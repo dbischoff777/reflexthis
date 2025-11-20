@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { playSound, preloadSounds } from '@/lib/soundUtils';
+import { playSound, preloadSounds, playBackgroundMusic, stopBackgroundMusic } from '@/lib/soundUtils';
 
 export interface GameState {
   score: number;
@@ -9,8 +9,10 @@ export interface GameState {
   highlightedButtons: number[];
   gameOver: boolean;
   soundEnabled: boolean;
+  musicEnabled: boolean;
   highScore: number;
   toggleSound: () => void;
+  toggleMusic: () => void;
   incrementScore: () => void;
   decrementLives: () => void;
   setHighlightedButtons: (buttonIds: number[]) => void;
@@ -21,6 +23,7 @@ const GameContext = createContext<GameState | undefined>(undefined);
 
 const STORAGE_KEYS = {
   SOUND_ENABLED: 'reflexthis_soundEnabled',
+  MUSIC_ENABLED: 'reflexthis_musicEnabled',
   HIGH_SCORE: 'reflexthis_highScore',
 } as const;
 
@@ -30,30 +33,37 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [highlightedButtons, setHighlightedButtons] = useState<number[]>([]);
   const [gameOver, setGameOver] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [musicEnabled, setMusicEnabled] = useState(true);
   const [highScore, setHighScore] = useState(0);
 
   // Load preferences from localStorage on mount and preload sounds
   useEffect(() => {
-    // Load sound preference
-    if (typeof window !== 'undefined') {
-      const savedSound = localStorage.getItem(STORAGE_KEYS.SOUND_ENABLED);
-      if (savedSound !== null) {
-        setSoundEnabled(savedSound === 'true');
-      }
-
-      // Load high score
-      const savedHighScore = localStorage.getItem(STORAGE_KEYS.HIGH_SCORE);
-      if (savedHighScore !== null) {
-        const parsed = parseInt(savedHighScore, 10);
-        if (!isNaN(parsed)) {
-          setHighScore(parsed);
+      // Load sound preference
+      if (typeof window !== 'undefined') {
+        const savedSound = localStorage.getItem(STORAGE_KEYS.SOUND_ENABLED);
+        if (savedSound !== null) {
+          setSoundEnabled(savedSound === 'true');
         }
-      }
 
-      // Preload sounds for better performance
-      preloadSounds();
-    }
-  }, []);
+        // Load music preference
+        const savedMusic = localStorage.getItem(STORAGE_KEYS.MUSIC_ENABLED);
+        if (savedMusic !== null) {
+          setMusicEnabled(savedMusic === 'true');
+        }
+
+        // Load high score
+        const savedHighScore = localStorage.getItem(STORAGE_KEYS.HIGH_SCORE);
+        if (savedHighScore !== null) {
+          const parsed = parseInt(savedHighScore, 10);
+          if (!isNaN(parsed)) {
+            setHighScore(parsed);
+          }
+        }
+
+        // Preload sounds for better performance
+        preloadSounds();
+      }
+    }, []);
 
   // Save sound preference to localStorage
   const toggleSound = useCallback(() => {
@@ -65,6 +75,25 @@ export function GameProvider({ children }: { children: ReactNode }) {
       return newValue;
     });
   }, []);
+
+  // Save music preference to localStorage and control music playback
+  const toggleMusic = useCallback(() => {
+    setMusicEnabled((prev) => {
+      const newValue = !prev;
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(STORAGE_KEYS.MUSIC_ENABLED, String(newValue));
+      }
+      
+      // Control music playback
+      if (newValue && !gameOver) {
+        playBackgroundMusic(true);
+      } else {
+        stopBackgroundMusic();
+      }
+      
+      return newValue;
+    });
+  }, [gameOver]);
 
   // Increment score
   const incrementScore = useCallback(() => {
@@ -98,8 +127,27 @@ export function GameProvider({ children }: { children: ReactNode }) {
         localStorage.setItem(STORAGE_KEYS.HIGH_SCORE, String(score));
         setHighScore(score);
       }
+      
+      // Stop background music when game ends
+      stopBackgroundMusic();
     }
   }, [gameOver, score]);
+
+  // Control background music based on game state and music preference
+  useEffect(() => {
+    if (!gameOver && musicEnabled) {
+      // Start music when game is active and music is enabled
+      playBackgroundMusic(true);
+    } else {
+      // Stop music when game is over or music is disabled
+      stopBackgroundMusic();
+    }
+
+    // Cleanup on unmount
+    return () => {
+      stopBackgroundMusic();
+    };
+  }, [gameOver, musicEnabled]);
 
   // Reset game state
   const resetGame = useCallback(() => {
@@ -107,6 +155,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setLives(5);
     setHighlightedButtons([]);
     setGameOver(false);
+    // Music will restart automatically via useEffect when gameOver becomes false
   }, []);
 
   return (
@@ -117,8 +166,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
         highlightedButtons,
         gameOver,
         soundEnabled,
+        musicEnabled,
         highScore,
         toggleSound,
+        toggleMusic,
         incrementScore,
         decrementLives,
         setHighlightedButtons,

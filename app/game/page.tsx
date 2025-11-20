@@ -23,8 +23,10 @@ export default function GamePage() {
     highlightedButtons,
     gameOver,
     soundEnabled,
+    musicEnabled,
     highScore,
     toggleSound,
+    toggleMusic,
     resetGame,
     setHighlightedButtons,
     incrementScore,
@@ -207,6 +209,14 @@ export default function GamePage() {
             aria-label={soundEnabled ? 'Disable sound' : 'Enable sound'}
           >
             <span className="text-xl">{soundEnabled ? '🔊' : '🔇'}</span>
+          </button>
+          
+          <button
+            onClick={toggleMusic}
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-card border border-border hover:bg-card/80 hover:border-primary/50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
+            aria-label={musicEnabled ? 'Disable music' : 'Enable music'}
+          >
+            <span className="text-xl">{musicEnabled ? '🎵' : '🎶'}</span>
           </button>
           
           <Link

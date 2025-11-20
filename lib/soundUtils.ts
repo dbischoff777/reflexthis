@@ -5,6 +5,7 @@
 
 const audioCache: Record<string, HTMLAudioElement> = {};
 const audioContextCache: AudioContext | null = null;
+let backgroundMusic: HTMLAudioElement | null = null;
 
 const SOUNDS = {
   highlight: '/sounds/highlight.mp3',
@@ -150,6 +151,88 @@ function playFallbackSound(sound: SoundType): void {
       setTimeout(() => generateBeepSound(400, 0.3, 'sine'), 200);
       setTimeout(() => generateBeepSound(200, 0.4, 'sine'), 500);
       break;
+  }
+}
+
+/**
+ * Background music management
+ */
+const MUSIC_PATH = '/sounds/music/game-music.mp3';
+const MUSIC_VOLUME = 0.3; // Lower volume than sound effects (0.7)
+
+/**
+ * Initialize background music
+ */
+function initBackgroundMusic(): HTMLAudioElement | null {
+  if (typeof window === 'undefined') return null;
+
+  if (!backgroundMusic) {
+    try {
+      backgroundMusic = new Audio(MUSIC_PATH);
+      backgroundMusic.loop = true;
+      backgroundMusic.volume = MUSIC_VOLUME;
+      backgroundMusic.preload = 'auto';
+      
+      // Handle loading errors gracefully
+      backgroundMusic.addEventListener('error', () => {
+        if (process.env.NODE_ENV === 'development') {
+          console.debug('Background music file not found (will be silent)');
+        }
+      });
+    } catch (error) {
+      if (process.env.NODE_ENV === 'development') {
+        console.debug('Could not initialize background music:', error);
+      }
+      return null;
+    }
+  }
+
+  return backgroundMusic;
+}
+
+/**
+ * Play background music
+ * @param enabled - Whether music is enabled
+ */
+export function playBackgroundMusic(enabled: boolean = true): void {
+  if (!enabled || typeof window === 'undefined') {
+    stopBackgroundMusic();
+    return;
+  }
+
+  const music = initBackgroundMusic();
+  if (!music) return;
+
+  // Only play if not already playing
+  if (music.paused) {
+    music.volume = MUSIC_VOLUME;
+    music.play().catch((error) => {
+      // Silently handle autoplay restrictions
+      if (process.env.NODE_ENV === 'development') {
+        console.debug('Could not play background music (may require user interaction):', error);
+      }
+    });
+  }
+}
+
+/**
+ * Stop background music
+ */
+export function stopBackgroundMusic(): void {
+  if (backgroundMusic && !backgroundMusic.paused) {
+    backgroundMusic.pause();
+    backgroundMusic.currentTime = 0;
+  }
+}
+
+/**
+ * Set background music volume
+ * @param volume - Volume between 0 and 1
+ */
+export function setBackgroundMusicVolume(volume: number): void {
+  const music = initBackgroundMusic();
+  if (music) {
+    music.volume = Math.max(0, Math.min(1, volume));
   }
 }
 
