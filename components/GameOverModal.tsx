@@ -5,10 +5,14 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { Confetti } from '@/components/Confetti';
 
+import { ReactionTimeStats } from '@/lib/GameContext';
+
 interface GameOverModalProps {
   score: number;
   highScore: number;
   isNewHighScore: boolean;
+  bestCombo: number;
+  reactionTimeStats: ReactionTimeStats;
   onRestart: () => void;
 }
 
@@ -19,6 +23,8 @@ export function GameOverModal({
   score,
   highScore,
   isNewHighScore,
+  bestCombo,
+  reactionTimeStats,
   onRestart,
 }: GameOverModalProps) {
   const [showConfetti, setShowConfetti] = useState(false);
@@ -87,6 +93,45 @@ export function GameOverModal({
             </div>
           )}
         </div>
+
+        {/* Stats */}
+        {(bestCombo > 0 || reactionTimeStats.allTimes.length > 0) && (
+          <div className="mb-6 p-4 bg-surface/50 rounded-lg border border-border">
+            <h3 className="text-sm font-semibold text-primary mb-3">Game Statistics</h3>
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              {bestCombo > 0 && (
+                <div>
+                  <p className="text-muted-foreground mb-1">Best Combo</p>
+                  <p className="text-lg font-bold text-accent">{bestCombo}x</p>
+                </div>
+              )}
+              {reactionTimeStats.average !== null && (
+                <div>
+                  <p className="text-muted-foreground mb-1">Avg Reaction</p>
+                  <p className="text-lg font-bold text-primary">
+                    {Math.round(reactionTimeStats.average)}ms
+                  </p>
+                </div>
+              )}
+              {reactionTimeStats.fastest !== null && (
+                <div>
+                  <p className="text-muted-foreground mb-1">Fastest</p>
+                  <p className="text-lg font-bold text-green-400">
+                    {Math.round(reactionTimeStats.fastest)}ms
+                  </p>
+                </div>
+              )}
+              {reactionTimeStats.allTimes.length > 0 && (
+                <div>
+                  <p className="text-muted-foreground mb-1">Total Presses</p>
+                  <p className="text-lg font-bold text-primary">
+                    {reactionTimeStats.allTimes.length}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Actions */}
         <div className="flex flex-col gap-3">

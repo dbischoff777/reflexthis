@@ -8,12 +8,18 @@ import { GameButton } from '@/components/GameButton';
 import { CyberpunkBackground } from '@/components/CyberpunkBackground';
 import { GameOverModal } from '@/components/GameOverModal';
 import { ScoreDisplay } from '@/components/ScoreDisplay';
+import { ComboDisplay } from '@/components/ComboDisplay';
+import { ReactionTimeDisplay } from '@/components/ReactionTimeDisplay';
 import { OrientationHandler } from '@/components/OrientationHandler';
 import {
   getRandomButtons,
   getButtonsToHighlight,
   getHighlightDuration,
 } from '@/lib/gameUtils';
+import {
+  getButtonsToHighlightForDifficulty,
+  getHighlightDurationForDifficulty,
+} from '@/lib/difficulty';
 import { playSound } from '@/lib/soundUtils';
 
 export default function GamePage() {
@@ -25,6 +31,10 @@ export default function GamePage() {
     soundEnabled,
     musicEnabled,
     highScore,
+    combo,
+    bestCombo,
+    reactionTimeStats,
+    difficulty,
     toggleSound,
     toggleMusic,
     resetGame,
@@ -38,6 +48,7 @@ export default function GamePage() {
   const lastHighlightedRef = useRef<number[]>([]);
   const isProcessingRef = useRef(false);
   const currentHighlightedRef = useRef<number[]>([]);
+  const highlightStartTimeRef = useRef<number | null>(null);
 
   // Clear highlight timer
   const clearHighlightTimer = useCallback(() => {
@@ -58,7 +69,7 @@ export default function GamePage() {
     clearHighlightTimer();
     isProcessingRef.current = true;
 
-    const buttonCount = getButtonsToHighlight(score);
+    const buttonCount = getButtonsToHighlightForDifficulty(score, difficulty);
     const newHighlighted = getRandomButtons(
       buttonCount,
       10,
@@ -68,18 +79,20 @@ export default function GamePage() {
 
     setHighlightedButtons(newHighlighted);
     currentHighlightedRef.current = newHighlighted;
+    highlightStartTimeRef.current = Date.now(); // Track when buttons were highlighted
     isProcessingRef.current = false;
 
     // Play highlight sound
     playSound('highlight', soundEnabled);
 
     // Set timer to clear highlight and penalize if not pressed in time
-    const duration = getHighlightDuration(score);
+    const duration = getHighlightDurationForDifficulty(score, difficulty);
     timerRef.current = setTimeout(() => {
       // Check if buttons are still highlighted (not pressed)
       if (currentHighlightedRef.current.length > 0) {
         setHighlightedButtons([]);
         currentHighlightedRef.current = [];
+        highlightStartTimeRef.current = null;
         decrementLives();
       }
       
@@ -90,7 +103,7 @@ export default function GamePage() {
         }, 1000);
       }
     }, duration);
-  }, [score, gameOver, setHighlightedButtons, decrementLives, clearHighlightTimer, soundEnabled]);
+  }, [score, difficulty, gameOver, setHighlightedButtons, decrementLives, clearHighlightTimer, soundEnabled]);
 
   // Handle button press
   const handleButtonPress = useCallback(
@@ -100,8 +113,13 @@ export default function GamePage() {
       }
 
       if (highlightedButtons.includes(buttonId)) {
+        // Calculate reaction time
+        const reactionTime = highlightStartTimeRef.current
+          ? Date.now() - highlightStartTimeRef.current
+          : 0;
+
         // Correct button pressed
-        incrementScore();
+        incrementScore(reactionTime);
 
         // Remove this button from highlighted buttons
         const updatedHighlighted = highlightedButtons.filter(
@@ -110,8 +128,9 @@ export default function GamePage() {
         setHighlightedButtons(updatedHighlighted);
         currentHighlightedRef.current = updatedHighlighted;
 
-        // If all highlighted buttons are pressed, highlight new ones
+        // If all highlighted buttons are pressed, reset highlight time
         if (updatedHighlighted.length === 0) {
+          highlightStartTimeRef.current = null;
           clearHighlightTimer();
           nextHighlightTimerRef.current = setTimeout(() => {
             highlightNewButtons();
@@ -120,6 +139,7 @@ export default function GamePage() {
       } else {
         // Wrong button pressed - play error sound
         playSound('error', soundEnabled);
+        highlightStartTimeRef.current = null;
         decrementLives();
       }
     },
@@ -175,14 +195,18 @@ export default function GamePage() {
         <CyberpunkBackground />
       
       {/* Header */}
-      <header className="relative z-10 p-4 flex justify-between items-center border-b border-border/50">
-        {/* Score Display */}
-        <div className="flex items-center gap-2">
-          <span className="text-sm sm:text-base text-muted-foreground">Score:</span>
-          <ScoreDisplay score={score} />
+      <header className="relative z-10 p-4 flex justify-between items-center border-b border-border/50 flex-wrap gap-2">
+        {/* Left: Score, Combo, and Reaction Time */}
+        <div className="flex items-center gap-4 flex-wrap">
+          <div className="flex items-center gap-2">
+            <span className="text-sm sm:text-base text-muted-foreground">Score:</span>
+            <ScoreDisplay score={score} />
+          </div>
+          <ComboDisplay combo={combo} />
+          <ReactionTimeDisplay stats={reactionTimeStats} />
         </div>
         
-        {/* Lives Display */}
+        {/* Center: Lives Display */}
         <div className="flex items-center gap-2">
           <span className="text-sm sm:text-base text-muted-foreground">Lives:</span>
           <div className="flex gap-1">
@@ -275,7 +299,9 @@ export default function GamePage() {
         <GameOverModal
           score={score}
           highScore={highScore}
-          isNewHighScore={isNewHighScore}
+          isNewHighScore={score > highScore && score > 0}
+          bestCombo={bestCombo}
+          reactionTimeStats={reactionTimeStats}
           onRestart={resetGame}
         />
       )}

@@ -1,7 +1,18 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import { playSound, preloadSounds, playBackgroundMusic, stopBackgroundMusic } from '@/lib/soundUtils';
+import { getComboMultiplier } from '@/lib/gameUtils';
+import { DifficultyPreset, DIFFICULTY_PRESETS } from '@/lib/difficulty';
+import { saveGameSession, calculateSessionStatistics, SessionStatistics } from '@/lib/sessionStats';
+
+export interface ReactionTimeStats {
+  current: number | null;
+  fastest: number | null;
+  slowest: number | null;
+  average: number | null;
+  allTimes: number[];
+}
 
 export interface GameState {
   score: number;
@@ -11,9 +22,15 @@ export interface GameState {
   soundEnabled: boolean;
   musicEnabled: boolean;
   highScore: number;
+  combo: number;
+  bestCombo: number;
+  reactionTimeStats: ReactionTimeStats;
+  difficulty: DifficultyPreset;
+  sessionStatistics: SessionStatistics;
   toggleSound: () => void;
   toggleMusic: () => void;
-  incrementScore: () => void;
+  setDifficulty: (difficulty: DifficultyPreset) => void;
+  incrementScore: (reactionTime: number) => void;
   decrementLives: () => void;
   setHighlightedButtons: (buttonIds: number[]) => void;
   resetGame: () => void;
@@ -25,6 +42,8 @@ const STORAGE_KEYS = {
   SOUND_ENABLED: 'reflexthis_soundEnabled',
   MUSIC_ENABLED: 'reflexthis_musicEnabled',
   HIGH_SCORE: 'reflexthis_highScore',
+  BEST_COMBO: 'reflexthis_bestCombo',
+  DIFFICULTY: 'reflexthis_difficulty',
 } as const;
 
 export function GameProvider({ children }: { children: ReactNode }) {
@@ -35,6 +54,21 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [musicEnabled, setMusicEnabled] = useState(true);
   const [highScore, setHighScore] = useState(0);
+  const [combo, setCombo] = useState(0);
+  const [bestCombo, setBestCombo] = useState(0);
+  const [difficulty, setDifficulty] = useState<DifficultyPreset>('custom');
+  const [sessionStatistics, setSessionStatistics] = useState<SessionStatistics>(
+    calculateSessionStatistics()
+  );
+  
+  const gameStartTimeRef = useRef<number | null>(null);
+  const [reactionTimeStats, setReactionTimeStats] = useState<ReactionTimeStats>({
+    current: null,
+    fastest: null,
+    slowest: null,
+    average: null,
+    allTimes: [],
+  });
 
   // Load preferences from localStorage on mount and preload sounds
   useEffect(() => {
@@ -58,6 +92,21 @@ export function GameProvider({ children }: { children: ReactNode }) {
           if (!isNaN(parsed)) {
             setHighScore(parsed);
           }
+        }
+
+        // Load best combo
+        const savedBestCombo = localStorage.getItem(STORAGE_KEYS.BEST_COMBO);
+        if (savedBestCombo !== null) {
+          const parsed = parseInt(savedBestCombo, 10);
+          if (!isNaN(parsed)) {
+            setBestCombo(parsed);
+          }
+        }
+
+        // Load difficulty preference
+        const savedDifficulty = localStorage.getItem(STORAGE_KEYS.DIFFICULTY);
+        if (savedDifficulty && ['easy', 'medium', 'hard', 'custom'].includes(savedDifficulty)) {
+          setDifficulty(savedDifficulty as DifficultyPreset);
         }
 
         // Preload sounds for better performance
@@ -95,14 +144,60 @@ export function GameProvider({ children }: { children: ReactNode }) {
     });
   }, [gameOver]);
 
-  // Increment score
-  const incrementScore = useCallback(() => {
-    setScore((prev) => prev + 1);
+  // Set difficulty preset
+  const handleSetDifficulty = useCallback((newDifficulty: DifficultyPreset) => {
+    setDifficulty(newDifficulty);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEYS.DIFFICULTY, newDifficulty);
+    }
+  }, []);
+
+  // Increment score with combo multiplier and track reaction time
+  const incrementScore = useCallback((reactionTime: number) => {
+    // Update reaction time stats
+    setReactionTimeStats((prev) => {
+      const newTimes = [...prev.allTimes, reactionTime];
+      const average = newTimes.reduce((sum, time) => sum + time, 0) / newTimes.length;
+      const fastest = prev.fastest === null ? reactionTime : Math.min(prev.fastest, reactionTime);
+      const slowest = prev.slowest === null ? reactionTime : Math.max(prev.slowest, reactionTime);
+
+      return {
+        current: reactionTime,
+        fastest,
+        slowest,
+        average,
+        allTimes: newTimes,
+      };
+    });
+
+    // Increase combo and update score in one go
+    setCombo((prevCombo) => {
+      const newCombo = prevCombo + 1;
+      
+      // Update best combo
+      if (newCombo > bestCombo) {
+        setBestCombo(newCombo);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(STORAGE_KEYS.BEST_COMBO, String(newCombo));
+        }
+      }
+      
+      // Calculate score with combo multiplier
+      const comboMultiplier = getComboMultiplier(newCombo);
+      const pointsGained = Math.floor(1 * comboMultiplier);
+      setScore((prev) => prev + pointsGained);
+      
+      return newCombo;
+    });
+    
     playSound('success', soundEnabled);
-  }, [soundEnabled]);
+  }, [soundEnabled, bestCombo]);
 
   // Decrement lives and check for game over
   const decrementLives = useCallback(() => {
+    // Reset combo on error
+    setCombo(0);
+    
     setLives((prev) => {
       const newLives = prev - 1;
       if (newLives <= 0) {
@@ -115,7 +210,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     });
   }, [soundEnabled]);
 
-  // Check and update high score when game ends
+  // Check and update high score when game ends, and save session
   useEffect(() => {
     if (gameOver && typeof window !== 'undefined') {
       const currentHighScore = parseInt(
@@ -128,10 +223,30 @@ export function GameProvider({ children }: { children: ReactNode }) {
         setHighScore(score);
       }
       
+      // Save game session
+      if (gameStartTimeRef.current) {
+        const duration = Date.now() - gameStartTimeRef.current;
+        saveGameSession({
+          id: `game_${Date.now()}`,
+          score,
+          bestCombo: bestCombo > 0 ? bestCombo : combo,
+          averageReactionTime: reactionTimeStats.average,
+          fastestReactionTime: reactionTimeStats.fastest,
+          totalPresses: reactionTimeStats.allTimes.length,
+          difficulty,
+          timestamp: Date.now(),
+          duration,
+        });
+        
+        // Update session statistics
+        setSessionStatistics(calculateSessionStatistics());
+        gameStartTimeRef.current = null;
+      }
+      
       // Stop background music when game ends
       stopBackgroundMusic();
     }
-  }, [gameOver, score]);
+  }, [gameOver, score, bestCombo, combo, reactionTimeStats, difficulty]);
 
   // Control background music based on game state and music preference
   useEffect(() => {
@@ -155,6 +270,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setLives(5);
     setHighlightedButtons([]);
     setGameOver(false);
+    setCombo(0);
+    setReactionTimeStats({
+      current: null,
+      fastest: null,
+      slowest: null,
+      average: null,
+      allTimes: [],
+    });
+    gameStartTimeRef.current = Date.now(); // Track game start time
     // Music will restart automatically via useEffect when gameOver becomes false
   }, []);
 
@@ -168,8 +292,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
         soundEnabled,
         musicEnabled,
         highScore,
+        combo,
+        bestCombo,
+        reactionTimeStats,
+        difficulty,
+        sessionStatistics,
         toggleSound,
         toggleMusic,
+        setDifficulty: handleSetDifficulty,
         incrementScore,
         decrementLives,
         setHighlightedButtons,

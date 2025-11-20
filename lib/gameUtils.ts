@@ -81,3 +81,16 @@ export function getHighlightDuration(score: number): number {
   return Math.max(minDuration, duration);
 }
 
+/**
+ * Calculate combo multiplier based on combo count
+ * @param combo - Current combo count
+ * @returns Multiplier (1x, 2x, 3x, etc.)
+ */
+export function getComboMultiplier(combo: number): number {
+  if (combo < 5) return 1;
+  if (combo < 10) return 2;
+  if (combo < 20) return 3;
+  if (combo < 30) return 4;
+  return 5; // Max 5x multiplier
+}
+

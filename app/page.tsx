@@ -1,8 +1,19 @@
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
 import { CyberpunkBackground } from '@/components/CyberpunkBackground';
 import { BuildInfo } from '@/components/BuildInfo';
+import { DifficultySelector } from '@/components/DifficultySelector';
+import { SessionStatsDisplay } from '@/components/SessionStatsDisplay';
+import { DifficultyPreset } from '@/lib/difficulty';
+import { GameProvider, useGameState } from '@/lib/GameContext';
 
-export default function LandingPage() {
+function LandingPageContent() {
+  const { difficulty, setDifficulty, sessionStatistics } = useGameState();
+  const [showDifficulty, setShowDifficulty] = useState(false);
+  const [showStats, setShowStats] = useState(false);
+
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center bg-background text-foreground p-4 overflow-hidden">
       <CyberpunkBackground />
@@ -18,22 +29,61 @@ export default function LandingPage() {
           </p>
         </div>
         
-        {/* Start Game Button */}
-        <Link 
-          href="/game"
-          className="group relative inline-flex items-center justify-center min-h-[56px] px-8 py-4 text-lg sm:text-xl font-bold rounded-full bg-gradient-to-r from-primary via-accent to-secondary text-primary-foreground transition-all duration-300 hover:shadow-glow hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
-        >
-          <span className="relative z-10">Start Game</span>
-          
-          {/* Shine effect */}
-          <span 
-            className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-            style={{
-              background: 'linear-gradient(to right, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%)',
-              animation: 'shine 3s infinite',
+        {/* Statistics Display */}
+        {showStats && (
+          <div className="mb-8 w-full max-w-2xl">
+            <SessionStatsDisplay stats={sessionStatistics} />
+          </div>
+        )}
+
+        {/* Difficulty Selector */}
+        {showDifficulty && !showStats && (
+          <div className="mb-8 w-full max-w-2xl">
+            <DifficultySelector
+              selected={difficulty}
+              onSelect={setDifficulty}
+            />
+          </div>
+        )}
+        
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row gap-4 items-center">
+          {!showStats && (
+            <Link 
+              href="/game"
+              onClick={(e) => {
+                if (!showDifficulty) {
+                  e.preventDefault();
+                  setShowDifficulty(true);
+                }
+              }}
+              className="group relative inline-flex items-center justify-center min-h-[56px] px-8 py-4 text-lg sm:text-xl font-bold rounded-full bg-gradient-to-r from-primary via-accent to-secondary text-primary-foreground transition-all duration-300 hover:shadow-glow hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
+            >
+              <span className="relative z-10">
+                {showDifficulty ? 'Start Game' : 'Select Difficulty & Play'}
+              </span>
+              
+              {/* Shine effect */}
+              <span 
+                className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                style={{
+                  background: 'linear-gradient(to right, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%)',
+                  animation: 'shine 3s infinite',
+                }}
+              />
+            </Link>
+          )}
+
+          <button
+            onClick={() => {
+              setShowStats(!showStats);
+              setShowDifficulty(false);
             }}
-          />
-        </Link>
+            className="inline-flex items-center justify-center min-h-[56px] px-6 py-3 text-base sm:text-lg font-semibold rounded-full border-2 border-border bg-card/50 text-foreground hover:border-primary/50 hover:bg-card/80 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
+          >
+            {showStats ? 'Hide Stats' : 'View Statistics'}
+          </button>
+        </div>
       </main>
       
       {/* Build Info Footer */}
@@ -41,5 +91,13 @@ export default function LandingPage() {
         <BuildInfo className="text-center" />
       </footer>
     </div>
+  );
+}
+
+export default function LandingPage() {
+  return (
+    <GameProvider>
+      <LandingPageContent />
+    </GameProvider>
   );
 }
