@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useGameState } from '@/lib/GameContext';
 import { GameButton } from '@/components/GameButton';
@@ -20,9 +21,10 @@ import {
   getButtonsToHighlightForDifficulty,
   getHighlightDurationForDifficulty,
 } from '@/lib/difficulty';
-import { playSound } from '@/lib/soundUtils';
+import { playSound, stopBackgroundMusic } from '@/lib/soundUtils';
 
 export default function GamePage() {
+  const router = useRouter();
   const {
     score,
     lives,
@@ -38,6 +40,8 @@ export default function GamePage() {
     toggleSound,
     toggleMusic,
     resetGame,
+    startGame,
+    endGame,
     setHighlightedButtons,
     incrementScore,
     decrementLives,
@@ -154,6 +158,11 @@ export default function GamePage() {
     ]
   );
 
+  // Start game when component mounts
+  useEffect(() => {
+    startGame();
+  }, [startGame]);
+
   // Start game when component mounts or game resets
   useEffect(() => {
     if (!gameOver) {
@@ -184,6 +193,13 @@ export default function GamePage() {
       return () => clearTimeout(restartTimer);
     }
   }, [gameOver, highlightedButtons.length, highlightNewButtons]);
+
+  // Stop game and music when component unmounts (e.g., when navigating away)
+  useEffect(() => {
+    return () => {
+      endGame();
+    };
+  }, [endGame]);
 
   // Check if current score is a new high score
   const isNewHighScore = gameOver && score > 0 && score >= highScore;
@@ -243,13 +259,16 @@ export default function GamePage() {
             <span className="text-xl">{musicEnabled ? '🎵' : '🎶'}</span>
           </button>
           
-          <Link
-            href="/"
+          <button
+            onClick={() => {
+              endGame();
+              router.push('/');
+            }}
             className="w-10 h-10 flex items-center justify-center rounded-full bg-card border border-border hover:bg-card/80 hover:border-destructive/50 hover:text-destructive transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-destructive focus:ring-offset-2 focus:ring-offset-background"
             aria-label="Quit game"
           >
             <span className="text-xl">✕</span>
-          </Link>
+          </button>
         </div>
       </header>
       

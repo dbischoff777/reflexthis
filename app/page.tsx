@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { CyberpunkBackground } from '@/components/CyberpunkBackground';
 import { BuildInfo } from '@/components/BuildInfo';
@@ -8,11 +8,22 @@ import { DifficultySelector } from '@/components/DifficultySelector';
 import { SessionStatsDisplay } from '@/components/SessionStatsDisplay';
 import { DifficultyPreset } from '@/lib/difficulty';
 import { GameProvider, useGameState } from '@/lib/GameContext';
+import { stopBackgroundMusic } from '@/lib/soundUtils';
 
 function LandingPageContent() {
   const { difficulty, setDifficulty, sessionStatistics } = useGameState();
   const [showDifficulty, setShowDifficulty] = useState(false);
   const [showStats, setShowStats] = useState(false);
+
+  // Ensure music is stopped on landing page
+  useEffect(() => {
+    stopBackgroundMusic();
+    
+    // Also stop on cleanup/unmount
+    return () => {
+      stopBackgroundMusic();
+    };
+  }, []);
 
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center bg-background text-foreground p-4 overflow-hidden">
@@ -62,15 +73,6 @@ function LandingPageContent() {
               <span className="relative z-10">
                 {showDifficulty ? 'Start Game' : 'Select Difficulty & Play'}
               </span>
-              
-              {/* Shine effect */}
-              <span 
-                className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                style={{
-                  background: 'linear-gradient(to right, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%)',
-                  animation: 'shine 3s infinite',
-                }}
-              />
             </Link>
           )}
 

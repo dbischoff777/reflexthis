@@ -219,9 +219,18 @@ export function playBackgroundMusic(enabled: boolean = true): void {
  * Stop background music
  */
 export function stopBackgroundMusic(): void {
-  if (backgroundMusic && !backgroundMusic.paused) {
-    backgroundMusic.pause();
-    backgroundMusic.currentTime = 0;
+  if (typeof window === 'undefined') return;
+  
+  if (backgroundMusic) {
+    try {
+      backgroundMusic.pause();
+      backgroundMusic.currentTime = 0;
+    } catch (error) {
+      // Silently handle any errors
+      if (process.env.NODE_ENV === 'development') {
+        console.debug('Error stopping background music:', error);
+      }
+    }
   }
 }
 

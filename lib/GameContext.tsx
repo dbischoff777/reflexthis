@@ -34,6 +34,8 @@ export interface GameState {
   decrementLives: () => void;
   setHighlightedButtons: (buttonIds: number[]) => void;
   resetGame: () => void;
+  startGame: () => void;
+  endGame: () => void;
 }
 
 const GameContext = createContext<GameState | undefined>(undefined);
@@ -60,6 +62,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [sessionStatistics, setSessionStatistics] = useState<SessionStatistics>(
     calculateSessionStatistics()
   );
+  const [isGameStarted, setIsGameStarted] = useState(false);
   
   const gameStartTimeRef = useRef<number | null>(null);
   const [reactionTimeStats, setReactionTimeStats] = useState<ReactionTimeStats>({
@@ -243,18 +246,24 @@ export function GameProvider({ children }: { children: ReactNode }) {
         gameStartTimeRef.current = null;
       }
       
+      // Mark game as ended
+      setIsGameStarted(false);
+      
       // Stop background music when game ends
       stopBackgroundMusic();
     }
   }, [gameOver, score, bestCombo, combo, reactionTimeStats, difficulty]);
 
   // Control background music based on game state and music preference
+  // Only start music when we're actually in a game session (game has started)
   useEffect(() => {
-    if (!gameOver && musicEnabled) {
+    const isGameActive = !gameOver && isGameStarted;
+    
+    if (isGameActive && musicEnabled) {
       // Start music when game is active and music is enabled
       playBackgroundMusic(true);
     } else {
-      // Stop music when game is over or music is disabled
+      // Stop music when game is over, music is disabled, or not in a game session
       stopBackgroundMusic();
     }
 
@@ -262,7 +271,22 @@ export function GameProvider({ children }: { children: ReactNode }) {
     return () => {
       stopBackgroundMusic();
     };
-  }, [gameOver, musicEnabled]);
+  }, [gameOver, musicEnabled, isGameStarted]);
+
+  // Start game (called when game page mounts)
+  const startGame = useCallback(() => {
+    if (!isGameStarted && !gameOver) {
+      setIsGameStarted(true);
+      gameStartTimeRef.current = Date.now(); // Track game start time
+    }
+  }, [isGameStarted, gameOver]);
+
+  // End game (called when leaving game page)
+  const endGame = useCallback(() => {
+    setIsGameStarted(false);
+    gameStartTimeRef.current = null;
+    stopBackgroundMusic();
+  }, []);
 
   // Reset game state
   const resetGame = useCallback(() => {
@@ -271,6 +295,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setHighlightedButtons([]);
     setGameOver(false);
     setCombo(0);
+    setIsGameStarted(true); // Mark that game has started
     setReactionTimeStats({
       current: null,
       fastest: null,
@@ -279,7 +304,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       allTimes: [],
     });
     gameStartTimeRef.current = Date.now(); // Track game start time
-    // Music will restart automatically via useEffect when gameOver becomes false
+    // Music will restart automatically via useEffect when gameOver becomes false and isGameStarted is true
   }, []);
 
   return (
@@ -304,6 +329,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
         decrementLives,
         setHighlightedButtons,
         resetGame,
+        startGame,
+        endGame,
       }}
     >
       {children}
