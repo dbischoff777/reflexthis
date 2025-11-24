@@ -5,6 +5,7 @@ import { playSound, preloadSounds, playBackgroundMusic, stopBackgroundMusic } fr
 import { getComboMultiplier } from '@/lib/gameUtils';
 import { DifficultyPreset, DIFFICULTY_PRESETS } from '@/lib/difficulty';
 import { saveGameSession, calculateSessionStatistics, SessionStatistics } from '@/lib/sessionStats';
+import { GameMode } from '@/lib/gameModes';
 
 export interface ReactionTimeStats {
   current: number | null;
@@ -26,13 +27,16 @@ export interface GameState {
   bestCombo: number;
   reactionTimeStats: ReactionTimeStats;
   difficulty: DifficultyPreset;
+  gameMode: GameMode;
   sessionStatistics: SessionStatistics;
   toggleSound: () => void;
   toggleMusic: () => void;
   setDifficulty: (difficulty: DifficultyPreset) => void;
+  setGameMode: (mode: GameMode) => void;
   incrementScore: (reactionTime: number) => void;
   decrementLives: () => void;
   setHighlightedButtons: (buttonIds: number[]) => void;
+  setLives: (lives: number) => void;
   resetGame: () => void;
   startGame: () => void;
   endGame: () => void;
@@ -46,6 +50,7 @@ const STORAGE_KEYS = {
   HIGH_SCORE: 'reflexthis_highScore',
   BEST_COMBO: 'reflexthis_bestCombo',
   DIFFICULTY: 'reflexthis_difficulty',
+  GAME_MODE: 'reflexthis_gameMode',
 } as const;
 
 export function GameProvider({ children }: { children: ReactNode }) {
@@ -59,6 +64,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [combo, setCombo] = useState(0);
   const [bestCombo, setBestCombo] = useState(0);
   const [difficulty, setDifficulty] = useState<DifficultyPreset>('custom');
+  const [gameMode, setGameMode] = useState<GameMode>('reflex');
   const [sessionStatistics, setSessionStatistics] = useState<SessionStatistics>(
     calculateSessionStatistics()
   );
@@ -112,6 +118,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
           setDifficulty(savedDifficulty as DifficultyPreset);
         }
 
+        // Load game mode preference
+        const savedMode = localStorage.getItem(STORAGE_KEYS.GAME_MODE);
+        if (savedMode && ['reflex', 'sequence', 'survival'].includes(savedMode)) {
+          setGameMode(savedMode as GameMode);
+        }
+
         // Preload sounds for better performance
         preloadSounds();
       }
@@ -152,6 +164,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setDifficulty(newDifficulty);
     if (typeof window !== 'undefined') {
       localStorage.setItem(STORAGE_KEYS.DIFFICULTY, newDifficulty);
+    }
+  }, []);
+
+  // Set game mode
+  const handleSetGameMode = useCallback((newMode: GameMode) => {
+    setGameMode(newMode);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEYS.GAME_MODE, newMode);
     }
   }, []);
 
@@ -196,8 +216,21 @@ export function GameProvider({ children }: { children: ReactNode }) {
     playSound('success', soundEnabled);
   }, [soundEnabled, bestCombo]);
 
+  // Track if game over sound has been played to prevent duplicates
+  const gameOverSoundPlayedRef = useRef(false);
+  
+  // Reset game over sound flag when game resets
+  useEffect(() => {
+    if (!gameOver) {
+      gameOverSoundPlayedRef.current = false;
+    }
+  }, [gameOver]);
+  
   // Decrement lives and check for game over
   const decrementLives = useCallback(() => {
+    // Don't decrement if already game over
+    if (gameOver) return;
+    
     // Reset combo on error
     setCombo(0);
     
@@ -205,13 +238,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const newLives = prev - 1;
       if (newLives <= 0) {
         setGameOver(true);
-        playSound('gameOver', soundEnabled);
+        // Only play game over sound once
+        if (!gameOverSoundPlayedRef.current) {
+          gameOverSoundPlayedRef.current = true;
+          playSound('gameOver', soundEnabled);
+        }
       } else {
         playSound('lifeLost', soundEnabled);
       }
       return newLives;
     });
-  }, [soundEnabled]);
+  }, [soundEnabled, gameOver]);
 
   // Check and update high score when game ends, and save session
   useEffect(() => {
@@ -291,7 +328,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
   // Reset game state
   const resetGame = useCallback(() => {
     setScore(0);
-    setLives(5);
+    // Set lives based on game mode: survival = 1, others = 5
+    setLives(gameMode === 'survival' ? 1 : 5);
     setHighlightedButtons([]);
     setGameOver(false);
     setCombo(0);
@@ -305,7 +343,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     });
     gameStartTimeRef.current = Date.now(); // Track game start time
     // Music will restart automatically via useEffect when gameOver becomes false and isGameStarted is true
-  }, []);
+  }, [gameMode]);
 
   return (
     <GameContext.Provider
@@ -321,13 +359,16 @@ export function GameProvider({ children }: { children: ReactNode }) {
         bestCombo,
         reactionTimeStats,
         difficulty,
+        gameMode,
         sessionStatistics,
         toggleSound,
         toggleMusic,
         setDifficulty: handleSetDifficulty,
+        setGameMode: handleSetGameMode,
         incrementScore,
         decrementLives,
         setHighlightedButtons,
+        setLives,
         resetGame,
         startGame,
         endGame,

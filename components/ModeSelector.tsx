@@ -1,26 +1,26 @@
 'use client';
 
 import { useEffect } from 'react';
-import { DifficultyPreset, DIFFICULTY_PRESETS } from '@/lib/difficulty';
+import { GameMode, GAME_MODES } from '@/lib/gameModes';
 import { cn } from '@/lib/utils';
 
-interface DifficultySelectorProps {
-  selected: DifficultyPreset;
-  onSelect: (difficulty: DifficultyPreset) => void;
+interface ModeSelectorProps {
+  selected: GameMode;
+  onSelect: (mode: GameMode) => void;
   onCancel?: () => void;
   disabled?: boolean;
 }
 
 /**
- * DifficultySelector component - Allows players to choose difficulty preset
+ * ModeSelector component - Allows players to choose game mode
  */
-export function DifficultySelector({
+export function ModeSelector({
   selected,
   onSelect,
   onCancel,
   disabled = false,
-}: DifficultySelectorProps) {
-  const difficulties: DifficultyPreset[] = ['easy', 'medium', 'hard', 'custom'];
+}: ModeSelectorProps) {
+  const modes: GameMode[] = ['reflex', 'sequence', 'survival'];
 
   // Handle ESC key to cancel
   useEffect(() => {
@@ -37,7 +37,7 @@ export function DifficultySelector({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-lg font-semibold text-primary">Select Difficulty</h3>
+        <h3 className="text-lg font-semibold text-primary">Select Game Mode</h3>
         {onCancel && (
           <button
             onClick={onCancel}
@@ -48,15 +48,15 @@ export function DifficultySelector({
           </button>
         )}
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {difficulties.map((preset) => {
-          const config = DIFFICULTY_PRESETS[preset];
-          const isSelected = selected === preset;
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        {modes.map((mode) => {
+          const modeInfo = GAME_MODES[mode];
+          const isSelected = selected === mode;
 
           return (
             <button
-              key={preset}
-              onClick={() => !disabled && onSelect(preset)}
+              key={mode}
+              onClick={() => !disabled && onSelect(mode)}
               disabled={disabled}
               className={cn(
                 'p-4 border-4 transition-all duration-100 text-left pixel-border',
@@ -68,7 +68,10 @@ export function DifficultySelector({
               )}
             >
               <div className="flex items-center justify-between mb-2">
-                <span className="font-bold text-lg text-primary">{config.name}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">{modeInfo.icon}</span>
+                  <span className="font-bold text-lg text-primary">{modeInfo.name}</span>
+                </div>
                 {isSelected && (
                   <span className="text-xl" aria-label="Selected">
                     ✓
@@ -76,13 +79,8 @@ export function DifficultySelector({
                 )}
               </div>
               <p className="text-xs sm:text-sm text-muted-foreground">
-                {config.description}
+                {modeInfo.description}
               </p>
-              <div className="mt-2 text-xs text-muted-foreground">
-                <div>Base: {config.baseDuration}ms</div>
-                <div>Min: {config.minDuration}ms</div>
-                <div>Max Buttons: {config.maxButtons}</div>
-              </div>
             </button>
           );
         })}

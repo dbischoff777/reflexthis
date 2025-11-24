@@ -20,20 +20,29 @@ export function ComboDisplay({ combo }: ComboDisplayProps) {
       <span className="text-sm sm:text-base font-semibold">Combo:</span>
       <span
         className={cn(
-          'text-lg sm:text-xl font-bold',
-          'transition-all duration-300',
-          multiplier >= 3 && 'text-accent'
+          'text-lg sm:text-xl font-bold pixel-border px-2 py-1',
+          'transition-all duration-200',
+          multiplier >= 3
+            ? 'text-accent border-accent bg-accent/20 animate-pixel-pulse'
+            : 'text-primary border-primary bg-primary/10'
         )}
+        style={{
+          imageRendering: 'pixelated',
+        }}
       >
         {combo}x
       </span>
       {multiplier > 1 && (
         <span
           className={cn(
-            'text-xs sm:text-sm font-bold px-2 py-0.5 rounded',
-            'bg-primary/20 border border-primary/50',
-            'animate-pulse-glow'
+            'text-xs sm:text-sm font-bold px-2 py-1',
+            'bg-accent/30 border-2 border-accent',
+            'animate-pixel-pulse pixel-border',
+            multiplier >= 3 && 'bg-accent/50'
           )}
+          style={{
+            imageRendering: 'pixelated',
+          }}
         >
           {multiplier}x MULTIPLIER!
         </span>

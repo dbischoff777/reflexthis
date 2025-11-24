@@ -15,9 +15,9 @@ export function ReactionTimeDisplay({ stats }: ReactionTimeDisplayProps) {
 
   const getReactionColor = (time: number | null): string => {
     if (time === null) return 'text-muted-foreground';
-    if (time < 300) return 'text-green-400';
-    if (time < 500) return 'text-yellow-400';
-    return 'text-orange-400';
+    if (time < 300) return 'text-chart-3';
+    if (time < 500) return 'text-accent';
+    return 'text-chart-5';
   };
 
   const formatTime = (time: number | null): string => {
@@ -46,7 +46,7 @@ export function ReactionTimeDisplay({ stats }: ReactionTimeDisplayProps) {
       {stats.fastest !== null && (
         <div className="flex items-center gap-2">
           <span className="text-muted-foreground">Best:</span>
-          <span className="font-semibold text-green-400">
+          <span className="font-semibold text-chart-3">
             {formatTime(stats.fastest)}
           </span>
         </div>

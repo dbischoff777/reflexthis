@@ -1,0 +1,34 @@
+/**
+ * Game mode definitions for ReflexThis
+ */
+
+export type GameMode = 'reflex' | 'sequence' | 'survival';
+
+export interface GameModeInfo {
+  id: GameMode;
+  name: string;
+  description: string;
+  icon: string;
+}
+
+export const GAME_MODES: Record<GameMode, GameModeInfo> = {
+  reflex: {
+    id: 'reflex',
+    name: 'Reflex',
+    description: 'Press highlighted buttons as fast as possible before they disappear.',
+    icon: '⚡',
+  },
+  sequence: {
+    id: 'sequence',
+    name: 'Sequence',
+    description: 'Remember and repeat the exact sequence of buttons shown.',
+    icon: '🧠',
+  },
+  survival: {
+    id: 'survival',
+    name: 'Survival',
+    description: 'One mistake and it\'s game over! How long can you survive?',
+    icon: '💀',
+  },
+};
+

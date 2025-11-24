@@ -1,12 +1,16 @@
 'use client';
 
-import { memo, useCallback, useRef, useEffect } from 'react';
+import { memo, useCallback, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
+import { ButtonCountdown } from './ButtonCountdown';
+import { PixelParticleBurst } from './PixelParticle';
 
 export interface GameButtonProps {
   id: number;
   highlighted?: boolean;
   onPress?: () => void;
+  highlightStartTime?: number;
+  highlightDuration?: number;
 }
 
 /**
@@ -17,10 +21,13 @@ export const GameButton = memo(function GameButton({
   id,
   highlighted = false,
   onPress,
+  highlightStartTime,
+  highlightDuration,
 }: GameButtonProps) {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const lastPressTimeRef = useRef<number>(0);
   const DEBOUNCE_DELAY = 100; // 100ms debounce to prevent spam
+  const [particleBurst, setParticleBurst] = useState<{ x: number; y: number } | null>(null);
 
   // Debounced press handler
   const handlePress = useCallback(() => {
@@ -29,6 +36,18 @@ export const GameButton = memo(function GameButton({
       return; // Ignore if pressed too soon
     }
     lastPressTimeRef.current = now;
+    
+    // Trigger particle burst at button center
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setParticleBurst({
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2,
+      });
+      // Clear particle burst after animation
+      setTimeout(() => setParticleBurst(null), 500);
+    }
+    
     if (onPress) {
       onPress();
     }
@@ -49,28 +68,55 @@ export const GameButton = memo(function GameButton({
     <button
       ref={buttonRef}
       className={cn(
-        'game-button relative min-w-[44px] min-h-[44px] w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 rounded-full',
-        'transition-all duration-200 ease-out',
-        'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background',
-        'active:scale-90 touch-manipulation',
+        'game-button relative min-w-[44px] min-h-[44px] w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 lg:w-28 lg:h-28',
+        'transition-all duration-100 ease-out',
+        'focus:outline-none focus:ring-2 focus:ring-primary',
+        'active:scale-95 touch-manipulation',
         'will-change-transform',
+        'pixel-border',
         highlighted
-          ? 'bg-primary shadow-glow animate-pulse-glow border-2 border-primary'
-          : 'bg-card border-2 border-border hover:border-primary/50 hover:bg-card/80'
+          ? 'bg-primary border-primary animate-pixel-pulse'
+          : 'bg-card border-border hover:border-primary hover:bg-primary/20'
       )}
+      style={{
+        imageRendering: 'pixelated' as any,
+        borderRadius: '0',
+      }}
       onClick={handlePress}
       onTouchStart={handleTouchStart}
       aria-label={`Game button ${id}`}
       aria-pressed={highlighted}
     >
-      {/* Inner glow effect when highlighted */}
+      {/* Pixelated highlight effect when highlighted */}
       {highlighted && (
-        <span
-          className="absolute inset-0 rounded-full bg-primary/30 animate-pulse"
-          style={{
-            boxShadow: 'inset 0 0 20px rgba(0, 255, 255, 0.5)',
-          }}
-        />
+        <>
+          <span
+            className="absolute inset-0 bg-accent/50"
+            style={{
+              backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255, 255, 0, 0.1) 2px, rgba(255, 255, 0, 0.1) 4px)',
+              imageRendering: 'pixelated',
+              borderRadius: '0',
+            }}
+          />
+          {highlightStartTime && highlightDuration !== undefined && highlightDuration > 0 && (
+            <ButtonCountdown
+              duration={highlightDuration}
+              startTime={highlightStartTime}
+            />
+          )}
+        </>
+      )}
+      
+      {/* Pixel Particle Burst - rendered in portal */}
+      {particleBurst && (
+        <div className="fixed inset-0 pointer-events-none z-50">
+          <PixelParticleBurst
+            buttonId={id}
+            x={particleBurst.x}
+            y={particleBurst.y}
+            color={highlighted ? '#ffff00' : '#00ffff'}
+          />
+        </div>
       )}
     </button>
   );

@@ -44,96 +44,145 @@
 }
 
 :root {
-  --radius: 0.625rem;
-  /* Cyberpunk Theme Colors */
-  --background: #0a0a0f;
+  --radius: 0;
+  /* Sinclair ZX Spectrum Theme Colors */
+  --background: #000000;
   --foreground: #ffffff;
-  --card: #1a1a2e;
+  --card: #0000ff;
   --card-foreground: #ffffff;
-  --popover: #1a1a2e;
+  --popover: #0000ff;
   --popover-foreground: #ffffff;
   --primary: #00ffff;
-  --primary-foreground: #0a0a0f;
+  --primary-foreground: #000000;
   --secondary: #ff00ff;
   --secondary-foreground: #ffffff;
-  --muted: #1a1a2e;
-  --muted-foreground: #a0a0a0;
-  --accent: #00f0ff;
-  --accent-foreground: #0a0a0f;
-  --destructive: #ff0040;
-  --border: rgba(0, 255, 255, 0.2);
-  --input: rgba(0, 255, 255, 0.1);
+  --muted: #000000;
+  --muted-foreground: #00ffff;
+  --accent: #ffff00;
+  --accent-foreground: #000000;
+  --destructive: #ff0000;
+  --border: #00ffff;
+  --input: #0000ff;
   --ring: #00ffff;
   --chart-1: #00ffff;
   --chart-2: #ff00ff;
-  --chart-3: #00f0ff;
-  --chart-4: #ff00ff;
-  --chart-5: #00ffff;
-  --sidebar: #1a1a2e;
+  --chart-3: #00ff00;
+  --chart-4: #ffff00;
+  --chart-5: #ff0000;
+  --sidebar: #0000ff;
   --sidebar-foreground: #ffffff;
   --sidebar-primary: #00ffff;
-  --sidebar-primary-foreground: #0a0a0f;
-  --sidebar-accent: #1a1a2e;
+  --sidebar-primary-foreground: #000000;
+  --sidebar-accent: #0000ff;
   --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: rgba(0, 255, 255, 0.2);
+  --sidebar-border: #00ffff;
   --sidebar-ring: #00ffff;
 }
 
 .dark {
-  --background: #0a0a0f;
+  --background: #000000;
   --foreground: #ffffff;
-  --card: #1a1a2e;
+  --card: #0000ff;
   --card-foreground: #ffffff;
-  --popover: #1a1a2e;
+  --popover: #0000ff;
   --popover-foreground: #ffffff;
   --primary: #00ffff;
-  --primary-foreground: #0a0a0f;
+  --primary-foreground: #000000;
   --secondary: #ff00ff;
   --secondary-foreground: #ffffff;
-  --muted: #1a1a2e;
-  --muted-foreground: #a0a0a0;
-  --accent: #00f0ff;
-  --accent-foreground: #0a0a0f;
-  --destructive: #ff0040;
-  --border: rgba(0, 255, 255, 0.2);
-  --input: rgba(0, 255, 255, 0.1);
+  --muted: #000000;
+  --muted-foreground: #00ffff;
+  --accent: #ffff00;
+  --accent-foreground: #000000;
+  --destructive: #ff0000;
+  --border: #00ffff;
+  --input: #0000ff;
   --ring: #00ffff;
   --chart-1: #00ffff;
   --chart-2: #ff00ff;
-  --chart-3: #00f0ff;
-  --chart-4: #ff00ff;
-  --chart-5: #00ffff;
-  --sidebar: #1a1a2e;
+  --chart-3: #00ff00;
+  --chart-4: #ffff00;
+  --chart-5: #ff0000;
+  --sidebar: #0000ff;
   --sidebar-foreground: #ffffff;
   --sidebar-primary: #00ffff;
-  --sidebar-primary-foreground: #0a0a0f;
-  --sidebar-accent: #1a1a2e;
+  --sidebar-primary-foreground: #000000;
+  --sidebar-accent: #0000ff;
   --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: rgba(0, 255, 255, 0.2);
+  --sidebar-border: #00ffff;
   --sidebar-ring: #00ffff;
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
   }
   body {
     @apply bg-background text-foreground;
-    font-family: var(--font-rajdhani), var(--font-geist-sans), system-ui, sans-serif;
+    font-family: 'Courier New', 'Courier', monospace;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
   }
 }
 
 @layer utilities {
   .shadow-glow {
-    box-shadow: 0 0 15px 5px rgba(0, 255, 255, 0.7);
+    box-shadow: 0 0 0 2px #00ffff, 0 0 0 4px #000000, 0 0 0 6px #00ffff;
   }
   
   .text-glow {
-    text-shadow: 0 0 10px rgba(0, 255, 255, 0.7);
+    text-shadow: 2px 2px 0 #000000, -2px -2px 0 #000000, 2px -2px 0 #000000, -2px 2px 0 #000000;
   }
   
   .border-glow {
-    box-shadow: 0 0 5px 2px rgba(0, 255, 255, 0.5);
+    box-shadow: 0 0 0 2px #00ffff;
+  }
+  
+  /* CRT Scanline Effect */
+  .crt-scanlines {
+    position: relative;
+  }
+  
+  .crt-scanlines::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.15) 0px,
+      rgba(0, 0, 0, 0.15) 1px,
+      transparent 1px,
+      transparent 2px
+    );
+    pointer-events: none;
+    z-index: 1000;
+  }
+  
+  /* Pixelated border effect */
+  .pixel-border {
+    border: 4px solid;
+    border-image: none;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+  }
+  
+  /* Attribute clash effect (color limitation simulation) */
+  .attribute-clash {
+    background: repeating-linear-gradient(
+      0deg,
+      var(--primary) 0px,
+      var(--primary) 4px,
+      var(--secondary) 4px,
+      var(--secondary) 8px
+    );
   }
   
   @keyframes pulse-glow {
@@ -149,6 +198,63 @@
   
   .animate-pulse-glow {
     animation: pulse-glow 1.5s infinite;
+  }
+  
+  @keyframes pixel-pulse {
+    0%, 100% {
+      transform: scale(1);
+      border-color: var(--primary);
+      background-color: var(--primary);
+    }
+    50% {
+      transform: scale(1.02);
+      border-color: var(--accent);
+      background-color: var(--accent);
+    }
+  }
+  
+  .animate-pixel-pulse {
+    animation: pixel-pulse 1s infinite;
+  }
+  
+  @keyframes shake {
+    0%, 100% {
+      transform: translateX(0);
+    }
+    10%, 30%, 50%, 70%, 90% {
+      transform: translateX(-4px);
+    }
+    20%, 40%, 60%, 80% {
+      transform: translateX(4px);
+    }
+  }
+  
+  @keyframes screen-flash {
+    0%, 100% {
+      opacity: 0;
+    }
+    50% {
+      opacity: 0.3;
+    }
+  }
+  
+  .screen-flash {
+    animation: screen-flash 0.3s ease-out;
+  }
+  
+  @keyframes countdown-pulse {
+    0% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    100% {
+      opacity: 0.3;
+      transform: scale(0.95);
+    }
+  }
+  
+  .countdown-pulse {
+    animation: countdown-pulse linear;
   }
   
   @keyframes shine {
@@ -220,16 +326,81 @@
     animation: glitch 0.3s infinite;
   }
   
-  /* Enhanced button hover effects */
+  @keyframes flicker {
+    0%, 100% {
+      opacity: 0.02;
+    }
+    50% {
+      opacity: 0.05;
+    }
+  }
+  
+  @keyframes phosphor-trail {
+    0%, 100% {
+      opacity: 0.08;
+      transform: translateY(0);
+    }
+    50% {
+      opacity: 0.12;
+      transform: translateY(-2px);
+    }
+  }
+  
+  /* Enhanced CRT scanline effect */
+  .crt-scanlines::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.15) 0px,
+      rgba(0, 0, 0, 0.15) 1px,
+      transparent 1px,
+      transparent 2px
+    );
+    pointer-events: none;
+    z-index: 1000;
+    animation: scanline-move 8s linear infinite;
+  }
+  
+  @keyframes scanline-move {
+    0% {
+      transform: translateY(0);
+    }
+    100% {
+      transform: translateY(4px);
+    }
+  }
+  
+  @keyframes pixel-pulse {
+    0%, 100% {
+      transform: scale(1);
+      border-color: var(--primary);
+    }
+    50% {
+      transform: scale(1.05);
+      border-color: var(--accent);
+    }
+  }
+  
+  .animate-pixel-pulse {
+    animation: pixel-pulse 1s infinite;
+  }
+  
+  /* Enhanced button hover effects - Square style */
   .game-button::before {
     content: '';
     position: absolute;
     inset: -2px;
-    border-radius: 50%;
+    border-radius: 0;
     background: linear-gradient(45deg, var(--primary), var(--secondary));
     opacity: 0;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.1s ease;
     z-index: -1;
+    image-rendering: pixelated;
   }
   
   .game-button:hover::before,
@@ -253,20 +424,43 @@
     animation: particle-burst 0.6s ease-out forwards;
   }
   
-  /* Game Button Grid Styles */
+  /* Game Button Grid Styles - Sinclair Style */
   .button-grid {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 1rem;
+    gap: 0.5rem;
+    image-rendering: pixelated;
   }
   
   .grid-row {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 1rem;
+    gap: 0.5rem;
+  }
+  
+  /* Square button styling for Sinclair look */
+  .game-button {
+    border-radius: 0 !important;
+    border: 4px solid !important;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    position: relative;
+  }
+  
+  /* Ensure all pseudo-elements are square too */
+  .game-button *,
+  .game-button::before,
+  .game-button::after {
+    border-radius: 0 !important;
+  }
+  
+  /* Enhanced button press feedback */
+  .game-button:active {
+    transform: scale(0.92);
   }
   
   /* Responsive button sizing for landscape mobile */

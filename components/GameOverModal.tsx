@@ -42,11 +42,11 @@ export function GameOverModal({
   return (
     <>
       <Confetti active={showConfetti} duration={3000} />
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 crt-scanlines">
       <div
         className={cn(
-          'relative w-full max-w-md rounded-lg border-2 p-6 sm:p-8',
-          'bg-card border-primary shadow-glow',
+          'relative w-full max-w-md border-4 p-6 sm:p-8',
+          'bg-card border-primary pixel-border',
           'animate-[fadeIn_0.3s_ease-out,scaleIn_0.3s_ease-out]'
         )}
       >
@@ -76,7 +76,7 @@ export function GameOverModal({
           {isNewHighScore && (
             <div
               className={cn(
-                'mt-4 p-3 bg-primary/20 border border-primary rounded-md',
+                'mt-4 p-3 bg-primary/30 border-4 border-primary pixel-border',
                 'animate-[pulse_1s_ease-in-out_infinite]'
               )}
             >
@@ -96,7 +96,7 @@ export function GameOverModal({
 
         {/* Stats */}
         {(bestCombo > 0 || reactionTimeStats.allTimes.length > 0) && (
-          <div className="mb-6 p-4 bg-surface/50 rounded-lg border border-border">
+          <div className="mb-6 p-4 bg-card border-4 border-border pixel-border">
             <h3 className="text-sm font-semibold text-primary mb-3">Game Statistics</h3>
             <div className="grid grid-cols-2 gap-4 text-sm">
               {bestCombo > 0 && (
@@ -138,12 +138,11 @@ export function GameOverModal({
           <button
             onClick={onRestart}
             className={cn(
-              'w-full py-3 px-6 rounded-full font-bold text-lg',
-              'bg-gradient-to-r from-primary via-accent to-secondary',
-              'text-primary-foreground',
-              'hover:shadow-glow transition-all duration-300',
-              'hover:scale-105 active:scale-95',
-              'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-card'
+              'w-full py-3 px-6 border-4 font-bold text-lg',
+              'bg-primary border-primary text-primary-foreground',
+              'hover:border-accent hover:bg-accent',
+              'transition-all duration-100 active:scale-95',
+              'focus:outline-none focus:ring-2 focus:ring-primary pixel-border'
             )}
           >
             Play Again
@@ -152,11 +151,11 @@ export function GameOverModal({
           <Link
             href="/"
             className={cn(
-              'w-full py-3 px-6 rounded-full font-bold text-base text-center',
-              'border-2 border-border text-foreground',
-              'hover:border-primary/50 hover:bg-card/80',
-              'transition-all duration-200',
-              'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-card'
+              'w-full py-3 px-6 border-4 font-bold text-base text-center',
+              'border-border bg-card text-foreground',
+              'hover:border-primary hover:bg-primary/20',
+              'transition-all duration-100',
+              'focus:outline-none focus:ring-2 focus:ring-primary pixel-border'
             )}
           >
             Back to Home

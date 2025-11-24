@@ -20,8 +20,8 @@ const rajdhani = Rajdhani({
 });
 
 export const metadata: Metadata = {
-  title: "ReflexThis - Reflex Training Game",
-  description: "Test your reflexes in this cyberpunk-inspired reflex training game",
+  title: "Reflex This - Reflex Training Game",
+  description: "Test your reflexes!",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",

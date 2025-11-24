@@ -81,13 +81,20 @@ export function preloadSounds(): void {
   });
 }
 
+// Track if we're on the game page to prevent sounds on landing page
+let isGamePageActive = false;
+
+export function setGamePageActive(active: boolean) {
+  isGamePageActive = active;
+}
+
 /**
  * Play a sound effect
  * @param sound - The sound type to play
  * @param enabled - Whether sound is enabled
  */
 export function playSound(sound: SoundType, enabled: boolean = true): void {
-  if (!enabled || typeof window === 'undefined') return;
+  if (!enabled || typeof window === 'undefined' || !isGamePageActive) return;
 
   try {
     // Try to play from cache first

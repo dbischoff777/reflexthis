@@ -16,25 +16,25 @@ export interface DifficultyConfig {
 export const DIFFICULTY_PRESETS: Record<DifficultyPreset, DifficultyConfig> = {
   easy: {
     name: 'Easy',
-    baseDuration: 3000, // 3 seconds - more time to react
+    baseDuration: 2000, // 2 seconds - more time to react
     minDuration: 800, // Minimum 800ms
-    maxButtons: 2, // Max 2 buttons at once
+    maxButtons: 3, // Max 3 buttons at once
     speedIncrease: 0.3, // Slower difficulty increase
     description: 'Perfect for beginners. More time to react, fewer buttons.',
   },
   medium: {
     name: 'Medium',
-    baseDuration: 2000, // 2 seconds - standard
+    baseDuration: 1500, // 1.5 seconds - standard
     minDuration: 400, // Minimum 400ms
-    maxButtons: 3, // Max 3 buttons at once
+    maxButtons: 4, // Max 4 buttons at once
     speedIncrease: 0.5, // Moderate difficulty increase
     description: 'Balanced difficulty. Good for improving reflexes.',
   },
   hard: {
     name: 'Hard',
-    baseDuration: 1500, // 1.5 seconds - challenging
+    baseDuration: 666, // 666ms - challenging
     minDuration: 250, // Minimum 250ms
-    maxButtons: 3, // Max 3 buttons at once
+    maxButtons: 5, // Max 5 buttons at once
     speedIncrease: 0.7, // Fast difficulty increase
     description: 'Extreme challenge. For reflex masters only!',
   },
@@ -42,7 +42,7 @@ export const DIFFICULTY_PRESETS: Record<DifficultyPreset, DifficultyConfig> = {
     name: 'Custom',
     baseDuration: 2000, // Default progressive (original behavior)
     minDuration: 300, // Default minimum
-    maxButtons: 3, // Default max
+    maxButtons: 4, // Default max
     speedIncrease: 0.7, // Original progressive scaling
     description: 'Progressive difficulty that scales with your score.',
   },

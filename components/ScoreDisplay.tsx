@@ -28,17 +28,22 @@ export function ScoreDisplay({ score, className }: ScoreDisplayProps) {
     <div className={cn('relative inline-block', className)}>
       <span
         className={cn(
-          'text-lg sm:text-xl font-bold text-primary transition-all duration-300',
-          animate && 'text-glow scale-110'
+          'text-lg sm:text-xl font-bold text-primary transition-all duration-200',
+          'pixel-border px-2 py-1',
+          animate && 'text-glow scale-110 bg-primary/20 border-primary'
         )}
+        style={{
+          imageRendering: 'pixelated',
+        }}
       >
         {score}
       </span>
       {animate && (
         <span
-          className="absolute -top-2 -right-2 text-xs text-primary animate-[fadeOut_0.5s_ease-out]"
+          className="absolute -top-3 -right-3 text-xs font-bold text-chart-3 pixel-border px-1 bg-chart-3/20 border-chart-3 animate-[fadeOut_0.6s_ease-out]"
           style={{
-            animation: 'fadeOut 0.5s ease-out',
+            animation: 'fadeOut 0.6s ease-out',
+            imageRendering: 'pixelated',
           }}
         >
           +1
