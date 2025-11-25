@@ -33,7 +33,7 @@ export const GameButton = memo(function GameButton({
   const [ripplePosition, setRipplePosition] = useState<{ x: number; y: number } | null>(null);
   const DEBOUNCE_DELAY = 100; // 100ms debounce to prevent spam
 
-  // Reset press feedback after animation
+  // Reset press feedback and scale after animation
   useEffect(() => {
     if (pressFeedback) {
       const timer = setTimeout(() => {
@@ -42,6 +42,13 @@ export const GameButton = memo(function GameButton({
       return () => clearTimeout(timer);
     }
   }, [pressFeedback]);
+
+  // Reset scale when highlight is removed
+  useEffect(() => {
+    if (!highlighted && !pressFeedback) {
+      setIsPressed(false);
+    }
+  }, [highlighted, pressFeedback]);
 
   // Debounced press handler with haptic feedback
   const handlePress = useCallback((event?: React.MouseEvent<HTMLButtonElement> | React.TouchEvent<HTMLButtonElement>) => {
@@ -121,6 +128,7 @@ export const GameButton = memo(function GameButton({
         'will-change-transform',
         'pixel-border overflow-hidden',
         getButtonStateClasses(),
+        // Only apply scale-90 when pressed
         isPressed && 'scale-90'
       )}
       style={{
@@ -170,13 +178,23 @@ export const GameButton = memo(function GameButton({
         />
       )}
 
-      {/* Pixelated highlight effect when highlighted */}
+      {/* Enhanced highlight effect when highlighted */}
       {highlighted && (
         <>
+          {/* Inner glow overlay */}
           <span
-            className="absolute inset-0 bg-accent/50 z-10"
+            className="absolute inset-0 z-10"
             style={{
-              backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255, 255, 0, 0.1) 2px, rgba(255, 255, 0, 0.1) 4px)',
+              background: 'radial-gradient(circle at center, rgba(0, 255, 255, 0.3) 0%, rgba(0, 255, 255, 0.1) 50%, transparent 100%)',
+              imageRendering: 'pixelated',
+              borderRadius: '0',
+            }}
+          />
+          {/* Subtle pattern overlay */}
+          <span
+            className="absolute inset-0 bg-accent/30 z-10"
+            style={{
+              backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255, 255, 0, 0.08) 2px, rgba(255, 255, 0, 0.08) 4px)',
               imageRendering: 'pixelated',
               borderRadius: '0',
             }}
@@ -189,6 +207,16 @@ export const GameButton = memo(function GameButton({
           )}
         </>
       )}
+      
+      {/* Inner bevel highlight - top-left light, bottom-right shadow */}
+      <span
+        className="absolute inset-0 pointer-events-none z-5"
+        style={{
+          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 30%, transparent 70%, rgba(0, 0, 0, 0.3) 100%)',
+          borderRadius: '0',
+          imageRendering: 'pixelated',
+        }}
+      />
     </button>
   );
 });

@@ -147,7 +147,7 @@
     pointer-events: none;
     z-index: 50;
   }
-
+  
   .crt-scanlines {
     background: repeating-linear-gradient(
       0deg,
@@ -211,14 +211,30 @@
       background-color: var(--primary);
     }
     50% {
-      transform: scale(1.02);
+      transform: scale(1.05);
       border-color: var(--accent);
       background-color: var(--accent);
     }
   }
   
-  .animate-pixel-pulse {
+  /* Only apply scale animation when highlighted and not pressed/feedback */
+  .game-button.animate-pixel-pulse:not(.scale-90):not([class*="bg-chart-3"]):not([class*="bg-destructive"]) {
     animation: pixel-pulse 1s infinite;
+  }
+  
+  /* Reset scale when not highlighted or when pressed/feedback */
+  .game-button:not(.animate-pixel-pulse),
+  .game-button.scale-90,
+  .game-button[class*="bg-chart-3"],
+  .game-button[class*="bg-destructive"],
+  .game-button.scale-100 {
+    animation: none !important;
+    transform: scale(1) !important;
+  }
+  
+  /* Pressed state scale */
+  .game-button.scale-90 {
+    transform: scale(0.9) !important;
   }
   
   @keyframes shake {
@@ -482,8 +498,22 @@
     }
   }
   
-  .animate-pixel-pulse {
+  /* Scale animation only when highlighted, not pressed, and no feedback */
+  .game-button.animate-pixel-pulse:not(.scale-90):not([class*="bg-chart-3"]):not([class*="bg-destructive"]) {
     animation: pixel-pulse 1s infinite;
+  }
+  
+  /* Stop animation when not highlighted or when pressed/feedback */
+  .game-button:not(.animate-pixel-pulse),
+  .game-button.scale-90,
+  .game-button[class*="bg-chart-3"],
+  .game-button[class*="bg-destructive"] {
+    animation: none !important;
+  }
+  
+  /* Ensure scale resets when animation stops */
+  .game-button:not(.animate-pixel-pulse):not(.scale-90) {
+    transform: scale(1) !important;
   }
   
   /* Enhanced button hover effects - Square style */
@@ -751,6 +781,84 @@
     image-rendering: -moz-crisp-edges;
     image-rendering: crisp-edges;
     position: relative;
+    /* Inner bevel/emboss effect */
+    box-shadow: 
+      inset 2px 2px 4px rgba(0, 0, 0, 0.4),
+      inset -2px -2px 4px rgba(255, 255, 255, 0.1),
+      0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+  
+  /* Enhanced default state contrast */
+  .game-button:not([class*="bg-primary"]):not([class*="bg-chart-3"]):not([class*="bg-destructive"]) {
+    background-color: rgba(0, 0, 255, 0.3) !important;
+    border-color: rgba(0, 255, 255, 0.5) !important;
+    box-shadow: 
+      inset 2px 2px 4px rgba(0, 0, 0, 0.5),
+      inset -2px -2px 4px rgba(0, 255, 255, 0.15),
+      0 2px 4px rgba(0, 0, 0, 0.4),
+      0 0 8px rgba(0, 255, 255, 0.2);
+  }
+  
+  /* Enhanced highlight glow effect */
+  .game-button[class*="bg-primary"] {
+    box-shadow: 
+      inset 2px 2px 4px rgba(0, 0, 0, 0.3),
+      inset -2px -2px 4px rgba(0, 255, 255, 0.3),
+      0 0 12px rgba(0, 255, 255, 0.6),
+      0 0 24px rgba(0, 255, 255, 0.4),
+      0 0 36px rgba(0, 255, 255, 0.2),
+      0 2px 4px rgba(0, 0, 0, 0.3);
+    animation: highlight-glow 1.5s ease-in-out infinite;
+  }
+  
+  @keyframes highlight-glow {
+    0%, 100% {
+      box-shadow: 
+        inset 2px 2px 4px rgba(0, 0, 0, 0.3),
+        inset -2px -2px 4px rgba(0, 255, 255, 0.3),
+        0 0 12px rgba(0, 255, 255, 0.6),
+        0 0 24px rgba(0, 255, 255, 0.4),
+        0 0 36px rgba(0, 255, 255, 0.2),
+        0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+    50% {
+      box-shadow: 
+        inset 2px 2px 4px rgba(0, 0, 0, 0.3),
+        inset -2px -2px 4px rgba(0, 255, 255, 0.4),
+        0 0 16px rgba(0, 255, 255, 0.8),
+        0 0 32px rgba(0, 255, 255, 0.6),
+        0 0 48px rgba(0, 255, 255, 0.3),
+        0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+  }
+  
+  /* Enhanced bevel for correct state */
+  .game-button[class*="bg-chart-3"] {
+    box-shadow: 
+      inset 2px 2px 4px rgba(0, 0, 0, 0.3),
+      inset -2px -2px 4px rgba(0, 255, 0, 0.3),
+      0 0 12px rgba(0, 255, 0, 0.5),
+      0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+  
+  /* Enhanced bevel for incorrect state */
+  .game-button[class*="bg-destructive"] {
+    box-shadow: 
+      inset 2px 2px 4px rgba(0, 0, 0, 0.4),
+      inset -2px -2px 4px rgba(255, 0, 0, 0.2),
+      0 0 12px rgba(255, 0, 0, 0.4),
+      0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+  
+  /* Pressed state - inverted bevel and scale */
+  .game-button:active,
+  .game-button.scale-90 {
+    box-shadow: 
+      inset -2px -2px 4px rgba(0, 0, 0, 0.5),
+      inset 2px 2px 4px rgba(255, 255, 255, 0.1),
+      0 1px 2px rgba(0, 0, 0, 0.4);
+    transform: scale(0.9) !important;
+    animation: none !important;
   }
   
   /* Ensure all pseudo-elements are square too */
