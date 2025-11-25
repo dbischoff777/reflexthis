@@ -99,7 +99,7 @@ export function DynamicAmbience() {
           className="absolute inset-0 transition-colors duration-500"
           style={{ 
             boxShadow: `inset 0 0 200px 80px ${state.borderColor}`,
-            opacity: 0.7,
+            opacity: 0.6,
             filter: 'blur(80px)'
           }}
         />
