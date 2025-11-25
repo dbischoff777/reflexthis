@@ -24,6 +24,7 @@ import { LoadingScreen } from '@/components/LoadingScreen';
 import { ReadyScreen } from '@/components/ReadyScreen';
 import { RetroHudWidgets } from '@/components/RetroHudWidgets';
 import { DynamicAmbience } from '@/components/DynamicAmbience';
+import { KeybindingsSettings } from '@/components/KeybindingsSettings';
 
 export default function GamePage() {
   const router = useRouter();
@@ -472,6 +473,9 @@ export default function GamePage() {
   const buttonHandler = getButtonHandler();
   useKeyboardControls(buttonHandler, keyboardEnabled);
 
+  // Keybindings settings state
+  const [showKeybindingsSettings, setShowKeybindingsSettings] = useState(false);
+
 
   return (
     <>
@@ -512,6 +516,7 @@ export default function GamePage() {
             endGame();
             router.push('/');
           }}
+          onOpenSettings={() => setShowKeybindingsSettings(true)}
         />
       </header>
       
@@ -600,6 +605,13 @@ export default function GamePage() {
               setLives(1);
             }
           }}
+        />
+      )}
+
+      {/* Keybindings Settings */}
+      {showKeybindingsSettings && (
+        <KeybindingsSettings
+          onClose={() => setShowKeybindingsSettings(false)}
         />
       )}
       </div>

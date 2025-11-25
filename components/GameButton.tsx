@@ -122,7 +122,7 @@ export const GameButton = memo(function GameButton({
       ref={buttonRef}
       className={cn(
         'game-button relative min-w-[44px] min-h-[44px] w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 lg:w-28 lg:h-28',
-        'transition-all duration-150 ease-out',
+        'transition-all duration-300 ease-out',
         'focus:outline-none focus:ring-2 focus:ring-primary',
         'touch-manipulation',
         'will-change-transform',
@@ -178,6 +178,24 @@ export const GameButton = memo(function GameButton({
         />
       )}
 
+      {/* CRT scanline overlay - visible on all buttons */}
+      <span
+        className="absolute inset-0 pointer-events-none z-15 button-scanlines"
+        style={{
+          backgroundImage: `repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 1px,
+            rgba(0, 255, 255, 0.08) 1px,
+            rgba(0, 255, 255, 0.08) 2px
+          )`,
+          imageRendering: 'pixelated',
+          borderRadius: '0',
+          opacity: highlighted ? 0.6 : 0.3,
+          transition: 'opacity 0.3s ease',
+        }}
+      />
+
       {/* Enhanced highlight effect when highlighted */}
       {highlighted && (
         <>
@@ -207,6 +225,24 @@ export const GameButton = memo(function GameButton({
           )}
         </>
       )}
+      
+      {/* Subtle texture overlay - noise/grain pattern */}
+      <span
+        className="absolute inset-0 pointer-events-none z-2"
+        style={{
+          backgroundImage: `
+            repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(0, 0, 0, 0.03) 1px, rgba(0, 0, 0, 0.03) 2px),
+            repeating-linear-gradient(90deg, transparent, transparent 1px, rgba(255, 255, 255, 0.02) 1px, rgba(255, 255, 255, 0.02) 2px),
+            radial-gradient(circle at 20% 30%, rgba(0, 255, 255, 0.05) 0%, transparent 50%),
+            radial-gradient(circle at 80% 70%, rgba(255, 0, 255, 0.03) 0%, transparent 50%)
+          `,
+          backgroundSize: '4px 4px, 4px 4px, 100% 100%, 100% 100%',
+          opacity: highlighted ? 0.6 : 0.4,
+          borderRadius: '0',
+          imageRendering: 'pixelated',
+          transition: 'opacity 0.3s ease',
+        }}
+      />
       
       {/* Inner bevel highlight - top-left light, bottom-right shadow */}
       <span

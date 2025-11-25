@@ -1,10 +1,12 @@
 'use client';
 
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
+import { getKeybindings, getButtonIdForKey } from '@/lib/keybindings';
 
 /**
  * Hook for keyboard controls in the game
- * Maps number keys 1-0 to button IDs 1-10
+ * Uses customizable keybindings from settings
+ * Dynamically loads keybindings on each key press to support runtime changes
  */
 export function useKeyboardControls(
   onButtonPress: (buttonId: number) => void,
@@ -14,25 +16,14 @@ export function useKeyboardControls(
     (e: KeyboardEvent) => {
       if (!enabled) return;
 
-      // Prevent default behavior for number keys
       const key = e.key;
       
-      // Map number keys to button IDs
-      // Keys: 1-9 map to buttons 1-9, 0 maps to button 10
-      const keyToButtonMap: Record<string, number> = {
-        '1': 1,
-        '2': 2,
-        '3': 3,
-        '4': 4,
-        '5': 5,
-        '6': 6,
-        '7': 7,
-        '8': 8,
-        '9': 9,
-        '0': 10,
-      };
-
-      const buttonId = keyToButtonMap[key];
+      // Get current keybindings dynamically (supports runtime changes)
+      const keybindings = getKeybindings();
+      
+      // Get button ID for this key using current keybindings
+      const buttonId = getButtonIdForKey(key, keybindings);
+      
       if (buttonId) {
         e.preventDefault();
         onButtonPress(buttonId);

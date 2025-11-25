@@ -86,13 +86,6 @@ export function DemoMode({ onStart }: DemoModeProps) {
           ))}
         </div>
       </div>
-      
-      {/* Demo indicator */}
-      <div className="mt-4 text-center">
-        <p className="text-xs text-muted-foreground pixel-border px-2 py-1 inline-block border-2 border-border">
-          DEMO MODE
-        </p>
-      </div>
     </div>
   );
 }

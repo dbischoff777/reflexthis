@@ -8,6 +8,7 @@ import { ModeSelector } from '@/components/ModeSelector';
 import { SessionStatsDisplay } from '@/components/SessionStatsDisplay';
 import { DemoMode } from '@/components/DemoMode';
 import { LoadingScreen } from '@/components/LoadingScreen';
+import { KeybindingsSettings } from '@/components/KeybindingsSettings';
 import { DifficultyPreset } from '@/lib/difficulty';
 import { GameMode } from '@/lib/gameModes';
 import { GameProvider, useGameState } from '@/lib/GameContext';
@@ -18,6 +19,7 @@ function LandingPageContent() {
   const [showMode, setShowMode] = useState(false);
   const [showDifficulty, setShowDifficulty] = useState(false);
   const [showStats, setShowStats] = useState(false);
+  const [showKeybindings, setShowKeybindings] = useState(false);
 
   // Ensure music is stopped on landing page and prevent any game sounds
   useEffect(() => {
@@ -120,13 +122,33 @@ function LandingPageContent() {
               setShowStats(!showStats);
               setShowDifficulty(false);
               setShowMode(false);
+              setShowKeybindings(false);
             }}
             className="inline-flex items-center justify-center min-h-[56px] px-6 py-3 text-base sm:text-lg font-semibold border-4 border-border bg-card text-foreground hover:border-primary hover:bg-primary/20 transition-all duration-100 focus:outline-none focus:ring-2 focus:ring-primary pixel-border"
           >
             {showStats ? 'Hide Stats' : 'View Statistics'}
           </button>
+
+          <button
+            onClick={() => {
+              setShowKeybindings(!showKeybindings);
+              setShowStats(false);
+              setShowDifficulty(false);
+              setShowMode(false);
+            }}
+            className="inline-flex items-center justify-center min-h-[56px] px-6 py-3 text-base sm:text-lg font-semibold border-4 border-border bg-card text-foreground hover:border-primary hover:bg-primary/20 transition-all duration-100 focus:outline-none focus:ring-2 focus:ring-primary pixel-border"
+          >
+            Keybindings
+          </button>
         </div>
       </main>
+
+      {/* Keybindings Settings */}
+      {showKeybindings && (
+        <KeybindingsSettings
+          onClose={() => setShowKeybindings(false)}
+        />
+      )}
       
       {/* Build Info Footer */}
       <footer className="relative z-10 w-full flex justify-center pb-4">

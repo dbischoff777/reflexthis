@@ -19,6 +19,7 @@ type RetroHudWidgetsProps = {
   onToggleSound: () => void;
   onToggleMusic: () => void;
   onQuit: () => void;
+  onOpenSettings?: () => void;
 };
 
 const difficultyAccentMap: Record<DifficultyPreset, string> = {
@@ -48,6 +49,7 @@ export function RetroHudWidgets({
   onToggleSound,
   onToggleMusic,
   onQuit,
+  onOpenSettings,
 }: RetroHudWidgetsProps) {
   const comboIntensity = Math.min(combo / 15, 1);
   const livesRatio = maxLives > 0 ? Math.max(0, Math.min(1, lives / maxLives)) : 1;
@@ -171,6 +173,16 @@ export function RetroHudWidgets({
             />
             <span>MSC</span>
           </button>
+          {onOpenSettings && (
+            <button
+              className="hud-control-button"
+              onClick={onOpenSettings}
+              aria-label="Open keybindings settings"
+            >
+              <span className="hud-control-indicator" data-active="false" />
+              <span>KEYS</span>
+            </button>
+          )}
           <button
             className="hud-control-button danger"
             onClick={onQuit}
