@@ -41,6 +41,7 @@ export function DifficultySelector({
         {onCancel && (
           <button
             onClick={onCancel}
+            draggable={false}
             className="text-xs text-muted-foreground hover:text-foreground border-2 border-border bg-card px-2 py-1 pixel-border transition-all duration-100 hover:border-primary"
             aria-label="Cancel (ESC)"
           >
@@ -58,6 +59,7 @@ export function DifficultySelector({
               key={preset}
               onClick={() => !disabled && onSelect(preset)}
               disabled={disabled}
+              draggable={false}
               className={cn(
                 'p-4 border-4 transition-all duration-100 text-left pixel-border',
                 'focus:outline-none focus:ring-2 focus:ring-primary',

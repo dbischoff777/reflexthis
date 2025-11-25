@@ -124,6 +124,7 @@ function LandingPageContent() {
               setShowMode(false);
               setShowKeybindings(false);
             }}
+            draggable={false}
             className="inline-flex items-center justify-center min-h-[56px] px-6 py-3 text-base sm:text-lg font-semibold border-4 border-border bg-card text-foreground hover:border-primary hover:bg-primary/20 transition-all duration-100 focus:outline-none focus:ring-2 focus:ring-primary pixel-border"
           >
             {showStats ? 'Hide Stats' : 'View Statistics'}
@@ -136,6 +137,7 @@ function LandingPageContent() {
               setShowDifficulty(false);
               setShowMode(false);
             }}
+            draggable={false}
             className="inline-flex items-center justify-center min-h-[56px] px-6 py-3 text-base sm:text-lg font-semibold border-4 border-border bg-card text-foreground hover:border-primary hover:bg-primary/20 transition-all duration-100 focus:outline-none focus:ring-2 focus:ring-primary pixel-border"
           >
             Keybindings

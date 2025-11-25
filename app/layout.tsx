@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Rajdhani } from "next/font/google";
 import "./globals.css";
 import { ErrorBoundaryWrapper } from "@/components/ErrorBoundaryWrapper";
 import { CRTOverlay } from "@/components/CRTOverlay";
+import { InteractionPrevention } from "@/components/InteractionPrevention";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -53,6 +54,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${rajdhani.variable} antialiased`}
       >
+        <InteractionPrevention />
         <CRTOverlay />
         <ErrorBoundaryWrapper>
           {children}

@@ -46,6 +46,7 @@ export function ReadyScreen({ onReady, gameMode }: ReadyScreenProps) {
           {/* Ready button */}
           <button
             onClick={onReady}
+            draggable={false}
             className={cn(
               'px-8 py-4 text-xl sm:text-2xl font-bold',
               'border-4 border-primary bg-primary text-primary-foreground',

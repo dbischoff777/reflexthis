@@ -520,6 +520,50 @@ export default function GamePage() {
     };
   }, [screenShake]);
 
+  // Prevent context menu, text selection, and drag globally
+  useEffect(() => {
+    const preventContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    };
+
+    const preventDrag = (e: DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    };
+
+    const preventSelect = (e: Event) => {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    };
+
+    // Prevent context menu
+    document.addEventListener('contextmenu', preventContextMenu);
+    
+    // Prevent drag events
+    document.addEventListener('dragstart', preventDrag);
+    document.addEventListener('drag', preventDrag);
+    
+    // Prevent text selection
+    document.addEventListener('selectstart', preventSelect);
+    document.addEventListener('mousedown', (e) => {
+      // Prevent text selection on mouse down
+      if (e.detail > 1) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+
+    return () => {
+      document.removeEventListener('contextmenu', preventContextMenu);
+      document.removeEventListener('dragstart', preventDrag);
+      document.removeEventListener('drag', preventDrag);
+      document.removeEventListener('selectstart', preventSelect);
+    };
+  }, []);
+
   return (
     <>
       <OrientationHandler />

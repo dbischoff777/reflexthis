@@ -70,6 +70,7 @@ export class ErrorBoundary extends Component<Props, State> {
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
               <button
                 onClick={this.handleReset}
+                draggable={false}
                 className={cn(
                   'px-6 py-3 rounded-full font-bold',
                   'bg-gradient-to-r from-primary via-accent to-secondary',

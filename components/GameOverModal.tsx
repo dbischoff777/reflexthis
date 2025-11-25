@@ -160,6 +160,7 @@ export function GameOverModal({
         <div className="flex flex-col gap-3">
           <button
             onClick={onRestart}
+            draggable={false}
             className={cn(
               'w-full py-3 px-6 border-4 font-bold text-lg',
               'bg-primary border-primary text-primary-foreground',

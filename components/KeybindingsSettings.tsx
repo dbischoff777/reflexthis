@@ -121,6 +121,7 @@ export function KeybindingsSettings({ onClose }: KeybindingsSettingsProps) {
                     </div>
                     <button
                       onClick={() => handleStartEdit(buttonId)}
+                      draggable={false}
                       className={cn(
                         'min-w-[60px] sm:min-w-[80px] h-12 sm:h-14 px-4',
                         'border-4 pixel-border font-bold text-lg sm:text-xl',
@@ -149,12 +150,14 @@ export function KeybindingsSettings({ onClose }: KeybindingsSettingsProps) {
         <div className="flex flex-col sm:flex-row gap-3 justify-end">
           <button
             onClick={handleReset}
+            draggable={false}
             className="px-6 py-3 border-4 border-accent bg-accent/20 text-accent pixel-border font-bold hover:bg-accent hover:text-accent-foreground transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-accent"
           >
             RESET TO DEFAULTS
           </button>
           <button
             onClick={onClose}
+            draggable={false}
             className="px-6 py-3 border-4 border-primary bg-primary text-primary-foreground pixel-border font-bold hover:bg-primary/80 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary"
           >
             CLOSE

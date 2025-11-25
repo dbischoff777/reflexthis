@@ -154,6 +154,7 @@ export function RetroHudWidgets({
           <button
             className="hud-control-button"
             onClick={onToggleSound}
+            draggable={false}
             aria-label={soundEnabled ? 'Disable sound' : 'Enable sound'}
           >
             <span
@@ -165,6 +166,7 @@ export function RetroHudWidgets({
           <button
             className="hud-control-button"
             onClick={onToggleMusic}
+            draggable={false}
             aria-label={musicEnabled ? 'Disable music' : 'Enable music'}
           >
             <span
@@ -177,6 +179,7 @@ export function RetroHudWidgets({
             <button
               className="hud-control-button"
               onClick={onOpenSettings}
+              draggable={false}
               aria-label="Open keybindings settings"
             >
               <span className="hud-control-indicator" data-active="false" />
@@ -186,6 +189,7 @@ export function RetroHudWidgets({
           <button
             className="hud-control-button danger"
             onClick={onQuit}
+            draggable={false}
             aria-label="Quit game"
           >
             <span className="hud-control-indicator" data-active="true" />

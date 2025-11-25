@@ -117,6 +117,65 @@ export const GameButton = memo(function GameButton({
     return 'bg-card border-border hover:border-primary hover:bg-primary/20';
   };
 
+  // Prevent drag behavior
+  const handleDragStart = useCallback((e: React.DragEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    return false;
+  }, []);
+
+  // Track mouse position to detect drag attempts
+  const mouseDownPosRef = useRef<{ x: number; y: number } | null>(null);
+
+  // Prevent mouse down from starting drag
+  const handleMouseDown = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    // Store mouse position to detect drag
+    mouseDownPosRef.current = { x: e.clientX, y: e.clientY };
+    
+    // Prevent any drag behavior, but allow click
+    if (e.button === 0) {
+      // Left click - prevent drag but allow click
+      // Don't prevent default to allow click to work
+    } else {
+      // Other buttons - prevent completely
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }, []);
+
+  // Prevent drag if mouse moves (indicating drag attempt)
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    if (mouseDownPosRef.current) {
+      const deltaX = Math.abs(e.clientX - mouseDownPosRef.current.x);
+      const deltaY = Math.abs(e.clientY - mouseDownPosRef.current.y);
+      
+      // If mouse moved more than 5px, it's a drag attempt
+      if (deltaX > 5 || deltaY > 5) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    }
+  }, []);
+
+  // Clear mouse position on mouse up
+  const handleMouseUp = useCallback(() => {
+    mouseDownPosRef.current = null;
+  }, []);
+
+  // Prevent context menu
+  const handleContextMenu = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    return false;
+  }, []);
+
+  // Prevent text selection
+  const handleSelectStart = useCallback((e: React.SyntheticEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    return false;
+  }, []);
+
   return (
     <button
       ref={buttonRef}
@@ -135,6 +194,14 @@ export const GameButton = memo(function GameButton({
         imageRendering: 'pixelated' as any,
         borderRadius: '0',
       }}
+      draggable={false}
+      onDragStart={handleDragStart}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
+      onContextMenu={handleContextMenu}
+      onSelectStart={handleSelectStart}
       onClick={handleClick}
       onTouchStart={handleTouchStart}
       aria-label={`Game button ${id}`}
