@@ -194,12 +194,14 @@ export default function GamePage() {
 
   // Track if game has been initialized to prevent resetting on every render
   const hasInitializedRef = useRef(false);
+  const isInitialMountRef = useRef(true);
   
-  // Initialize game - resetGame now handles lives based on game mode
+  // Initialize game on mount - show loading screen once
   useEffect(() => {
-    // Only reset on initial mount, not when game is over
-    if (!hasInitializedRef.current && !gameOver) {
-      hasInitializedRef.current = true;
+    // Only run on initial mount
+    if (isInitialMountRef.current) {
+      isInitialMountRef.current = false;
+      
       // Reset game first to ensure clean state (sets lives correctly based on game mode)
       resetGame();
       
@@ -211,7 +213,7 @@ export default function GamePage() {
       
       return () => clearTimeout(loadingTimer);
     }
-  }, [startGame, resetGame, gameOver]);
+  }, [resetGame]);
 
   // Start reflex game when component mounts or game resets (only after ready)
   useEffect(() => {
@@ -452,119 +454,119 @@ export default function GamePage() {
           gameMode={gameMode}
         />
       ) : (
-      <div className="relative h-screen bg-background text-foreground flex flex-col overflow-hidden no-select">
-        <DynamicAmbience />
-      
-      {/* Screen Flash Effect */}
-      {screenFlash && <ScreenFlash type={screenFlash} />}
-      
-      {/* Header */}
-      <header className="relative z-10 p-2 sm:p-3 border-b-4 border-primary bg-card/40 pixel-border overflow-hidden flex justify-center">
-        <RetroHudWidgets
-          score={score}
-          highScore={highScore}
-          combo={combo}
-          lives={effectiveLives}
-          maxLives={maxLives}
-          difficulty={difficulty}
-          gameMode={gameMode}
-          reactionStats={reactionTimeStats}
-          soundEnabled={soundEnabled}
-          musicEnabled={musicEnabled}
-          onToggleSound={toggleSound}
-          onToggleMusic={toggleMusic}
-          onQuit={() => {
-            endGame();
-            router.push('/');
-          }}
-        />
-      </header>
-      
-      {/* Main Game Area */}
-      <main className="relative z-10 flex-1 flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-hidden">
-        {/* Sequence Mode Status */}
-        {gameMode === 'sequence' && (
-          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-20">
-            <div className="bg-card border-4 border-primary pixel-border px-4 py-2">
-              {isShowingSequence ? (
-                <div className="text-sm font-bold text-primary">
-                  Watch the sequence...
-                </div>
-              ) : isWaitingForInput ? (
-                <div className="text-sm font-bold text-accent">
-                  Repeat: {playerSequence.length}/{sequence.length}
-                </div>
-              ) : null}
-            </div>
-          </div>
-        )}
+        <div className="relative h-screen bg-background text-foreground flex flex-col overflow-hidden no-select">
+          <DynamicAmbience />
         
-        <div className="button-grid w-full max-w-2xl">
-          {/* Top Row - 3 buttons */}
-          <div className="grid-row top-row flex justify-center gap-2 sm:gap-3 md:gap-4 lg:gap-6 mb-2 sm:mb-3 md:mb-4 lg:mb-6">
-            {[1, 2, 3].map((id) => (
-              <GameButton
-                key={id}
-                id={id}
-                highlighted={highlightedButtons.includes(id)}
-                onPress={() => getButtonHandler()(id)}
-                highlightStartTime={highlightStartTimeRef.current || undefined}
-                highlightDuration={highlightDuration}
-              />
-            ))}
-          </div>
+          {/* Screen Flash Effect */}
+          {screenFlash && <ScreenFlash type={screenFlash} />}
           
-          {/* Middle Row - 4 buttons */}
-          <div className="grid-row middle-row flex justify-center gap-2 sm:gap-3 md:gap-4 lg:gap-6 mb-2 sm:mb-3 md:mb-4 lg:mb-6">
-            {[4, 5, 6, 7].map((id) => (
-              <GameButton
-                key={id}
-                id={id}
-                highlighted={highlightedButtons.includes(id)}
-                onPress={() => getButtonHandler()(id)}
-                highlightStartTime={highlightStartTimeRef.current || undefined}
-                highlightDuration={highlightDuration}
-              />
-            ))}
-          </div>
+          {/* Header */}
+          <header className="relative z-10 p-2 sm:p-3 border-b-4 border-primary bg-card/40 pixel-border overflow-hidden flex justify-center">
+            <RetroHudWidgets
+              score={score}
+              highScore={highScore}
+              combo={combo}
+              lives={effectiveLives}
+              maxLives={maxLives}
+              difficulty={difficulty}
+              gameMode={gameMode}
+              reactionStats={reactionTimeStats}
+              soundEnabled={soundEnabled}
+              musicEnabled={musicEnabled}
+              onToggleSound={toggleSound}
+              onToggleMusic={toggleMusic}
+              onQuit={() => {
+                endGame();
+                router.push('/');
+              }}
+            />
+          </header>
           
-          {/* Bottom Row - 3 buttons */}
-          <div className="grid-row bottom-row flex justify-center gap-2 sm:gap-3 md:gap-4 lg:gap-6">
-            {[8, 9, 10].map((id) => (
-              <GameButton
-                key={id}
-                id={id}
-                highlighted={highlightedButtons.includes(id)}
-                onPress={() => getButtonHandler()(id)}
-                highlightStartTime={highlightStartTimeRef.current || undefined}
-                highlightDuration={highlightDuration}
-              />
-            ))}
-          </div>
-        </div>
-      </main>
+          {/* Main Game Area */}
+          <main className="relative z-10 flex-1 flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-hidden">
+            {/* Sequence Mode Status */}
+            {gameMode === 'sequence' && (
+              <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-20">
+                <div className="bg-card border-4 border-primary pixel-border px-4 py-2">
+                  {isShowingSequence ? (
+                    <div className="text-sm font-bold text-primary">
+                      Watch the sequence...
+                    </div>
+                  ) : isWaitingForInput ? (
+                    <div className="text-sm font-bold text-accent">
+                      Repeat: {playerSequence.length}/{sequence.length}
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            )}
+            
+            <div className="button-grid w-full max-w-2xl">
+              {/* Top Row - 3 buttons */}
+              <div className="grid-row top-row flex justify-center gap-2 sm:gap-3 md:gap-4 lg:gap-6 mb-2 sm:mb-3 md:mb-4 lg:mb-6">
+                {[1, 2, 3].map((id) => (
+                  <GameButton
+                    key={id}
+                    id={id}
+                    highlighted={highlightedButtons.includes(id)}
+                    onPress={() => getButtonHandler()(id)}
+                    highlightStartTime={highlightStartTimeRef.current || undefined}
+                    highlightDuration={highlightDuration}
+                  />
+                ))}
+              </div>
+              
+              {/* Middle Row - 4 buttons */}
+              <div className="grid-row middle-row flex justify-center gap-2 sm:gap-3 md:gap-4 lg:gap-6 mb-2 sm:mb-3 md:mb-4 lg:mb-6">
+                {[4, 5, 6, 7].map((id) => (
+                  <GameButton
+                    key={id}
+                    id={id}
+                    highlighted={highlightedButtons.includes(id)}
+                    onPress={() => getButtonHandler()(id)}
+                    highlightStartTime={highlightStartTimeRef.current || undefined}
+                    highlightDuration={highlightDuration}
+                  />
+                ))}
+              </div>
+              
+              {/* Bottom Row - 3 buttons */}
+              <div className="grid-row bottom-row flex justify-center gap-2 sm:gap-3 md:gap-4 lg:gap-6">
+                {[8, 9, 10].map((id) => (
+                  <GameButton
+                    key={id}
+                    id={id}
+                    highlighted={highlightedButtons.includes(id)}
+                    onPress={() => getButtonHandler()(id)}
+                    highlightStartTime={highlightStartTimeRef.current || undefined}
+                    highlightDuration={highlightDuration}
+                  />
+                ))}
+              </div>
+            </div>
+          </main>
 
-      {/* Game Over Modal */}
-      {gameOver && (
-        <GameOverModal
-          score={score}
-          highScore={highScore}
-          isNewHighScore={score > highScore && score > 0}
-          bestCombo={bestCombo}
-          reactionTimeStats={reactionTimeStats}
-          onRestart={() => {
-            // Reset the initialization flag so game can be reset properly
-            hasInitializedRef.current = false;
-            setIsReady(false); // Show ready screen again
-            resetGame();
-            // Set lives for survival mode immediately after reset
-            if (gameMode === 'survival') {
-              setLives(1);
-            }
-          }}
-        />
-      )}
-      </div>
+          {/* Game Over Modal */}
+          {gameOver && (
+            <GameOverModal
+              score={score}
+              highScore={highScore}
+              isNewHighScore={score > highScore && score > 0}
+              bestCombo={bestCombo}
+              reactionTimeStats={reactionTimeStats}
+              onRestart={() => {
+                // Reset the initialization flag so game can be reset properly
+                hasInitializedRef.current = false;
+                setIsReady(false); // Show ready screen again
+                resetGame();
+                // Set lives for survival mode immediately after reset
+                if (gameMode === 'survival') {
+                  setLives(1);
+                }
+              }}
+            />
+          )}
+        </div>
       )}
     </>
   );

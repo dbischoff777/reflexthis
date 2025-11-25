@@ -18,7 +18,6 @@ function LandingPageContent() {
   const [showMode, setShowMode] = useState(false);
   const [showDifficulty, setShowDifficulty] = useState(false);
   const [showStats, setShowStats] = useState(false);
-  const [isNavigatingToGame, setIsNavigatingToGame] = useState(false);
 
   // Ensure music is stopped on landing page and prevent any game sounds
   useEffect(() => {
@@ -35,13 +34,6 @@ function LandingPageContent() {
 
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center bg-background text-foreground p-4 overflow-hidden">
-      {isNavigatingToGame && (
-        <LoadingScreen
-          message="INITIALIZING"
-          onComplete={() => {}}
-        />
-      )}
-      
       <main className="relative z-10 flex flex-col items-center justify-center flex-1 w-full max-w-4xl text-center">
         {/* Hero Section */}
         <div className="mb-8 space-y-6">
@@ -103,13 +95,8 @@ function LandingPageContent() {
               href="/game"
               onClick={(e) => {
                 if (showDifficulty) {
-                  // Start game - show loading screen before navigation
-                  e.preventDefault();
-                  setIsNavigatingToGame(true);
-                  // Navigate after loading screen shows
-                  setTimeout(() => {
-                    window.location.href = '/game';
-                  }, 500);
+                  // Start game - navigate directly, loading screen will show on game page
+                  // Don't prevent default, let Next.js handle navigation
                 } else if (showMode) {
                   // Proceed to difficulty selection
                   e.preventDefault();
