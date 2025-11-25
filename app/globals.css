@@ -345,6 +345,71 @@
       transform: translateY(-2px);
     }
   }
+
+  @keyframes heartbeat {
+    0% {
+      transform: scale(1);
+      opacity: 0.4;
+    }
+    25% {
+      transform: scale(1.08);
+      opacity: 0.8;
+    }
+    50% {
+      transform: scale(0.95);
+      opacity: 0.3;
+    }
+    75% {
+      transform: scale(1.05);
+      opacity: 0.7;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 0.4;
+    }
+  }
+
+  @keyframes hud-gear-spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes gradient-sweep {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  @keyframes hud-led-blink {
+    0%, 100% {
+      opacity: 0.2;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes hud-meter-pulse {
+    0% {
+      box-shadow: 0 0 0 0 rgba(0, 255, 255, 0.4);
+    }
+    70% {
+      box-shadow: 0 0 12px 4px rgba(0, 255, 255, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(0, 255, 255, 0);
+    }
+  }
   
   /* Enhanced CRT scanline effect */
   .crt-scanlines::before {
@@ -363,7 +428,7 @@
     );
     pointer-events: none;
     z-index: 1000;
-    animation: scanline-move 8s linear infinite;
+    animation: scanline-move var(--scanline-speed, 8s) linear infinite;
   }
   
   @keyframes scanline-move {
@@ -408,20 +473,226 @@
     opacity: 0.3;
   }
   
-  /* Particle burst effect */
-  @keyframes particle-burst {
-    0% {
-      transform: scale(0) rotate(0deg);
-      opacity: 1;
-    }
-    100% {
-      transform: scale(2) rotate(360deg);
-      opacity: 0;
+  
+  .retro-hud {
+    image-rendering: pixelated;
+    width: max-content;
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .retro-hud::-webkit-scrollbar {
+    display: none;
+  }
+
+  .scrollbar-hide {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .hud-module {
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    padding: 0.4rem 0.6rem;
+    background: rgba(0, 0, 0, 0.45);
+    box-shadow: inset 0 0 10px rgba(0, 255, 255, 0.15);
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  @media (min-width: 640px) {
+    .hud-module {
+      padding: 0.5rem 0.75rem;
+      gap: 0.3rem;
     }
   }
-  
-  .particle-burst {
-    animation: particle-burst 0.6s ease-out forwards;
+
+  @media (min-width: 768px) {
+    .hud-module {
+      padding: 0.6rem 0.9rem;
+      gap: 0.35rem;
+    }
+  }
+
+  .hud-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    color: rgba(255, 255, 255, 0.75);
+  }
+
+  .hud-led {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+  }
+
+  .hud-led::before {
+    content: '';
+    width: 0.6rem;
+    height: 0.6rem;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    animation: hud-led-blink 1.8s steps(2) infinite;
+  }
+
+  .hud-gear {
+    width: 2.2rem;
+    height: 2.2rem;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-radius: 50%;
+    position: relative;
+  }
+
+  .hud-gear::before,
+  .hud-gear::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 65%;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.7);
+    transform-origin: left center;
+  }
+
+  .hud-gear::after {
+    transform: rotate(90deg);
+  }
+
+  .hud-meter {
+    position: relative;
+    height: 0.5rem;
+    width: 100%;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.6);
+  }
+
+  .hud-meter-fill {
+    height: 100%;
+    animation: hud-meter-pulse 2s infinite;
+  }
+
+  .hud-readout {
+    display: flex;
+    flex-direction: column;
+    font-family: 'VT323', 'Roboto Mono', monospace;
+    letter-spacing: 0.2em;
+    line-height: 1.1;
+    image-rendering: pixelated;
+  }
+
+  .hud-readout-primary {
+    font-size: 1.2rem;
+    color: #00ffde;
+    text-shadow: 0 0 8px rgba(0, 255, 255, 0.6);
+  }
+
+  .hud-readout-sub {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  @media (min-width: 640px) {
+    .hud-readout-primary {
+      font-size: 1.5rem;
+    }
+    .hud-readout-sub {
+      font-size: 0.75rem;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .hud-readout-primary {
+      font-size: 1.8rem;
+    }
+    .hud-readout-sub {
+      font-size: 0.85rem;
+    }
+  }
+
+  .hud-difficulty {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-top: 0.25rem;
+  }
+
+  .hud-difficulty-chip {
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 0.1rem 0.35rem;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+  }
+
+  .hud-reaction-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+
+  .hud-reaction-label {
+    display: block;
+    font-size: 0.55rem;
+    letter-spacing: 0.15em;
+    color: rgba(255, 255, 255, 0.55);
+  }
+
+  .hud-reaction-value {
+    font-size: 0.85rem;
+    font-family: 'Roboto Mono', monospace;
+  }
+
+  .hud-control-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+
+  .hud-control-button {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.4rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    text-transform: uppercase;
+    background: rgba(0, 0, 0, 0.25);
+    transition: border-color 0.15s, background 0.15s;
+  }
+
+  .hud-control-button:hover {
+    border-color: rgba(255, 255, 255, 0.6);
+    background: rgba(0, 255, 255, 0.1);
+  }
+
+  .hud-control-button.danger:hover {
+    border-color: rgba(255, 0, 93, 0.8);
+    background: rgba(255, 0, 93, 0.15);
+  }
+
+  .hud-control-indicator {
+    width: 0.5rem;
+    height: 0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    background: rgba(255, 0, 93, 0.2);
+    transition: background 0.15s;
+  }
+
+  .hud-control-indicator[data-active='true'] {
+    background: rgba(0, 255, 160, 0.6);
+    box-shadow: 0 0 6px rgba(0, 255, 160, 0.9);
   }
   
   /* Game Button Grid Styles - Sinclair Style */

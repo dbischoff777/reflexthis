@@ -2,9 +2,10 @@
 
 /**
  * SinclairBackground component provides retro ZX Spectrum-style background effects
- * with enhanced CRT effects: scanlines, curvature, color bleed, and phosphor trails
+ * with enhanced CRT effects
  */
 export function SinclairBackground() {
+
   return (
     <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none crt-scanlines">
       {/* Screen Curvature Effect */}
@@ -41,7 +42,7 @@ export function SinclairBackground() {
               imageRendering: 'pixelated',
             }}
           />
-          
+
           {/* Color Bleed Effect - Horizontal */}
           <div 
             className="absolute inset-0 opacity-15"

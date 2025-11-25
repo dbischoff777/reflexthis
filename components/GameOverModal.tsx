@@ -1,9 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
-import { Confetti } from '@/components/Confetti';
 
 import { ReactionTimeStats } from '@/lib/GameContext';
 
@@ -27,22 +25,8 @@ export function GameOverModal({
   reactionTimeStats,
   onRestart,
 }: GameOverModalProps) {
-  const [showConfetti, setShowConfetti] = useState(false);
-
-  // Trigger confetti for new high score
-  useEffect(() => {
-    if (isNewHighScore) {
-      setShowConfetti(true);
-      // Hide confetti after animation
-      const timer = setTimeout(() => setShowConfetti(false), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [isNewHighScore]);
-
   return (
-    <>
-      <Confetti active={showConfetti} duration={3000} />
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 crt-scanlines">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 crt-scanlines">
       <div
         className={cn(
           'relative w-full max-w-md border-4 p-6 sm:p-8',
@@ -163,7 +147,6 @@ export function GameOverModal({
         </div>
       </div>
     </div>
-    </>
   );
 }
 

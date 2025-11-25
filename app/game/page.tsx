@@ -1,25 +1,14 @@
 'use client';
 
 import { useEffect, useRef, useCallback, useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { cn } from '@/lib/utils';
 import { useGameState } from '@/lib/GameContext';
 import { GameButton } from '@/components/GameButton';
 import { SinclairBackground } from '@/components/SinclairBackground';
 import { GameOverModal } from '@/components/GameOverModal';
-import { ScoreDisplay } from '@/components/ScoreDisplay';
-import { ComboDisplay } from '@/components/ComboDisplay';
-import { ReactionTimeDisplay } from '@/components/ReactionTimeDisplay';
 import { OrientationHandler } from '@/components/OrientationHandler';
-import { LivesDisplay } from '@/components/LivesDisplay';
 import { ScreenFlash } from '@/components/ScreenFlash';
-import { DifficultyIndicator } from '@/components/DifficultyIndicator';
-import {
-  getRandomButtons,
-  getButtonsToHighlight,
-  getHighlightDuration,
-} from '@/lib/gameUtils';
+import { getRandomButtons } from '@/lib/gameUtils';
 import {
   getButtonsToHighlightForDifficulty,
   getHighlightDurationForDifficulty,
@@ -30,10 +19,11 @@ import {
   getSequenceTiming,
   checkSequence,
 } from '@/lib/sequenceUtils';
-import { playSound, stopBackgroundMusic, setGamePageActive } from '@/lib/soundUtils';
+import { playSound, setGamePageActive } from '@/lib/soundUtils';
 import { useKeyboardControls } from '@/hooks/useKeyboardControls';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import { ReadyScreen } from '@/components/ReadyScreen';
+import { RetroHudWidgets } from '@/components/RetroHudWidgets';
 
 export default function GamePage() {
   const router = useRouter();
@@ -61,8 +51,9 @@ export default function GamePage() {
     decrementLives,
   } = useGameState();
   
-  // Survival mode: starts with 1 life (effectively one mistake = game over)
-  const effectiveLives = gameMode === 'survival' ? 1 : lives;
+  const maxLives = gameMode === 'survival' ? 1 : 5;
+  // Clamp to avoid negative display values
+  const effectiveLives = Math.max(0, Math.min(lives, maxLives));
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const nextHighlightTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -80,7 +71,6 @@ export default function GamePage() {
   const [playerSequence, setPlayerSequence] = useState<number[]>([]);
   const [isShowingSequence, setIsShowingSequence] = useState(false);
   const [isWaitingForInput, setIsWaitingForInput] = useState(false);
-  const [currentSequenceIndex, setCurrentSequenceIndex] = useState(0);
   const sequenceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Clear highlight timer
@@ -96,7 +86,7 @@ export default function GamePage() {
   }, []);
 
   // Highlight new buttons
-  const highlightNewButtons = useCallback(() => {
+  const highlightNewButtons = useCallback(function highlightNewButtonsInternal() {
     if (gameOver || isProcessingRef.current || !isReady) return;
 
     clearHighlightTimer();
@@ -135,7 +125,7 @@ export default function GamePage() {
       // Schedule next highlight after a short delay (if game not over)
       if (!gameOver) {
         nextHighlightTimerRef.current = setTimeout(() => {
-          highlightNewButtons();
+          highlightNewButtonsInternal();
         }, 1000);
       }
     }, duration);
@@ -195,9 +185,6 @@ export default function GamePage() {
       highlightNewButtons,
     ]
   );
-  
-  // Alias for reflex mode
-  const handleButtonPress = handleReflexButtonPress;
   
   // Handle ready button click - actually start the game
   const handleReady = useCallback(() => {
@@ -297,7 +284,6 @@ export default function GamePage() {
     isProcessingRef.current = true;
     setIsWaitingForInput(false);
     setIsShowingSequence(true);
-    setCurrentSequenceIndex(0);
     setPlayerSequence([]);
     
     const sequenceLength = getSequenceLength(score, difficulty);
@@ -320,7 +306,6 @@ export default function GamePage() {
       
       // Highlight current button in sequence
       setHighlightedButtons([newSequence[index]]);
-      setCurrentSequenceIndex(index);
       playSound('highlight', soundEnabled);
       
       // Schedule next button or completion
@@ -452,8 +437,6 @@ export default function GamePage() {
   const buttonHandler = getButtonHandler();
   useKeyboardControls(buttonHandler, keyboardEnabled);
 
-  // Check if current score is a new high score
-  const isNewHighScore = gameOver && score > 0 && score >= highScore;
 
   return (
     <>
@@ -469,63 +452,36 @@ export default function GamePage() {
           gameMode={gameMode}
         />
       ) : (
-      <div className="relative min-h-screen bg-background text-foreground flex flex-col overflow-hidden no-select">
+      <div className="relative h-screen bg-background text-foreground flex flex-col overflow-hidden no-select">
         <SinclairBackground />
       
       {/* Screen Flash Effect */}
       {screenFlash && <ScreenFlash type={screenFlash} />}
       
       {/* Header */}
-      <header className="relative z-10 p-3 sm:p-4 border-b-4 border-primary bg-card/50 pixel-border">
-        <div className="flex justify-between items-center flex-wrap gap-3">
-          {/* Left: Score, Combo, Reaction Time, Difficulty */}
-          <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
-            <div className="flex items-center gap-2">
-              <span className="text-xs sm:text-sm text-muted-foreground">Score:</span>
-              <ScoreDisplay score={score} />
-            </div>
-            <ComboDisplay combo={combo} />
-            <ReactionTimeDisplay stats={reactionTimeStats} />
-            <DifficultyIndicator difficulty={difficulty} score={score} />
-          </div>
-          
-          {/* Center: Lives Display */}
-          <LivesDisplay lives={gameMode === 'survival' ? 1 : lives} />
-          
-          {/* Controls */}
-          <div className="flex items-center gap-2 sm:gap-3">
-          <button
-            onClick={toggleSound}
-            className="w-10 h-10 flex items-center justify-center border-4 border-border bg-card hover:border-primary hover:bg-primary/20 transition-all duration-100 focus:outline-none focus:ring-2 focus:ring-primary pixel-border"
-            aria-label={soundEnabled ? 'Disable sound' : 'Enable sound'}
-          >
-            <span className="text-xl">{soundEnabled ? '🔊' : '🔇'}</span>
-          </button>
-          
-          <button
-            onClick={toggleMusic}
-            className="w-10 h-10 flex items-center justify-center border-4 border-border bg-card hover:border-primary hover:bg-primary/20 transition-all duration-100 focus:outline-none focus:ring-2 focus:ring-primary pixel-border"
-            aria-label={musicEnabled ? 'Disable music' : 'Enable music'}
-          >
-            <span className="text-xl">{musicEnabled ? '🎵' : '🎶'}</span>
-          </button>
-          
-          <button
-            onClick={() => {
-              endGame();
-              router.push('/');
-            }}
-            className="w-10 h-10 flex items-center justify-center border-4 border-border bg-card hover:border-destructive hover:bg-destructive/20 hover:text-destructive transition-all duration-100 focus:outline-none focus:ring-2 focus:ring-destructive pixel-border"
-            aria-label="Quit game"
-          >
-            <span className="text-xl">✕</span>
-          </button>
-          </div>
-        </div>
+      <header className="relative z-10 p-2 sm:p-3 border-b-4 border-primary bg-card/40 pixel-border overflow-hidden flex justify-center">
+        <RetroHudWidgets
+          score={score}
+          highScore={highScore}
+          combo={combo}
+          lives={effectiveLives}
+          maxLives={maxLives}
+          difficulty={difficulty}
+          gameMode={gameMode}
+          reactionStats={reactionTimeStats}
+          soundEnabled={soundEnabled}
+          musicEnabled={musicEnabled}
+          onToggleSound={toggleSound}
+          onToggleMusic={toggleMusic}
+          onQuit={() => {
+            endGame();
+            router.push('/');
+          }}
+        />
       </header>
       
       {/* Main Game Area */}
-      <main className="relative z-10 flex-1 flex items-center justify-center p-4 sm:p-6 md:p-8 overflow-auto">
+      <main className="relative z-10 flex-1 flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-hidden">
         {/* Sequence Mode Status */}
         {gameMode === 'sequence' && (
           <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-20">

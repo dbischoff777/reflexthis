@@ -1,9 +1,8 @@
 'use client';
 
-import { memo, useCallback, useRef, useState } from 'react';
+import { memo, useCallback, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { ButtonCountdown } from './ButtonCountdown';
-import { PixelParticleBurst } from './PixelParticle';
 
 export interface GameButtonProps {
   id: number;
@@ -27,7 +26,6 @@ export const GameButton = memo(function GameButton({
   const buttonRef = useRef<HTMLButtonElement>(null);
   const lastPressTimeRef = useRef<number>(0);
   const DEBOUNCE_DELAY = 100; // 100ms debounce to prevent spam
-  const [particleBurst, setParticleBurst] = useState<{ x: number; y: number } | null>(null);
 
   // Debounced press handler
   const handlePress = useCallback(() => {
@@ -36,17 +34,6 @@ export const GameButton = memo(function GameButton({
       return; // Ignore if pressed too soon
     }
     lastPressTimeRef.current = now;
-    
-    // Trigger particle burst at button center
-    if (buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect();
-      setParticleBurst({
-        x: rect.left + rect.width / 2,
-        y: rect.top + rect.height / 2,
-      });
-      // Clear particle burst after animation
-      setTimeout(() => setParticleBurst(null), 500);
-    }
     
     if (onPress) {
       onPress();
@@ -105,18 +92,6 @@ export const GameButton = memo(function GameButton({
             />
           )}
         </>
-      )}
-      
-      {/* Pixel Particle Burst - rendered in portal */}
-      {particleBurst && (
-        <div className="fixed inset-0 pointer-events-none z-50">
-          <PixelParticleBurst
-            buttonId={id}
-            x={particleBurst.x}
-            y={particleBurst.y}
-            color={highlighted ? '#ffff00' : '#00ffff'}
-          />
-        </div>
       )}
     </button>
   );
