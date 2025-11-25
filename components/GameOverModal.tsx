@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
@@ -25,6 +26,39 @@ export function GameOverModal({
   reactionTimeStats,
   onRestart,
 }: GameOverModalProps) {
+  const [displayedScore, setDisplayedScore] = useState(0);
+  const [isCounting, setIsCounting] = useState(true);
+
+  // Animate score count-up
+  useEffect(() => {
+    if (score === 0) {
+      setDisplayedScore(0);
+      setIsCounting(false);
+      return;
+    }
+
+    setIsCounting(true);
+    const duration = 1500; // 1.5 seconds
+    const steps = 60; // 60 animation steps
+    const increment = score / steps;
+    const stepDuration = duration / steps;
+    let currentStep = 0;
+
+    const timer = setInterval(() => {
+      currentStep++;
+      const newScore = Math.min(Math.floor(increment * currentStep), score);
+      setDisplayedScore(newScore);
+
+      if (currentStep >= steps || newScore >= score) {
+        setDisplayedScore(score);
+        setIsCounting(false);
+        clearInterval(timer);
+      }
+    }, stepDuration);
+
+    return () => clearInterval(timer);
+  }, [score]);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 crt-scanlines">
       <div
@@ -52,8 +86,13 @@ export function GameOverModal({
         {/* Score Display */}
         <div className="text-center py-6 mb-6 border-y border-border">
           <p className="text-sm text-muted-foreground mb-2">Final Score</p>
-          <p className="text-5xl sm:text-6xl font-bold text-primary text-glow mb-4">
-            {score}
+          <p 
+            className={cn(
+              'text-5xl sm:text-6xl font-bold text-primary text-glow mb-4 transition-all duration-75',
+              isCounting && 'scale-110'
+            )}
+          >
+            {displayedScore.toLocaleString()}
           </p>
 
           {/* High Score Indicator */}

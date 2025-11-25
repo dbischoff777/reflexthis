@@ -65,6 +65,7 @@ export default function GamePage() {
   const [highlightDuration, setHighlightDuration] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isReady, setIsReady] = useState(false);
+  const [buttonPressFeedback, setButtonPressFeedback] = useState<Record<number, 'correct' | 'incorrect' | null>>({});
   
   // Sequence mode state
   const [sequence, setSequence] = useState<number[]>([]);
@@ -144,7 +145,12 @@ export default function GamePage() {
           ? Date.now() - highlightStartTimeRef.current
           : 0;
 
-        // Correct button pressed
+        // Correct button pressed - show feedback
+        setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: 'correct' }));
+        setTimeout(() => {
+          setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: null }));
+        }, 300);
+
         incrementScore(reactionTime);
         setScreenFlash('success');
         setTimeout(() => setScreenFlash(null), 200);
@@ -166,7 +172,12 @@ export default function GamePage() {
           }, 500);
         }
       } else {
-        // Wrong button pressed - play error sound
+        // Wrong button pressed - show feedback
+        setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: 'incorrect' }));
+        setTimeout(() => {
+          setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: null }));
+        }, 300);
+
         playSound('error', soundEnabled);
         setScreenFlash('error');
         setTimeout(() => setScreenFlash(null), 300);
@@ -183,6 +194,7 @@ export default function GamePage() {
       decrementLives,
       clearHighlightTimer,
       highlightNewButtons,
+      soundEnabled,
     ]
   );
   
@@ -351,7 +363,14 @@ export default function GamePage() {
       if (newPlayerSequence.length === sequence.length) {
         // Check if correct
         if (checkSequence(newPlayerSequence, sequence)) {
-          // Correct sequence
+          // Correct sequence - show feedback for all buttons
+          sequence.forEach((id) => {
+            setButtonPressFeedback((prev) => ({ ...prev, [id]: 'correct' }));
+            setTimeout(() => {
+              setButtonPressFeedback((prev) => ({ ...prev, [id]: null }));
+            }, 300);
+          });
+
           incrementScore(0); // No reaction time in sequence mode
           setScreenFlash('success');
           setTimeout(() => setScreenFlash(null), 200);
@@ -361,7 +380,12 @@ export default function GamePage() {
             showSequence();
           }, 1000);
         } else {
-          // Wrong sequence
+          // Wrong sequence - show feedback for wrong button
+          setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: 'incorrect' }));
+          setTimeout(() => {
+            setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: null }));
+          }, 300);
+
           playSound('error', soundEnabled);
           setScreenFlash('error');
           setTimeout(() => setScreenFlash(null), 300);
@@ -378,7 +402,12 @@ export default function GamePage() {
       } else {
         // Check if current input is correct so far
         if (newPlayerSequence[newPlayerSequence.length - 1] !== sequence[newPlayerSequence.length - 1]) {
-          // Wrong button pressed
+          // Wrong button pressed - show feedback
+          setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: 'incorrect' }));
+          setTimeout(() => {
+            setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: null }));
+          }, 300);
+
           playSound('error', soundEnabled);
           setScreenFlash('error');
           setTimeout(() => setScreenFlash(null), 300);
@@ -392,7 +421,11 @@ export default function GamePage() {
             }, 1500);
           }
         } else {
-          // Correct so far, play success sound
+          // Correct so far - show feedback
+          setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: 'correct' }));
+          setTimeout(() => {
+            setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: null }));
+          }, 300);
           playSound('success', soundEnabled);
         }
       }
@@ -505,42 +538,45 @@ export default function GamePage() {
               {/* Top Row - 3 buttons */}
               <div className="grid-row top-row flex justify-center gap-2 sm:gap-3 md:gap-4 lg:gap-6 mb-2 sm:mb-3 md:mb-4 lg:mb-6">
                 {[1, 2, 3].map((id) => (
-                  <GameButton
-                    key={id}
-                    id={id}
-                    highlighted={highlightedButtons.includes(id)}
-                    onPress={() => getButtonHandler()(id)}
-                    highlightStartTime={highlightStartTimeRef.current || undefined}
-                    highlightDuration={highlightDuration}
-                  />
+              <GameButton
+                key={id}
+                id={id}
+                highlighted={highlightedButtons.includes(id)}
+                onPress={() => getButtonHandler()(id)}
+                highlightStartTime={highlightStartTimeRef.current || undefined}
+                highlightDuration={highlightDuration}
+                pressFeedback={buttonPressFeedback[id] || null}
+              />
                 ))}
               </div>
               
               {/* Middle Row - 4 buttons */}
               <div className="grid-row middle-row flex justify-center gap-2 sm:gap-3 md:gap-4 lg:gap-6 mb-2 sm:mb-3 md:mb-4 lg:mb-6">
                 {[4, 5, 6, 7].map((id) => (
-                  <GameButton
-                    key={id}
-                    id={id}
-                    highlighted={highlightedButtons.includes(id)}
-                    onPress={() => getButtonHandler()(id)}
-                    highlightStartTime={highlightStartTimeRef.current || undefined}
-                    highlightDuration={highlightDuration}
-                  />
+              <GameButton
+                key={id}
+                id={id}
+                highlighted={highlightedButtons.includes(id)}
+                onPress={() => getButtonHandler()(id)}
+                highlightStartTime={highlightStartTimeRef.current || undefined}
+                highlightDuration={highlightDuration}
+                pressFeedback={buttonPressFeedback[id] || null}
+              />
                 ))}
               </div>
               
               {/* Bottom Row - 3 buttons */}
               <div className="grid-row bottom-row flex justify-center gap-2 sm:gap-3 md:gap-4 lg:gap-6">
                 {[8, 9, 10].map((id) => (
-                  <GameButton
-                    key={id}
-                    id={id}
-                    highlighted={highlightedButtons.includes(id)}
-                    onPress={() => getButtonHandler()(id)}
-                    highlightStartTime={highlightStartTimeRef.current || undefined}
-                    highlightDuration={highlightDuration}
-                  />
+              <GameButton
+                key={id}
+                id={id}
+                highlighted={highlightedButtons.includes(id)}
+                onPress={() => getButtonHandler()(id)}
+                highlightStartTime={highlightStartTimeRef.current || undefined}
+                highlightDuration={highlightDuration}
+                pressFeedback={buttonPressFeedback[id] || null}
+              />
                 ))}
               </div>
             </div>
