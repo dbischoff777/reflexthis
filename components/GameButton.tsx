@@ -169,13 +169,6 @@ export const GameButton = memo(function GameButton({
     return false;
   }, []);
 
-  // Prevent text selection
-  const handleSelectStart = useCallback((e: React.SyntheticEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    return false;
-  }, []);
-
   return (
     <button
       ref={buttonRef}
@@ -186,6 +179,7 @@ export const GameButton = memo(function GameButton({
         'touch-manipulation',
         'will-change-transform',
         'pixel-border overflow-hidden',
+        'no-select',
         getButtonStateClasses(),
         // Only apply scale-90 when pressed
         isPressed && 'scale-90'
@@ -193,6 +187,10 @@ export const GameButton = memo(function GameButton({
       style={{
         imageRendering: 'pixelated' as any,
         borderRadius: '0',
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
+        MozUserSelect: 'none',
+        msUserSelect: 'none',
       }}
       draggable={false}
       onDragStart={handleDragStart}
@@ -201,7 +199,6 @@ export const GameButton = memo(function GameButton({
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
       onContextMenu={handleContextMenu}
-      onSelectStart={handleSelectStart}
       onClick={handleClick}
       onTouchStart={handleTouchStart}
       aria-label={`Game button ${id}`}
