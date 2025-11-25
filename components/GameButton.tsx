@@ -139,6 +139,7 @@ export const GameButton = memo(function GameButton({
       onTouchStart={handleTouchStart}
       aria-label={`Game button ${id}`}
       aria-pressed={highlighted}
+      data-button-id={id}
     >
       {/* Ripple effect on press */}
       {ripplePosition && (

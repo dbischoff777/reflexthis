@@ -1169,4 +1169,66 @@
   .game-button[class*="bg-destructive"] {
     animation: error-jolt 0.4s ease-out;
   }
+  
+  /* Screen shake animations - constrained to prevent scrollbars */
+  @keyframes screen-shake-light {
+    0%, 100% {
+      transform: translate(0, 0);
+    }
+    10%, 30%, 50%, 70%, 90% {
+      transform: translate(-2px, -1px);
+    }
+    20%, 40%, 60%, 80% {
+      transform: translate(2px, 1px);
+    }
+  }
+  
+  @keyframes screen-shake-medium {
+    0%, 100% {
+      transform: translate(0, 0);
+    }
+    10%, 30%, 50%, 70%, 90% {
+      transform: translate(-4px, -2px) rotate(-0.5deg);
+    }
+    20%, 40%, 60%, 80% {
+      transform: translate(4px, 2px) rotate(0.5deg);
+    }
+  }
+  
+  @keyframes screen-shake-heavy {
+    0%, 100% {
+      transform: translate(0, 0) rotate(0deg);
+    }
+    10%, 30%, 50%, 70%, 90% {
+      transform: translate(-6px, -3px) rotate(-1deg);
+    }
+    20%, 40%, 60%, 80% {
+      transform: translate(6px, 3px) rotate(1deg);
+    }
+  }
+  
+  .screen-shake-light,
+  .screen-shake-medium,
+  .screen-shake-heavy {
+    overflow: hidden !important;
+    position: relative;
+    will-change: transform;
+    /* Prevent scrollbars by constraining content */
+    max-width: 100vw;
+    max-height: 100vh;
+    /* Ensure transform doesn't push content outside viewport */
+    contain: layout style paint;
+  }
+  
+  .screen-shake-light {
+    animation: screen-shake-light 0.4s ease-out;
+  }
+  
+  .screen-shake-medium {
+    animation: screen-shake-medium 0.4s ease-out;
+  }
+  
+  .screen-shake-heavy {
+    animation: screen-shake-heavy 0.4s ease-out;
+  }
 }

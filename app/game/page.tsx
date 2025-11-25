@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { cn } from '@/lib/utils';
 import { useGameState } from '@/lib/GameContext';
 import { GameButton } from '@/components/GameButton';
 import { GameOverModal } from '@/components/GameOverModal';
@@ -119,6 +120,13 @@ export default function GamePage() {
         setHighlightedButtons([]);
         currentHighlightedRef.current = [];
         highlightStartTimeRef.current = null;
+        
+        // Trigger screen shake for missed buttons
+        setScreenShake(true);
+        setTimeout(() => {
+          setScreenShake(false);
+        }, 400);
+        
         setScreenFlash('error');
         setTimeout(() => setScreenFlash(null), 300);
         decrementLives();
@@ -146,7 +154,7 @@ export default function GamePage() {
           ? Date.now() - highlightStartTimeRef.current
           : 0;
 
-        // Correct button pressed - show feedback
+        // Correct button pressed - show feedback and particles
         setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: 'correct' }));
         setTimeout(() => {
           setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: null }));
@@ -173,11 +181,17 @@ export default function GamePage() {
           }, 500);
         }
       } else {
-        // Wrong button pressed - show feedback
+        // Wrong button pressed - show feedback, screen shake, and error particles
         setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: 'incorrect' }));
         setTimeout(() => {
           setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: null }));
         }, 300);
+
+        // Trigger screen shake
+        setScreenShake(true);
+        setTimeout(() => {
+          setScreenShake(false);
+        }, 400);
 
         playSound('error', soundEnabled);
         setScreenFlash('error');
@@ -387,6 +401,12 @@ export default function GamePage() {
             setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: null }));
           }, 300);
 
+          // Trigger screen shake
+          setScreenShake(true);
+          setTimeout(() => {
+            setScreenShake(false);
+          }, 400);
+
           playSound('error', soundEnabled);
           setScreenFlash('error');
           setTimeout(() => setScreenFlash(null), 300);
@@ -409,6 +429,12 @@ export default function GamePage() {
             setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: null }));
           }, 300);
 
+          // Trigger screen shake
+          setScreenShake(true);
+          setTimeout(() => {
+            setScreenShake(false);
+          }, 400);
+
           playSound('error', soundEnabled);
           setScreenFlash('error');
           setTimeout(() => setScreenFlash(null), 300);
@@ -427,6 +453,7 @@ export default function GamePage() {
           setTimeout(() => {
             setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: null }));
           }, 300);
+          
           playSound('success', soundEnabled);
         }
       }
@@ -476,6 +503,22 @@ export default function GamePage() {
   // Keybindings settings state
   const [showKeybindingsSettings, setShowKeybindingsSettings] = useState(false);
 
+  const [screenShake, setScreenShake] = useState(false);
+
+  // Prevent scrollbars during screen shake
+  useEffect(() => {
+    if (screenShake) {
+      document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+    };
+  }, [screenShake]);
 
   return (
     <>
@@ -491,7 +534,10 @@ export default function GamePage() {
           gameMode={gameMode}
         />
       ) : (
-      <div className="relative h-screen bg-background text-foreground flex flex-col overflow-hidden no-select">
+      <div className={cn(
+        "relative h-screen bg-background text-foreground flex flex-col overflow-hidden no-select",
+        screenShake && "screen-shake-medium"
+      )}>
           <DynamicAmbience />
       
       {/* Screen Flash Effect */}
@@ -614,6 +660,7 @@ export default function GamePage() {
           onClose={() => setShowKeybindingsSettings(false)}
         />
       )}
+
       </div>
       )}
     </>
