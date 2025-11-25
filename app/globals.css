@@ -143,17 +143,12 @@
   }
   
   /* CRT Scanline Effect */
-  .crt-scanlines {
-    position: relative;
+  .crt-overlay {
+    pointer-events: none;
+    z-index: 50;
   }
-  
-  .crt-scanlines::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+
+  .crt-scanlines {
     background: repeating-linear-gradient(
       0deg,
       rgba(0, 0, 0, 0.15) 0px,
@@ -161,8 +156,17 @@
       transparent 1px,
       transparent 2px
     );
-    pointer-events: none;
-    z-index: 1000;
+    background-size: 100% 4px;
+    animation: scanline-move 8s linear infinite;
+  }
+  
+  @keyframes scanline-move {
+    0% {
+      background-position: 0 0;
+    }
+    100% {
+      background-position: 0 4px;
+    }
   }
   
   /* Pixelated border effect */
@@ -326,14 +330,6 @@
     animation: glitch 0.3s infinite;
   }
   
-  @keyframes flicker {
-    0%, 100% {
-      opacity: 0.02;
-    }
-    50% {
-      opacity: 0.05;
-    }
-  }
   
   @keyframes phosphor-trail {
     0%, 100% {
@@ -411,34 +407,7 @@
     }
   }
   
-  /* Enhanced CRT scanline effect */
-  .crt-scanlines::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: repeating-linear-gradient(
-      0deg,
-      rgba(0, 0, 0, 0.15) 0px,
-      rgba(0, 0, 0, 0.15) 1px,
-      transparent 1px,
-      transparent 2px
-    );
-    pointer-events: none;
-    z-index: 1000;
-    animation: scanline-move var(--scanline-speed, 8s) linear infinite;
-  }
-  
-  @keyframes scanline-move {
-    0% {
-      transform: translateY(0);
-    }
-    100% {
-      transform: translateY(4px);
-    }
-  }
+  /* Enhanced CRT scanline effect removed - consolidated above */
   
   @keyframes pixel-pulse {
     0%, 100% {

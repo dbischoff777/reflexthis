@@ -7,7 +7,7 @@
 export function SinclairBackground() {
 
   return (
-    <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none crt-scanlines">
+    <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
       {/* Screen Curvature Effect */}
       <div 
         className="absolute inset-0"
@@ -90,13 +90,6 @@ export function SinclairBackground() {
             />
           </div>
           
-          {/* CRT flicker effect */}
-          <div 
-            className="absolute inset-0 opacity-5 bg-white"
-            style={{
-              animation: 'flicker 0.15s infinite',
-            }}
-          />
           
           {/* Screen curvature shadow */}
           <div 
