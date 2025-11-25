@@ -4,7 +4,6 @@ import { useEffect, useRef, useCallback, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGameState } from '@/lib/GameContext';
 import { GameButton } from '@/components/GameButton';
-import { SinclairBackground } from '@/components/SinclairBackground';
 import { GameOverModal } from '@/components/GameOverModal';
 import { OrientationHandler } from '@/components/OrientationHandler';
 import { ScreenFlash } from '@/components/ScreenFlash';
@@ -24,6 +23,7 @@ import { useKeyboardControls } from '@/hooks/useKeyboardControls';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import { ReadyScreen } from '@/components/ReadyScreen';
 import { RetroHudWidgets } from '@/components/RetroHudWidgets';
+import { DynamicAmbience } from '@/components/DynamicAmbience';
 
 export default function GamePage() {
   const router = useRouter();
@@ -453,7 +453,7 @@ export default function GamePage() {
         />
       ) : (
       <div className="relative h-screen bg-background text-foreground flex flex-col overflow-hidden no-select">
-        <SinclairBackground />
+        <DynamicAmbience />
       
       {/* Screen Flash Effect */}
       {screenFlash && <ScreenFlash type={screenFlash} />}

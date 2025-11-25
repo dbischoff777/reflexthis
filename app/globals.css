@@ -342,6 +342,27 @@
     }
   }
 
+  @keyframes opacity-pulse {
+    0%, 100% {
+      opacity: 0.5;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+
+  .animate-bg-pulse-slow {
+    animation: opacity-pulse 4s infinite ease-in-out;
+  }
+
+  .animate-bg-pulse-medium {
+    animation: opacity-pulse 2s infinite ease-in-out;
+  }
+
+  .animate-bg-pulse-fast {
+    animation: opacity-pulse 0.8s infinite ease-in-out;
+  }
+
   @keyframes heartbeat {
     0% {
       transform: scale(1);

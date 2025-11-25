@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { SinclairBackground } from '@/components/SinclairBackground';
 import { BuildInfo } from '@/components/BuildInfo';
 import { DifficultySelector } from '@/components/DifficultySelector';
 import { ModeSelector } from '@/components/ModeSelector';
@@ -36,7 +35,6 @@ function LandingPageContent() {
 
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center bg-background text-foreground p-4 overflow-hidden">
-      <SinclairBackground />
       {isNavigatingToGame && (
         <LoadingScreen
           message="INITIALIZING"
@@ -112,6 +110,11 @@ function LandingPageContent() {
                   setTimeout(() => {
                     window.location.href = '/game';
                   }, 500);
+                } else if (showMode) {
+                  // Proceed to difficulty selection
+                  e.preventDefault();
+                  setShowMode(false);
+                  setShowDifficulty(true);
                 } else if (!showMode && !showDifficulty) {
                   e.preventDefault();
                   setShowMode(true);
