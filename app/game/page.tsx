@@ -26,6 +26,7 @@ import { ReadyScreen } from '@/components/ReadyScreen';
 import { RetroHudWidgets } from '@/components/RetroHudWidgets';
 import { DynamicAmbience } from '@/components/DynamicAmbience';
 import { KeybindingsSettings } from '@/components/KeybindingsSettings';
+import { PerformanceFeedback } from '@/components/PerformanceFeedback';
 
 export default function GamePage() {
   const router = useRouter();
@@ -68,6 +69,21 @@ export default function GamePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isReady, setIsReady] = useState(false);
   const [buttonPressFeedback, setButtonPressFeedback] = useState<Record<number, 'correct' | 'incorrect' | null>>({});
+  
+  // Track previous values for performance feedback
+  const previousComboRef = useRef(0);
+  const previousScoreRef = useRef(0);
+  const [currentReactionTime, setCurrentReactionTime] = useState<number | null>(null);
+  const [isNewBestReaction, setIsNewBestReaction] = useState(false);
+  
+  // Update previous values when combo/score change
+  useEffect(() => {
+    previousComboRef.current = combo;
+  }, [combo]);
+  
+  useEffect(() => {
+    previousScoreRef.current = score;
+  }, [score]);
   
   // Sequence mode state
   const [sequence, setSequence] = useState<number[]>([]);
@@ -154,6 +170,11 @@ export default function GamePage() {
           ? Date.now() - highlightStartTimeRef.current
           : 0;
 
+        // Check if this is a new best reaction time
+        const wasNewBest = reactionTimeStats.fastest === null || reactionTime < reactionTimeStats.fastest;
+        setIsNewBestReaction(wasNewBest);
+        setCurrentReactionTime(reactionTime);
+
         // Correct button pressed - show feedback and particles
         setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: 'correct' }));
         setTimeout(() => {
@@ -163,6 +184,12 @@ export default function GamePage() {
         incrementScore(reactionTime);
         setScreenFlash('success');
         setTimeout(() => setScreenFlash(null), 200);
+        
+        // Reset reaction time after a short delay to allow feedback to process
+        setTimeout(() => {
+          setCurrentReactionTime(null);
+          setIsNewBestReaction(false);
+        }, 100);
 
         // Remove this button from highlighted buttons
         const updatedHighlighted = highlightedButtons.filter(
@@ -387,6 +414,11 @@ export default function GamePage() {
           });
 
           incrementScore(0); // No reaction time in sequence mode
+          
+          // Update previous values for feedback tracking
+          previousComboRef.current = combo;
+          previousScoreRef.current = score;
+          
           setScreenFlash('success');
           setTimeout(() => setScreenFlash(null), 200);
           
@@ -609,6 +641,16 @@ export default function GamePage() {
           onOpenSettings={() => setShowKeybindingsSettings(true)}
         />
       </header>
+      
+      {/* Performance Feedback */}
+      <PerformanceFeedback
+        reactionTime={currentReactionTime}
+        combo={combo}
+        score={score}
+        previousCombo={previousComboRef.current}
+        previousScore={previousScoreRef.current}
+        isNewBestReaction={isNewBestReaction}
+      />
       
       {/* Main Game Area */}
       <main className="relative z-10 flex-1 flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-hidden">

@@ -1301,4 +1301,39 @@
   .screen-shake-heavy {
     animation: screen-shake-heavy 0.4s ease-out;
   }
+  
+  /* Performance feedback popup animations */
+  @keyframes feedback-popup {
+    0% {
+      transform: scale(0.5) translateY(20px);
+      opacity: 0;
+    }
+    50% {
+      transform: scale(1.1) translateY(-10px);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(1) translateY(0);
+      opacity: 1;
+    }
+  }
+  
+  @keyframes feedback-exit {
+    0% {
+      transform: scale(1) translateY(0);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(0.8) translateY(-30px);
+      opacity: 0;
+    }
+  }
+  
+  .animate-feedback-popup {
+    animation: feedback-popup 0.3s ease-out forwards;
+  }
+  
+  .animate-feedback-exit {
+    animation: feedback-exit 0.5s ease-in forwards;
+  }
 }
