@@ -136,33 +136,12 @@ export function PerformanceFeedback({
     let priority = 0; // Higher priority messages override lower ones
     
     // Only process reaction time if it's new (different from last processed)
+    // Only show messages for fast reactions to avoid spam
     if (reactionTime !== null && reactionTime !== lastReactionTimeRef.current) {
       lastReactionTimeRef.current = reactionTime;
 
-      // Perfect timing (very fast reaction on first try) - Highest priority
-      if (reactionTime < 200 && combo === 1) {
-        newMessage = {
-          id: `msg-${messageIdCounter.current++}`,
-          type: 'perfect-timing',
-          message: getRandomMessage(PERFECT_MESSAGES),
-          color: '#00ff00',
-          timestamp: Date.now(),
-        };
-        priority = 100;
-      }
-      // New best reaction time - High priority
-      else if (isNewBestReaction) {
-        newMessage = {
-          id: `msg-${messageIdCounter.current++}`,
-          type: 'new-best',
-          message: getRandomMessage(NEW_BEST_MESSAGES),
-          color: '#ffff00',
-          timestamp: Date.now(),
-        };
-        priority = 90;
-      }
-      // Reaction time feedback
-      else if (reactionTime > 0) {
+      // Only show feedback for fast reactions (lower priority than combo/score)
+      if (reactionTime > 0 && reactionTime < 250) {
         if (reactionTime < 150) {
           newMessage = {
             id: `msg-${messageIdCounter.current++}`,
@@ -171,7 +150,7 @@ export function PerformanceFeedback({
             color: '#00ff00',
             timestamp: Date.now(),
           };
-          priority = 80;
+          priority = 50; // Lower priority than combo/score
         } else if (reactionTime < 250) {
           newMessage = {
             id: `msg-${messageIdCounter.current++}`,
@@ -180,21 +159,12 @@ export function PerformanceFeedback({
             color: '#00ff9f',
             timestamp: Date.now(),
           };
-          priority = 70;
-        } else if (reactionTime > 500) {
-          newMessage = {
-            id: `msg-${messageIdCounter.current++}`,
-            type: 'reaction-slow',
-            message: getRandomMessage(REACTION_SLOW_MESSAGES),
-            color: '#ffaa00',
-            timestamp: Date.now(),
-          };
-          priority = 60;
+          priority = 40; // Lower priority than combo/score
         }
       }
     }
 
-    // Combo milestone feedback - Check if combo increased
+    // Combo milestone feedback - Check if combo increased (HIGHEST PRIORITY)
     if (combo > lastProcessedComboRef.current) {
       let comboMessage: FeedbackMessage | null = null;
       let comboPriority = 0;
@@ -207,7 +177,7 @@ export function PerformanceFeedback({
           color: '#00f0ff',
           timestamp: Date.now(),
         };
-        comboPriority = 50;
+        comboPriority = 90;
       } else if (combo === 10) {
         comboMessage = {
           id: `msg-${messageIdCounter.current++}`,
@@ -216,7 +186,7 @@ export function PerformanceFeedback({
           color: '#00ffff',
           timestamp: Date.now(),
         };
-        comboPriority = 55;
+        comboPriority = 92;
       } else if (combo === 20) {
         comboMessage = {
           id: `msg-${messageIdCounter.current++}`,
@@ -225,7 +195,7 @@ export function PerformanceFeedback({
           color: '#ff00ff',
           timestamp: Date.now(),
         };
-        comboPriority = 65;
+        comboPriority = 94;
       } else if (combo === 30) {
         comboMessage = {
           id: `msg-${messageIdCounter.current++}`,
@@ -234,7 +204,7 @@ export function PerformanceFeedback({
           color: '#ff00ff',
           timestamp: Date.now(),
         };
-        comboPriority = 75;
+        comboPriority = 96;
       } else if (combo === 50) {
         comboMessage = {
           id: `msg-${messageIdCounter.current++}`,
@@ -243,7 +213,7 @@ export function PerformanceFeedback({
           color: '#ff00ff',
           timestamp: Date.now(),
         };
-        comboPriority = 85;
+        comboPriority = 98;
       } else if (combo > 0 && combo % 10 === 0 && combo > 10) {
         comboMessage = {
           id: `msg-${messageIdCounter.current++}`,
@@ -252,31 +222,37 @@ export function PerformanceFeedback({
           color: '#ff00ff',
           timestamp: Date.now(),
         };
-        comboPriority = 65;
+        comboPriority = 94;
       }
       
-      // Use combo message if it has higher priority
+      // Combo messages always override reaction time messages
       if (comboMessage && comboPriority > priority) {
         newMessage = comboMessage;
         priority = comboPriority;
       }
     }
 
-    // Score milestone feedback (every 100 points) - Lower priority
+    // Score milestone feedback (every 100 points) - HIGHEST PRIORITY
     const scoreDiff = score - lastProcessedScoreRef.current;
     if (scoreDiff > 0) {
       const previousMilestone = Math.floor(lastProcessedScoreRef.current / 100);
       const currentMilestone = Math.floor(score / 100);
       
-      if (currentMilestone > previousMilestone && score >= 100 && priority < 40) {
-        newMessage = {
+      if (currentMilestone > previousMilestone && score >= 100) {
+        const scoreMessage: FeedbackMessage = {
           id: `msg-${messageIdCounter.current++}`,
           type: 'score-milestone',
           message: `${currentMilestone * 100} POINTS!`,
           color: '#ffff00',
           timestamp: Date.now(),
         };
-        priority = 40;
+        const scorePriority = 95;
+        
+        // Score messages always override reaction time, but combo can override score
+        if (scorePriority > priority) {
+          newMessage = scoreMessage;
+          priority = scorePriority;
+        }
       }
     }
 
