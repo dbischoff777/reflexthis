@@ -129,7 +129,8 @@ export function PerformanceFeedback({
   const lastProcessedComboRef = useRef(previousCombo);
   const lastProcessedScoreRef = useRef(previousScore);
   const lastReactionTimeRef = useRef<number | null>(null);
-  const lastMessageTimeRef = useRef(0);
+  const lastHighImpactTimeRef = useRef(0);
+  const lastLowImpactTimeRef = useRef(0);
 
   // Generate feedback based on performance metrics
   useEffect(() => {
@@ -163,17 +164,24 @@ export function PerformanceFeedback({
           };
           priority = 40; // Lower priority than combo/score
         }
-      } else if (reactionTime >= 500 && combo < 5 && Math.random() < 0.25) {
-        // Gentle coaching when reactions are consistently slow, but only occasionally
-        // and mostly early in the run (low combo) to reduce noise.
-        newMessage = {
-          id: `msg-${messageIdCounter.current++}`,
-          type: 'reaction-slow',
-          message: getRandomMessage(REACTION_SLOW_MESSAGES),
-          color: '#ffff66',
-          timestamp: Date.now(),
-        };
-        priority = 20; // Low priority – combo/score messages will override
+      } else if (reactionTime >= 450) {
+        // Gentle coaching for slower reactions.
+        // - More likely early in the run (low combo)
+        // - Still occasionally available at higher combos, but rarer,
+        //   so coaching remains present without becoming noisy.
+        const isEarlyCombo = combo < 5;
+        const chance = isEarlyCombo ? 0.25 : 0.08;
+
+        if (Math.random() < chance) {
+          newMessage = {
+            id: `msg-${messageIdCounter.current++}`,
+            type: 'reaction-slow',
+            message: getRandomMessage(REACTION_SLOW_MESSAGES),
+            color: '#ffff66',
+            timestamp: Date.now(),
+          };
+          priority = 20; // Low priority – combo/score messages will override
+        }
       }
     }
 
@@ -269,22 +277,31 @@ export function PerformanceFeedback({
       }
     }
 
-    // Set the single message (replaces any existing message), with a simple cooldown
-    // to prevent spamming the player with frequent popups.
+    // Set the single message (replaces any existing message), with a simple cooldown.
+    // High-impact messages (combo/score milestones) use their own cooldown and
+    // are not blocked by recent low-impact reaction messages.
     if (newMessage) {
       const now = Date.now();
-      const timeSinceLast = now - lastMessageTimeRef.current;
       const isHighImpact =
         newMessage.type.startsWith('combo-') ||
         newMessage.type === 'score-milestone' ||
         newMessage.type === 'new-best' ||
         newMessage.type === 'perfect-timing';
 
-      const minGapMs = isHighImpact ? 800 : 2500;
-
-      if (timeSinceLast >= minGapMs || isHighImpact) {
-        lastMessageTimeRef.current = now;
-        setCurrentMessage(newMessage);
+      if (isHighImpact) {
+        const timeSinceHigh = now - lastHighImpactTimeRef.current;
+        const minGapHighMs = 800;
+        if (timeSinceHigh >= minGapHighMs) {
+          lastHighImpactTimeRef.current = now;
+          setCurrentMessage(newMessage);
+        }
+      } else {
+        const timeSinceLow = now - lastLowImpactTimeRef.current;
+        const minGapLowMs = 2500;
+        if (timeSinceLow >= minGapLowMs) {
+          lastLowImpactTimeRef.current = now;
+          setCurrentMessage(newMessage);
+        }
       }
     }
 

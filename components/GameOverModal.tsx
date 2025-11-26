@@ -5,6 +5,16 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
 import { ReactionTimeStats } from '@/lib/GameContext';
+import {
+  calculateSessionStatistics,
+  calculateSessionStatisticsFromSessions,
+  getGameSessions,
+} from '@/lib/sessionStats';
+import {
+  getMetaProgression,
+  getMetaProgressionFromSessions,
+  type AchievementProgress,
+} from '@/lib/progression';
 
 interface GameOverModalProps {
   score: number;
@@ -61,6 +71,11 @@ export function GameOverModal({
   const [displayedScore, setDisplayedScore] = useState(0);
   const [isCounting, setIsCounting] = useState(true);
   const coachingTip = getCoachingTip(score, bestCombo, reactionTimeStats);
+  const [metaSummary, setMetaSummary] = useState<{
+    rankName: string | null;
+    nextRank: string | null;
+  }>({ rankName: null, nextRank: null });
+  const [newAchievements, setNewAchievements] = useState<AchievementProgress[]>([]);
 
   // Animate score count-up
   useEffect(() => {
@@ -91,6 +106,36 @@ export function GameOverModal({
 
     return () => clearInterval(timer);
   }, [score]);
+
+  // Load latest rank information and newly unlocked achievements for this Game Over screen
+  useEffect(() => {
+    const sessions = getGameSessions();
+
+    // Meta after this run (all sessions)
+    const statsAfter = calculateSessionStatisticsFromSessions(sessions);
+    const metaAfter = getMetaProgressionFromSessions(statsAfter, sessions);
+
+    // Meta before this run (all but last session)
+    const sessionsBefore =
+      sessions.length > 1 ? sessions.slice(0, -1) : [];
+    const statsBefore = calculateSessionStatisticsFromSessions(sessionsBefore);
+    const metaBefore = getMetaProgressionFromSessions(statsBefore, sessionsBefore);
+
+    setMetaSummary({
+      rankName: metaAfter.rank?.name ?? null,
+      nextRank: metaAfter.rank?.nextName ?? null,
+    });
+
+    const unlockedBefore = new Set(
+      metaBefore.achievements.filter((a) => a.achieved).map((a) => a.id)
+    );
+    const unlockedNow = metaAfter.achievements.filter((a) => a.achieved);
+    const newlyUnlocked = unlockedNow.filter(
+      (a) => !unlockedBefore.has(a.id)
+    );
+
+    setNewAchievements(newlyUnlocked);
+  }, []);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 crt-scanlines">
@@ -148,6 +193,19 @@ export function GameOverModal({
               <p className="text-xl font-semibold text-primary">{highScore}</p>
             </div>
           )}
+
+          {metaSummary.rankName && (
+            <div className="mt-4 text-xs text-foreground/80">
+              <p className="font-semibold text-primary">
+                Current Rank: {metaSummary.rankName}
+              </p>
+              {metaSummary.nextRank && (
+                <p className="mt-0.5 text-[11px] text-foreground/70">
+                  Keep pushing to reach <span className="font-semibold">{metaSummary.nextRank}</span>.
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Stats */}
@@ -195,6 +253,24 @@ export function GameOverModal({
                   Coach&apos;s Tip
                 </h3>
                 <p className="text-xs text-foreground/80">{coachingTip}</p>
+              </div>
+            )}
+
+            {newAchievements.length > 0 && (
+              <div className="p-4 bg-chart-3/10 border-2 border-chart-3 pixel-border">
+                <h3 className="text-xs font-semibold text-chart-3 mb-2 uppercase tracking-wide">
+                  New Achievements
+                </h3>
+                <ul className="space-y-1 text-xs text-foreground/90">
+                  {newAchievements.map((a) => (
+                    <li key={a.id}>
+                      <span className="font-semibold text-chart-3">
+                        {a.title}
+                      </span>
+                      <span className="text-foreground/70"> – {a.description}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
           </div>

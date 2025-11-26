@@ -66,11 +66,11 @@ export function getGameSessions(): GameSession[] {
 }
 
 /**
- * Calculate session statistics from all game sessions
+ * Calculate session statistics from a provided list of game sessions
  */
-export function calculateSessionStatistics(): SessionStatistics {
-  const sessions = getGameSessions();
-  
+export function calculateSessionStatisticsFromSessions(
+  sessions: GameSession[]
+): SessionStatistics {
   if (sessions.length === 0) {
     return {
       totalGames: 0,
@@ -130,6 +130,14 @@ export function calculateSessionStatistics(): SessionStatistics {
     gamesPlayedToday,
     recentGames,
   };
+}
+
+/**
+ * Calculate session statistics from all game sessions
+ */
+export function calculateSessionStatistics(): SessionStatistics {
+  const sessions = getGameSessions();
+  return calculateSessionStatisticsFromSessions(sessions);
 }
 
 /**

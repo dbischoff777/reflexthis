@@ -1,7 +1,7 @@
 'use client';
 
-import { SessionStatistics } from '@/lib/sessionStats';
-import { formatPlaytime } from '@/lib/sessionStats';
+import { SessionStatistics, formatPlaytime } from '@/lib/sessionStats';
+import { getMetaProgression } from '@/lib/progression';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 
@@ -31,6 +31,8 @@ export function SessionStatsDisplay({ stats }: SessionStatsDisplayProps) {
     if (time === null) return '--';
     return `${Math.round(time)}ms`;
   };
+
+  const meta = getMetaProgression(stats);
 
   return (
     <div className="p-6 bg-card border-4 border-border space-y-6 pixel-border">
@@ -93,7 +95,71 @@ export function SessionStatsDisplay({ stats }: SessionStatsDisplayProps) {
           </div>
         )}
 
-        {/* Recent Games */}
+        {/* Rank & Recommendation */}
+        {meta.rank && (
+          <div className="mb-6 grid gap-3 sm:grid-cols-[minmax(0,1.2fr)_minmax(0,1.6fr)]">
+            <div className="p-3 bg-card border-2 border-border pixel-border text-left">
+              <p className="text-xs text-muted-foreground mb-1">Current Rank</p>
+              <p className="text-lg font-bold text-primary">{meta.rank.name}</p>
+              {meta.rank.nextName && meta.rank.nextMinScore !== undefined && (
+                <p className="mt-1 text-[11px] text-foreground/70">
+                  Next: <span className="font-semibold">{meta.rank.nextName}</span> at{' '}
+                  <span className="font-mono">{meta.rank.nextMinScore}</span> score.
+                </p>
+              )}
+            </div>
+            {meta.recommendation && (
+              <div className="p-3 bg-card border-2 border-primary/60 pixel-border text-left">
+                <p className="text-xs font-semibold text-primary mb-1 uppercase tracking-wide">
+                  Suggested Next Goal
+                </p>
+                <p className="text-xs text-foreground/80">{meta.recommendation}</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Achievements */}
+        {meta.achievements.length > 0 && (
+          <div className="mb-6">
+            <h4 className="text-sm font-semibold text-primary mb-3">Achievements</h4>
+            <div className="space-y-2">
+              {meta.achievements.map((a) => {
+                const progressPercent = Math.round((a.current / a.target) * 100);
+                return (
+                  <div
+                    key={a.id}
+                    className={cn(
+                      'p-2 border-2 pixel-border text-xs sm:text-[13px] flex flex-col gap-1',
+                      a.achieved
+                        ? 'bg-chart-3/10 border-chart-3'
+                        : 'bg-card border-border'
+                    )}
+                  >
+                    <div className="flex justify-between items-center gap-2">
+                      <span className="font-semibold text-primary">{a.title}</span>
+                      <span className="text-[11px] text-muted-foreground font-mono">
+                        {a.current}/{a.target}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-foreground/70">{a.description}</p>
+                    <div className="h-1.5 bg-background/60 border border-border mt-1 overflow-hidden">
+                      <div
+                        className={cn(
+                          'h-full transition-all',
+                          a.achieved ? 'bg-chart-3' : 'bg-primary/70'
+                        )}
+                        style={{ width: `${Math.min(progressPercent, 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Recent Games (run history) */}
         {stats.recentGames.length > 0 && (
           <div>
             <h4 className="text-sm font-semibold text-primary mb-3">Recent Games</h4>
