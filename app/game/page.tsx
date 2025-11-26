@@ -25,7 +25,7 @@ import { LoadingScreen } from '@/components/LoadingScreen';
 import { ReadyScreen } from '@/components/ReadyScreen';
 import { RetroHudWidgets } from '@/components/RetroHudWidgets';
 import { DynamicAmbience } from '@/components/DynamicAmbience';
-import { KeybindingsSettings } from '@/components/KeybindingsSettings';
+import { SettingsModal } from '@/components/SettingsModal';
 import { PerformanceFeedback } from '@/components/PerformanceFeedback';
 
 export default function GamePage() {
@@ -43,6 +43,9 @@ export default function GamePage() {
     reactionTimeStats,
     difficulty,
     gameMode,
+    isPaused,
+    pauseGame,
+    resumeGame,
     toggleSound,
     toggleMusic,
     resetGame,
@@ -106,7 +109,7 @@ export default function GamePage() {
 
   // Highlight new buttons
   const highlightNewButtons = useCallback(function highlightNewButtonsInternal() {
-    if (gameOver || isProcessingRef.current || !isReady) return;
+    if (gameOver || isProcessingRef.current || !isReady || isPaused) return;
 
     clearHighlightTimer();
     isProcessingRef.current = true;
@@ -160,7 +163,7 @@ export default function GamePage() {
   // Handle button press (Reflex mode)
   const handleReflexButtonPress = useCallback(
     (buttonId: number) => {
-      if (gameOver || !isReady || !highlightedButtons.length || isProcessingRef.current) {
+      if (gameOver || isPaused || !isReady || !highlightedButtons.length || isProcessingRef.current) {
         return;
       }
 
@@ -271,7 +274,7 @@ export default function GamePage() {
 
   // Start reflex game when component mounts or game resets (only after ready)
   useEffect(() => {
-    if (gameMode === 'reflex' && !gameOver && isReady) {
+    if (gameMode === 'reflex' && !gameOver && isReady && !isPaused) {
       // Small delay to ensure state is ready
       const startTimer = setTimeout(() => {
         highlightNewButtons();
@@ -282,7 +285,7 @@ export default function GamePage() {
         clearHighlightTimer();
       };
     }
-  }, [gameMode, gameOver, isReady, highlightNewButtons, clearHighlightTimer]);
+  }, [gameMode, gameOver, isReady, isPaused, highlightNewButtons, clearHighlightTimer]);
 
   // Sync ref with state
   useEffect(() => {
@@ -291,14 +294,14 @@ export default function GamePage() {
 
   // Restart reflex/survival game loop when game resets (only after ready)
   useEffect(() => {
-    if ((gameMode === 'reflex' || gameMode === 'survival') && !gameOver && isReady && highlightedButtons.length === 0 && !isProcessingRef.current) {
+    if ((gameMode === 'reflex' || gameMode === 'survival') && !gameOver && isReady && !isPaused && highlightedButtons.length === 0 && !isProcessingRef.current) {
       const restartTimer = setTimeout(() => {
         highlightNewButtons();
       }, 500);
 
       return () => clearTimeout(restartTimer);
     }
-  }, [gameMode, gameOver, isReady, highlightedButtons.length, highlightNewButtons]);
+  }, [gameMode, gameOver, isReady, isPaused, highlightedButtons.length, highlightNewButtons]);
 
   // Ensure survival mode always has 1 life (but not when game is over)
   useEffect(() => {
@@ -334,7 +337,7 @@ export default function GamePage() {
   
   // Show sequence to player
   const showSequence = useCallback(() => {
-    if (gameOver || !isReady || isProcessingRef.current) return;
+    if (gameOver || !isReady || isPaused || isProcessingRef.current) return;
     
     clearHighlightTimer();
     isProcessingRef.current = true;
@@ -394,7 +397,7 @@ export default function GamePage() {
   // Handle button press in sequence mode
   const handleSequenceButtonPress = useCallback(
     (buttonId: number) => {
-      if (gameOver || !isReady || !isWaitingForInput || isShowingSequence || isProcessingRef.current) {
+      if (gameOver || isPaused || !isReady || !isWaitingForInput || isShowingSequence || isProcessingRef.current) {
         return;
       }
       
@@ -506,10 +509,10 @@ export default function GamePage() {
   
   // Start sequence game (only after ready)
   useEffect(() => {
-    if (gameMode === 'sequence' && !gameOver && isReady && sequence.length === 0) {
+    if (gameMode === 'sequence' && !gameOver && isReady && !isPaused && sequence.length === 0) {
       showSequence();
     }
-  }, [gameMode, gameOver, isReady, sequence.length, showSequence]);
+  }, [gameMode, gameOver, isReady, isPaused, sequence.length, showSequence]);
   
   // Cleanup sequence timers
   useEffect(() => {
@@ -527,13 +530,14 @@ export default function GamePage() {
     return gameMode === 'sequence' ? handleSequenceButtonPress : handleReflexButtonPress;
   };
   
-  // Keyboard controls - enabled when game is active, ready, and not showing sequence
-  const keyboardEnabled = !gameOver && isReady && (gameMode !== 'sequence' || isWaitingForInput);
+  // Keyboard controls - enabled when game is active, ready, not paused, and not showing sequence
+  const keyboardEnabled = !gameOver && isReady && !isPaused && (gameMode !== 'sequence' || isWaitingForInput);
   const buttonHandler = getButtonHandler();
   useKeyboardControls(buttonHandler, keyboardEnabled);
 
-  // Keybindings settings state
-  const [showKeybindingsSettings, setShowKeybindingsSettings] = useState(false);
+  // Settings modal state
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [pausedByMenu, setPausedByMenu] = useState(false);
 
   const [screenShake, setScreenShake] = useState(false);
 
@@ -638,7 +642,30 @@ export default function GamePage() {
             endGame();
             router.push('/');
           }}
-          onOpenSettings={() => setShowKeybindingsSettings(true)}
+          onOpenSettings={() => {
+            if (!gameOver && isReady && !isPaused) {
+              pauseGame();
+              clearHighlightTimer();
+              if (nextHighlightTimerRef.current) {
+                clearTimeout(nextHighlightTimerRef.current);
+                nextHighlightTimerRef.current = null;
+              }
+              if (sequenceTimerRef.current) {
+                clearTimeout(sequenceTimerRef.current);
+                sequenceTimerRef.current = null;
+              }
+              setHighlightedButtons([]);
+              currentHighlightedRef.current = [];
+              highlightStartTimeRef.current = null;
+              setHighlightDuration(0);
+              // Ensure processing flag is cleared so loops can resume after closing settings
+              isProcessingRef.current = false;
+              setPausedByMenu(true);
+            } else {
+              setPausedByMenu(false);
+            }
+            setShowSettingsModal(true);
+          }}
         />
       </header>
       
@@ -740,10 +767,16 @@ export default function GamePage() {
         />
       )}
 
-      {/* Keybindings Settings */}
-      {showKeybindingsSettings && (
-        <KeybindingsSettings
-          onClose={() => setShowKeybindingsSettings(false)}
+      {/* Unified Settings Modal */}
+      {showSettingsModal && (
+        <SettingsModal
+          onClose={() => {
+            setShowSettingsModal(false);
+            if (pausedByMenu) {
+              resumeGame();
+              setPausedByMenu(false);
+            }
+          }}
         />
       )}
 

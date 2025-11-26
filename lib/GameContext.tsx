@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
-import { playSound, preloadSounds, playBackgroundMusic, stopBackgroundMusic } from '@/lib/soundUtils';
+import { playSound, preloadSounds, playBackgroundMusic, stopBackgroundMusic, setBackgroundMusicVolume, setSoundEffectsVolume } from '@/lib/soundUtils';
 import { getComboMultiplier } from '@/lib/gameUtils';
 import { DifficultyPreset, DIFFICULTY_PRESETS } from '@/lib/difficulty';
 import { saveGameSession, calculateSessionStatistics, SessionStatistics } from '@/lib/sessionStats';
@@ -20,8 +20,11 @@ export interface GameState {
   lives: number;
   highlightedButtons: number[];
   gameOver: boolean;
+  isPaused: boolean;
   soundEnabled: boolean;
   musicEnabled: boolean;
+  soundVolume: number;
+  musicVolume: number;
   highScore: number;
   combo: number;
   bestCombo: number;
@@ -31,6 +34,10 @@ export interface GameState {
   sessionStatistics: SessionStatistics;
   toggleSound: () => void;
   toggleMusic: () => void;
+  setSoundVolume: (volume: number) => void;
+  setMusicVolume: (volume: number) => void;
+  pauseGame: () => void;
+  resumeGame: () => void;
   setDifficulty: (difficulty: DifficultyPreset) => void;
   setGameMode: (mode: GameMode) => void;
   incrementScore: (reactionTime: number) => void;
@@ -47,6 +54,8 @@ const GameContext = createContext<GameState | undefined>(undefined);
 const STORAGE_KEYS = {
   SOUND_ENABLED: 'reflexthis_soundEnabled',
   MUSIC_ENABLED: 'reflexthis_musicEnabled',
+  SOUND_VOLUME: 'reflexthis_soundVolume',
+  MUSIC_VOLUME: 'reflexthis_musicVolume',
   HIGH_SCORE: 'reflexthis_highScore',
   BEST_COMBO: 'reflexthis_bestCombo',
   DIFFICULTY: 'reflexthis_difficulty',
@@ -60,6 +69,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [gameOver, setGameOver] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [musicEnabled, setMusicEnabled] = useState(true);
+  const [soundVolume, setSoundVolumeState] = useState(0.7);
+  const [musicVolume, setMusicVolumeState] = useState(0.3);
   const [highScore, setHighScore] = useState(0);
   const [combo, setCombo] = useState(0);
   const [bestCombo, setBestCombo] = useState(0);
@@ -69,7 +80,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
     calculateSessionStatistics()
   );
   const [isGameStarted, setIsGameStarted] = useState(false);
-  
+  const [isPaused, setIsPaused] = useState(false);
+
   const gameStartTimeRef = useRef<number | null>(null);
   const [reactionTimeStats, setReactionTimeStats] = useState<ReactionTimeStats>({
     current: null,
@@ -124,6 +136,28 @@ export function GameProvider({ children }: { children: ReactNode }) {
           setGameMode(savedMode as GameMode);
         }
 
+        // Load volumes
+        const savedSoundVolume = localStorage.getItem(STORAGE_KEYS.SOUND_VOLUME);
+        const savedMusicVolume = localStorage.getItem(STORAGE_KEYS.MUSIC_VOLUME);
+        if (savedSoundVolume !== null) {
+          const parsed = parseFloat(savedSoundVolume);
+          if (!isNaN(parsed)) {
+            setSoundVolumeState(parsed);
+            setSoundEffectsVolume(parsed);
+          }
+        } else {
+          setSoundEffectsVolume(0.7);
+        }
+        if (savedMusicVolume !== null) {
+          const parsed = parseFloat(savedMusicVolume);
+          if (!isNaN(parsed)) {
+            setMusicVolumeState(parsed);
+            setBackgroundMusicVolume(parsed);
+          }
+        } else {
+          setBackgroundMusicVolume(0.3);
+        }
+
         // Preload sounds for better performance
         preloadSounds();
       }
@@ -133,17 +167,53 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const toggleSound = useCallback(() => {
     setSoundEnabled((prev) => {
       const newValue = !prev;
+
+      // When turning off, also set volume to 0
+      if (!newValue) {
+        setSoundVolumeState(0);
+        setSoundEffectsVolume(0);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(STORAGE_KEYS.SOUND_VOLUME, String(0));
+        }
+      } else if (soundVolume === 0) {
+        // When turning on from 0 volume, restore to a reasonable default
+        const defaultVolume = 0.7;
+        setSoundVolumeState(defaultVolume);
+        setSoundEffectsVolume(defaultVolume);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(STORAGE_KEYS.SOUND_VOLUME, String(defaultVolume));
+        }
+      }
+
       if (typeof window !== 'undefined') {
         localStorage.setItem(STORAGE_KEYS.SOUND_ENABLED, String(newValue));
       }
       return newValue;
     });
-  }, []);
+  }, [soundVolume]);
 
   // Save music preference to localStorage and control music playback
   const toggleMusic = useCallback(() => {
     setMusicEnabled((prev) => {
       const newValue = !prev;
+
+      // When turning off, also set volume to 0
+      if (!newValue) {
+        setMusicVolumeState(0);
+        setBackgroundMusicVolume(0);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(STORAGE_KEYS.MUSIC_VOLUME, String(0));
+        }
+      } else if (musicVolume === 0) {
+        // When turning on from 0 volume, restore to a reasonable default
+        const defaultVolume = 0.3;
+        setMusicVolumeState(defaultVolume);
+        setBackgroundMusicVolume(defaultVolume);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(STORAGE_KEYS.MUSIC_VOLUME, String(defaultVolume));
+        }
+      }
+
       if (typeof window !== 'undefined') {
         localStorage.setItem(STORAGE_KEYS.MUSIC_ENABLED, String(newValue));
       }
@@ -157,7 +227,31 @@ export function GameProvider({ children }: { children: ReactNode }) {
       
       return newValue;
     });
-  }, [gameOver]);
+  }, [gameOver, musicVolume]);
+
+  const setSoundVolume = useCallback((volume: number) => {
+    const clamped = Math.max(0, Math.min(1, volume));
+    setSoundVolumeState(clamped);
+    // Update enabled flag based on volume
+    setSoundEnabled(clamped > 0);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEYS.SOUND_ENABLED, String(clamped > 0));
+      localStorage.setItem(STORAGE_KEYS.SOUND_VOLUME, String(clamped));
+    }
+    setSoundEffectsVolume(clamped);
+  }, []);
+
+  const setMusicVolume = useCallback((volume: number) => {
+    const clamped = Math.max(0, Math.min(1, volume));
+    setMusicVolumeState(clamped);
+    // Update enabled flag based on volume
+    setMusicEnabled(clamped > 0);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEYS.MUSIC_ENABLED, String(clamped > 0));
+      localStorage.setItem(STORAGE_KEYS.MUSIC_VOLUME, String(clamped));
+    }
+    setBackgroundMusicVolume(clamped);
+  }, []);
 
   // Set difficulty preset
   const handleSetDifficulty = useCallback((newDifficulty: DifficultyPreset) => {
@@ -173,6 +267,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
     if (typeof window !== 'undefined') {
       localStorage.setItem(STORAGE_KEYS.GAME_MODE, newMode);
     }
+  }, []);
+
+  const pauseGame = useCallback(() => {
+    setIsPaused(true);
+  }, []);
+
+  const resumeGame = useCallback(() => {
+    setIsPaused(false);
   }, []);
 
   // Increment score with combo multiplier and track reaction time
@@ -253,6 +355,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   // Check and update high score when game ends, and save session
   useEffect(() => {
     if (gameOver && typeof window !== 'undefined') {
+      setIsPaused(false);
       const currentHighScore = parseInt(
         localStorage.getItem(STORAGE_KEYS.HIGH_SCORE) || '0',
         10
@@ -294,7 +397,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   // Control background music based on game state and music preference
   // Only start music when we're actually in a game session (game has started)
   useEffect(() => {
-    const isGameActive = !gameOver && isGameStarted;
+    const isGameActive = !gameOver && isGameStarted && !isPaused;
     
     if (isGameActive && musicEnabled) {
       // Start music when game is active and music is enabled
@@ -308,12 +411,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
     return () => {
       stopBackgroundMusic();
     };
-  }, [gameOver, musicEnabled, isGameStarted]);
+  }, [gameOver, musicEnabled, isGameStarted, isPaused]);
 
   // Start game (called when game page mounts)
   const startGame = useCallback(() => {
     if (!isGameStarted && !gameOver) {
       setIsGameStarted(true);
+      setIsPaused(false);
       gameStartTimeRef.current = Date.now(); // Track game start time
     }
   }, [isGameStarted, gameOver]);
@@ -321,6 +425,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   // End game (called when leaving game page)
   const endGame = useCallback(() => {
     setIsGameStarted(false);
+    setIsPaused(false);
     gameStartTimeRef.current = null;
     stopBackgroundMusic();
   }, []);
@@ -334,6 +439,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setGameOver(false);
     setCombo(0);
     setIsGameStarted(true); // Mark that game has started
+    setIsPaused(false);
     setReactionTimeStats({
       current: null,
       fastest: null,
@@ -352,8 +458,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
         lives,
         highlightedButtons,
         gameOver,
+        isPaused,
         soundEnabled,
         musicEnabled,
+        soundVolume,
+        musicVolume,
         highScore,
         combo,
         bestCombo,
@@ -363,6 +472,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
         sessionStatistics,
         toggleSound,
         toggleMusic,
+        setSoundVolume,
+        setMusicVolume,
+        pauseGame,
+        resumeGame,
         setDifficulty: handleSetDifficulty,
         setGameMode: handleSetGameMode,
         incrementScore,

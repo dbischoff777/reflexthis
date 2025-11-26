@@ -7,6 +7,10 @@ const audioCache: Record<string, HTMLAudioElement> = {};
 const audioContextCache: AudioContext | null = null;
 let backgroundMusic: HTMLAudioElement | null = null;
 
+// Global volume controls (0-1), can be updated from UI
+let soundEffectsVolume = 0.7;
+let musicVolume = 0.3;
+
 const SOUNDS = {
   highlight: '/sounds/highlight.mp3',
   success: '/sounds/success.mp3',
@@ -59,7 +63,7 @@ export function preloadSounds(): void {
     try {
       const audio = new Audio(path);
       audio.preload = 'auto';
-      audio.volume = 0.7; // Set default volume
+      audio.volume = soundEffectsVolume; // Set default volume
       
       // Handle loading errors gracefully (silently - fallback will be used)
       audio.addEventListener('error', () => {
@@ -103,7 +107,7 @@ export function playSound(sound: SoundType, enabled: boolean = true): void {
     if (cachedAudio) {
       // Clone and play to allow overlapping sounds
       const audio = cachedAudio.cloneNode() as HTMLAudioElement;
-      audio.volume = 0.7;
+      audio.volume = soundEffectsVolume;
       audio.currentTime = 0;
       audio.play().catch(() => {
         // If file doesn't exist, silently fall back to generated sound
@@ -113,7 +117,7 @@ export function playSound(sound: SoundType, enabled: boolean = true): void {
     } else {
       // Try to load and play
       const audio = new Audio(SOUNDS[sound]);
-      audio.volume = 0.7;
+      audio.volume = soundEffectsVolume;
       audio.preload = 'auto';
       
       audio.play().catch(() => {
@@ -165,7 +169,6 @@ function playFallbackSound(sound: SoundType): void {
  * Background music management
  */
 const MUSIC_PATH = '/sounds/music/game-music.mp3';
-const MUSIC_VOLUME = 0.3; // Lower volume than sound effects (0.7)
 
 /**
  * Initialize background music
@@ -177,7 +180,7 @@ function initBackgroundMusic(): HTMLAudioElement | null {
     try {
       backgroundMusic = new Audio(MUSIC_PATH);
       backgroundMusic.loop = true;
-      backgroundMusic.volume = MUSIC_VOLUME;
+      backgroundMusic.volume = musicVolume;
       backgroundMusic.preload = 'auto';
       
       // Handle loading errors gracefully
@@ -212,7 +215,7 @@ export function playBackgroundMusic(enabled: boolean = true): void {
 
   // Only play if not already playing
   if (music.paused) {
-    music.volume = MUSIC_VOLUME;
+    music.volume = musicVolume;
     music.play().catch((error) => {
       // Silently handle autoplay restrictions
       if (process.env.NODE_ENV === 'development') {
@@ -246,9 +249,18 @@ export function stopBackgroundMusic(): void {
  * @param volume - Volume between 0 and 1
  */
 export function setBackgroundMusicVolume(volume: number): void {
+  musicVolume = Math.max(0, Math.min(1, volume));
   const music = initBackgroundMusic();
   if (music) {
-    music.volume = Math.max(0, Math.min(1, volume));
+    music.volume = musicVolume;
   }
+}
+
+/**
+ * Set sound effects volume
+ * @param volume - Volume between 0 and 1
+ */
+export function setSoundEffectsVolume(volume: number): void {
+  soundEffectsVolume = Math.max(0, Math.min(1, volume));
 }
 

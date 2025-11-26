@@ -8,10 +8,10 @@ export interface Keybindings {
   [buttonId: number]: string;
 }
 
-// Default keybindings - QWERTY layout matching 3-4-3 grid
+// Default keybindings - QWERTZ layout matching 3-4-3 grid
 // Row 1 (top): q, w, e
 // Row 2 (middle): a, s, d, f
-// Row 3 (bottom): z, x, c
+// Row 3 (bottom): y, x, c
 export const DEFAULT_KEYBINDINGS: Keybindings = {
   1: 'q',
   2: 'w',
@@ -20,9 +20,27 @@ export const DEFAULT_KEYBINDINGS: Keybindings = {
   5: 's',
   6: 'd',
   7: 'f',
-  8: 'z',
+  8: 'y',
   9: 'x',
   10: 'c',
+};
+
+// Numpad-friendly preset
+// Mapped to typical numpad shape:
+// Row 1 (top): 7, 8, 9
+// Row 2 (middle): 4, 5, 6, +
+// Row 3 (bottom): 1, 2, 3
+export const NUMPAD_KEYBINDINGS: Keybindings = {
+  1: '7',
+  2: '8',
+  3: '9',
+  4: '4',
+  5: '5',
+  6: '6',
+  7: '+',
+  8: '1',
+  9: '2',
+  10: '3',
 };
 
 const STORAGE_KEY = 'reflexthis_keybindings';
