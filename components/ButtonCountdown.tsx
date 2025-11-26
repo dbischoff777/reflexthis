@@ -10,7 +10,8 @@ interface ButtonCountdownProps {
 }
 
 /**
- * ButtonCountdown component - Shows countdown timer on highlighted buttons
+ * ButtonCountdown component - Shows a single prominent square progress indicator
+ * that matches the button shape and communicates urgency through color and intensity
  */
 export function ButtonCountdown({
   duration,
@@ -44,113 +45,61 @@ export function ButtonCountdown({
 
   if (!startTime || duration <= 0) return null;
 
-  // Determine urgency level
+  // Determine urgency level and color progression
+  // Green (safe) → Yellow (warning) → Orange (urgent) → Red (critical)
+  const getColor = () => {
+    if (progress > 60) {
+      // Green - plenty of time
+      return { color: '#00ff00', glow: 'rgba(0, 255, 0, 0.6)' };
+    } else if (progress > 40) {
+      // Yellow - getting urgent
+      return { color: '#ffff00', glow: 'rgba(255, 255, 0, 0.7)' };
+    } else if (progress > 20) {
+      // Orange - urgent
+      return { color: '#ff8800', glow: 'rgba(255, 136, 0, 0.8)' };
+    } else {
+      // Red - critical
+      return { color: '#ff0000', glow: 'rgba(255, 0, 0, 1)' };
+    }
+  };
+
   const urgencyLevel = progress < 20 ? 'critical' : progress < 40 ? 'warning' : 'normal';
   const isUrgent = urgencyLevel === 'critical' || urgencyLevel === 'warning';
+  const { color, glow } = getColor();
+
+  // Calculate border width based on progress (shrinks inward)
+  // Start with full border, shrink to show time running out
+  const borderWidth = 4;
+  const shrinkAmount = (1 - progress / 100) * 50; // Shrink up to 50% from edges
+  const inset = `${shrinkAmount}%`;
 
   return (
     <div
       className={cn(
         'absolute inset-0 pointer-events-none z-20',
-        'flex items-center justify-center',
-        'countdown-pulse'
+        'flex items-center justify-center'
       )}
-      style={{
-        animationDuration: `${duration}ms`,
-      }}
     >
-      {/* Progress ring around button - always red/orange for visibility against cyan buttons */}
-      <svg
-        className="absolute inset-0 w-full h-full transform -rotate-90"
-        style={{ 
-          filter: urgencyLevel === 'critical' 
-            ? 'drop-shadow(0 0 6px rgba(255, 0, 0, 0.8))' 
-            : urgencyLevel === 'warning'
-            ? 'drop-shadow(0 0 4px rgba(255, 136, 0, 0.6))'
-            : 'drop-shadow(0 0 3px rgba(255, 0, 0, 0.4))'
-        }}
-      >
-        <circle
-          cx="50%"
-          cy="50%"
-          r="45%"
-          fill="none"
-          stroke={urgencyLevel === 'critical' ? '#ff0000' : urgencyLevel === 'warning' ? '#ff8800' : '#ff3333'}
-          strokeWidth="3"
-          strokeDasharray={`${2 * Math.PI * 45} ${2 * Math.PI * 45}`}
-          strokeDashoffset={`${2 * Math.PI * 45 * (1 - progress / 100)}`}
-          className={cn(
-            'transition-all duration-75',
-            isUrgent && 'animate-pulse'
-          )}
-          style={{
-            strokeLinecap: 'round',
-          }}
-        />
-      </svg>
-
-      {/* Progress indicator - top border that shrinks - red tones for visibility */}
+      {/* Single prominent square progress border that shrinks inward */}
       <div
-        className="absolute top-0 left-0 right-0 h-1.5 transition-all duration-150"
+        className={cn(
+          'absolute border-4 transition-all duration-75',
+          isUrgent && 'animate-pulse'
+        )}
         style={{
-          backgroundColor: urgencyLevel === 'critical' ? '#ff0000' : urgencyLevel === 'warning' ? '#ff8800' : '#ff3333',
-          transform: `scaleX(${progress / 100})`,
-          transformOrigin: 'left',
-          boxShadow: isUrgent 
-            ? '0 0 8px rgba(255, 0, 0, 0.8), 0 0 4px rgba(255, 0, 0, 0.4)' 
-            : '0 0 4px rgba(255, 0, 0, 0.3)',
+          top: inset,
+          right: inset,
+          bottom: inset,
+          left: inset,
+          borderColor: color,
+          borderRadius: '0',
+          imageRendering: 'pixelated' as any,
+          boxShadow: isUrgent
+            ? `0 0 12px ${glow}, 0 0 24px ${glow}, 0 0 36px ${glow}, inset 0 0 12px ${glow}`
+            : `0 0 8px ${glow}, 0 0 16px ${glow}, inset 0 0 8px ${glow}`,
+          filter: isUrgent ? 'brightness(1.2)' : 'brightness(1)',
         }}
       />
-      
-      {/* Bottom border indicator - red tones for visibility */}
-      <div
-        className="absolute bottom-0 left-0 right-0 h-1.5 transition-all duration-150"
-        style={{
-          backgroundColor: urgencyLevel === 'critical' ? '#ff0000' : urgencyLevel === 'warning' ? '#ff8800' : '#ff3333',
-          transform: `scaleX(${progress / 100})`,
-          transformOrigin: 'right',
-          boxShadow: isUrgent 
-            ? '0 0 8px rgba(255, 0, 0, 0.8), 0 0 4px rgba(255, 0, 0, 0.4)' 
-            : '0 0 4px rgba(255, 0, 0, 0.3)',
-        }}
-      />
-      
-      {/* Countdown text - always red with dark background for maximum visibility */}
-      {remaining > 100 && (
-        <span
-          className={cn(
-            'text-[10px] sm:text-xs font-bold pixel-border px-1.5 py-0.5 transition-all duration-150',
-            'text-white border-red-600',
-            urgencyLevel === 'critical' 
-              ? 'bg-red-600/90 animate-pulse' 
-              : urgencyLevel === 'warning'
-              ? 'bg-red-600/80'
-              : 'bg-red-600/70'
-          )}
-          style={{
-            imageRendering: 'pixelated',
-            textShadow: isUrgent 
-              ? '0 0 10px rgba(255, 0, 0, 1), 0 0 5px rgba(255, 0, 0, 0.8), 0 0 2px rgba(0, 0, 0, 1)' 
-              : '0 0 6px rgba(255, 0, 0, 0.8), 0 0 2px rgba(0, 0, 0, 0.8)',
-            borderColor: urgencyLevel === 'critical' ? '#ff0000' : urgencyLevel === 'warning' ? '#ff8800' : '#ff3333',
-          }}
-        >
-          {Math.ceil(remaining / 100)}
-        </span>
-      )}
-
-      {/* Urgent warning pulse overlay - red tones to avoid conflict with cyan buttons */}
-      {isUrgent && (
-        <div
-          className="absolute inset-0 pointer-events-none animate-pulse"
-          style={{
-            borderRadius: '0',
-            backgroundColor: urgencyLevel === 'critical' 
-              ? 'rgba(255, 0, 0, 0.15)' 
-              : 'rgba(255, 136, 0, 0.1)',
-          }}
-        />
-      )}
     </div>
   );
 }
