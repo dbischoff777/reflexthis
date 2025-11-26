@@ -27,6 +27,7 @@ import { RetroHudWidgets } from '@/components/RetroHudWidgets';
 import { DynamicAmbience } from '@/components/DynamicAmbience';
 import { SettingsModal } from '@/components/SettingsModal';
 import { PerformanceFeedback } from '@/components/PerformanceFeedback';
+import { getKeybindings, getKeyDisplayName, DEFAULT_KEYBINDINGS } from '@/lib/keybindings';
 
 export default function GamePage() {
   const router = useRouter();
@@ -95,6 +96,18 @@ export default function GamePage() {
   const [isShowingSequence, setIsShowingSequence] = useState(false);
   const [isWaitingForInput, setIsWaitingForInput] = useState(false);
   const sequenceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Derived keybinding map for control hints.
+  // Computed on each render so updated keybindings from Settings are reflected immediately.
+  const keybindingHints: Record<number, string> = (() => {
+    const bindings =
+      typeof window === 'undefined' ? DEFAULT_KEYBINDINGS : getKeybindings();
+    const result: Record<number, string> = {};
+    for (let i = 1; i <= 10; i++) {
+      result[i] = getKeyDisplayName(bindings[i]);
+    }
+    return result;
+  })();
 
   // Clear highlight timer
   const clearHighlightTimer = useCallback(() => {
@@ -545,6 +558,7 @@ export default function GamePage() {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [pausedByMenu, setPausedByMenu] = useState(false);
   const [showPauseModal, setShowPauseModal] = useState(false);
+  const [showModeHelp, setShowModeHelp] = useState(false);
 
   const [screenShake, setScreenShake] = useState(false);
 
@@ -742,26 +756,65 @@ export default function GamePage() {
       
       {/* Main Game Area */}
       <main className="relative z-10 flex-1 flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-hidden">
-        {/* Sequence Mode Status */}
-        {gameMode === 'sequence' && (
-          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-20">
+        {/* Inline mode status + compact help toggle */}
+        <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-20 flex flex-col items-center gap-2">
+          {/* Sequence status */}
+          {gameMode === 'sequence' && (
             <div className="bg-card border-4 border-primary pixel-border px-4 py-2">
               {isShowingSequence ? (
-                <div className="text-sm font-bold text-primary">
+                <div className="text-xs sm:text-sm font-bold text-primary">
                   Watch the sequence...
                 </div>
               ) : isWaitingForInput ? (
-                <div className="text-sm font-bold text-accent">
+                <div className="text-xs sm:text-sm font-bold text-accent">
                   Repeat: {playerSequence.length}/{sequence.length}
                 </div>
               ) : null}
             </div>
+          )}
+
+          {/* Compact mode pill with ? toggle */}
+          <div className="flex items-center gap-2 bg-card/80 border-2 border-border px-3 py-1 rounded-sm pixel-border text-[10px] sm:text-xs">
+            <span className="font-semibold text-primary uppercase">
+              {gameMode === 'reflex' && 'Reflex'}
+              {gameMode === 'sequence' && 'Sequence'}
+              {gameMode === 'survival' && 'Survival'}
+            </span>
+            <button
+              type="button"
+              onClick={() => setShowModeHelp((prev) => !prev)}
+              className="ml-1 h-5 w-5 flex items-center justify-center border border-border rounded-sm bg-background/80 text-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
+              aria-label="Toggle mode help"
+            >
+              ?
+            </button>
           </div>
-        )}
+
+          {/* Small help popup when toggled */}
+          {showModeHelp && (
+            <div className="mt-1 bg-card/95 border-2 border-primary pixel-border px-3 py-2 max-w-xs shadow-lg">
+              {gameMode === 'reflex' && (
+                <p className="text-[10px] sm:text-xs text-foreground/80">
+                  Hit highlighted buttons quickly and avoid mistakes to keep your combo and score growing.
+                </p>
+              )}
+              {gameMode === 'sequence' && (
+                <p className="text-[10px] sm:text-xs text-foreground/80">
+                  Watch the pattern, then press the same buttons in order without errors.
+                </p>
+              )}
+              {gameMode === 'survival' && (
+                <p className="text-[10px] sm:text-xs text-foreground/80">
+                  One life only – every mistake ends the run, and difficulty rises fast.
+                </p>
+              )}
+            </div>
+          )}
+        </div>
         
         <div className="button-grid w-full max-w-2xl">
           {/* Top Row - 3 buttons */}
-          <div className="grid-row top-row flex justify-center gap-2 sm:gap-3 md:gap-4 lg:gap-6 mb-2 sm:mb-3 md:mb-4 lg:mb-6">
+          <div className="grid-row top-row flex justify-center gap-2 sm:gap-3 md:gap-4 lg:gap-6 mb-1 sm:mb-2 md:mb-3 lg:mb-4">
             {[1, 2, 3].map((id) => (
               <GameButton
                 key={id}
@@ -774,9 +827,17 @@ export default function GamePage() {
               />
             ))}
           </div>
+          {/* Top row key hints */}
+          <div className="flex justify-center gap-2 sm:gap-3 md:gap-4 lg:gap-6 mb-2 sm:mb-3 md:mb-4 lg:mb-6 text-[10px] sm:text-xs text-foreground/70 font-mono">
+            {[1, 2, 3].map((id) => (
+              <span key={id} className="min-w-[40px] text-center opacity-80">
+                {keybindingHints[id]}
+              </span>
+            ))}
+          </div>
           
           {/* Middle Row - 4 buttons */}
-          <div className="grid-row middle-row flex justify-center gap-2 sm:gap-3 md:gap-4 lg:gap-6 mb-2 sm:mb-3 md:mb-4 lg:mb-6">
+          <div className="grid-row middle-row flex justify-center gap-2 sm:gap-3 md:gap-4 lg:gap-6 mb-1 sm:mb-2 md:mb-3 lg:mb-4">
             {[4, 5, 6, 7].map((id) => (
               <GameButton
                 key={id}
@@ -787,6 +848,14 @@ export default function GamePage() {
                 highlightDuration={highlightDuration}
                 pressFeedback={buttonPressFeedback[id] || null}
               />
+            ))}
+          </div>
+          {/* Middle row key hints */}
+          <div className="flex justify-center gap-2 sm:gap-3 md:gap-4 lg:gap-6 mb-2 sm:mb-3 md:mb-4 lg:mb-6 text-[10px] sm:text-xs text-foreground/70 font-mono">
+            {[4, 5, 6, 7].map((id) => (
+              <span key={id} className="min-w-[40px] text-center opacity-80">
+                {keybindingHints[id]}
+              </span>
             ))}
           </div>
           
@@ -802,6 +871,14 @@ export default function GamePage() {
                 highlightDuration={highlightDuration}
                 pressFeedback={buttonPressFeedback[id] || null}
               />
+            ))}
+          </div>
+          {/* Bottom row key hints */}
+          <div className="flex justify-center gap-2 sm:gap-3 md:gap-4 lg:gap-6 mt-2 sm:mt-3 md:mt-4 lg:mt-6 text-[10px] sm:text-xs text-foreground/70 font-mono">
+            {[8, 9, 10].map((id) => (
+              <span key={id} className="min-w-[40px] text-center opacity-80">
+                {keybindingHints[id]}
+              </span>
             ))}
           </div>
         </div>
