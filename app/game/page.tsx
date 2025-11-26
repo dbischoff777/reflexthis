@@ -67,6 +67,7 @@ export default function GamePage() {
   const isProcessingRef = useRef(false);
   const currentHighlightedRef = useRef<number[]>([]);
   const highlightStartTimeRef = useRef<number | null>(null);
+  const isPausedRef = useRef(false);
   const [screenFlash, setScreenFlash] = useState<'error' | 'success' | null>(null);
   const [highlightDuration, setHighlightDuration] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -107,9 +108,14 @@ export default function GamePage() {
     }
   }, []);
 
+  // Keep a ref of the paused state for use in callbacks/timers
+  useEffect(() => {
+    isPausedRef.current = isPaused;
+  }, [isPaused]);
+
   // Highlight new buttons
   const highlightNewButtons = useCallback(function highlightNewButtonsInternal() {
-    if (gameOver || isProcessingRef.current || !isReady || isPaused) return;
+    if (gameOver || isProcessingRef.current || !isReady || isPausedRef.current) return;
 
     clearHighlightTimer();
     isProcessingRef.current = true;
@@ -163,7 +169,7 @@ export default function GamePage() {
   // Handle button press (Reflex mode)
   const handleReflexButtonPress = useCallback(
     (buttonId: number) => {
-      if (gameOver || isPaused || !isReady || !highlightedButtons.length || isProcessingRef.current) {
+      if (gameOver || isPausedRef.current || !isReady || !highlightedButtons.length || isProcessingRef.current) {
         return;
       }
 
@@ -337,7 +343,7 @@ export default function GamePage() {
   
   // Show sequence to player
   const showSequence = useCallback(() => {
-    if (gameOver || !isReady || isPaused || isProcessingRef.current) return;
+    if (gameOver || !isReady || isPausedRef.current || isProcessingRef.current) return;
     
     clearHighlightTimer();
     isProcessingRef.current = true;
@@ -397,7 +403,7 @@ export default function GamePage() {
   // Handle button press in sequence mode
   const handleSequenceButtonPress = useCallback(
     (buttonId: number) => {
-      if (gameOver || isPaused || !isReady || !isWaitingForInput || isShowingSequence || isProcessingRef.current) {
+      if (gameOver || isPausedRef.current || !isReady || !isWaitingForInput || isShowingSequence || isProcessingRef.current) {
         return;
       }
       
@@ -538,6 +544,7 @@ export default function GamePage() {
   // Settings modal state
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [pausedByMenu, setPausedByMenu] = useState(false);
+  const [showPauseModal, setShowPauseModal] = useState(false);
 
   const [screenShake, setScreenShake] = useState(false);
 
@@ -600,6 +607,69 @@ export default function GamePage() {
     };
   }, []);
 
+  // Helper to pause game and clear all active timers/highlights
+  const pauseGameAndClearState = useCallback(() => {
+    // Mark paused synchronously for any callbacks/timers that rely on the ref
+    isPausedRef.current = true;
+    pauseGame();
+    clearHighlightTimer();
+    if (nextHighlightTimerRef.current) {
+      clearTimeout(nextHighlightTimerRef.current);
+      nextHighlightTimerRef.current = null;
+    }
+    if (sequenceTimerRef.current) {
+      clearTimeout(sequenceTimerRef.current);
+      sequenceTimerRef.current = null;
+    }
+    setHighlightedButtons([]);
+    currentHighlightedRef.current = [];
+    highlightStartTimeRef.current = null;
+    setHighlightDuration(0);
+    isProcessingRef.current = false;
+  }, [pauseGame, clearHighlightTimer, setHighlightedButtons]);
+
+  // Global ESC handler to pause game and show pause confirmation
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      // Don't interfere when settings modal is open
+      if (showSettingsModal) return;
+      // Only react during active gameplay
+      if (!isReady || gameOver) return;
+
+      e.preventDefault();
+
+      if (showPauseModal) {
+        // ESC while paused = continue
+        setShowPauseModal(false);
+        // Synchronously mark as unpaused for callbacks/timers
+        isPausedRef.current = false;
+        resumeGame();
+        // If nothing is highlighted and we're not processing, kick off next highlight
+        if (!gameOver && highlightedButtons.length === 0 && !isProcessingRef.current) {
+          highlightNewButtons();
+        }
+        return;
+      }
+
+      // First ESC during gameplay → pause and show confirmation
+      pauseGameAndClearState();
+      setShowPauseModal(true);
+    };
+
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [
+    showSettingsModal,
+    isReady,
+    gameOver,
+    showPauseModal,
+    resumeGame,
+    highlightedButtons.length,
+    highlightNewButtons,
+    pauseGameAndClearState,
+  ]);
+
   return (
     <>
       <OrientationHandler />
@@ -639,27 +709,18 @@ export default function GamePage() {
           onToggleSound={toggleSound}
           onToggleMusic={toggleMusic}
           onQuit={() => {
-            endGame();
-            router.push('/');
+            // Match ESC behavior: pause first and show confirmation
+            if (!gameOver && isReady && !isPaused) {
+              pauseGameAndClearState();
+              setShowPauseModal(true);
+            } else {
+              endGame();
+              router.push('/');
+            }
           }}
           onOpenSettings={() => {
             if (!gameOver && isReady && !isPaused) {
-              pauseGame();
-              clearHighlightTimer();
-              if (nextHighlightTimerRef.current) {
-                clearTimeout(nextHighlightTimerRef.current);
-                nextHighlightTimerRef.current = null;
-              }
-              if (sequenceTimerRef.current) {
-                clearTimeout(sequenceTimerRef.current);
-                sequenceTimerRef.current = null;
-              }
-              setHighlightedButtons([]);
-              currentHighlightedRef.current = [];
-              highlightStartTimeRef.current = null;
-              setHighlightDuration(0);
-              // Ensure processing flag is cleared so loops can resume after closing settings
-              isProcessingRef.current = false;
+              pauseGameAndClearState();
               setPausedByMenu(true);
             } else {
               setPausedByMenu(false);
@@ -778,6 +839,46 @@ export default function GamePage() {
             }
           }}
         />
+      )}
+
+      {/* Pause Confirmation Modal */}
+      {showPauseModal && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/80">
+          <div className="bg-card border-4 border-primary pixel-border p-4 sm:p-6 md:p-8 max-w-sm w-full mx-4 text-center">
+            <h2 className="text-2xl sm:text-3xl font-bold text-primary mb-4 pixel-border px-4 py-2 inline-block">
+              GAME PAUSED
+            </h2>
+            <p className="text-sm text-foreground/80 mb-6">
+              Press ESC or CONTINUE to resume, or EXIT to return to the main menu.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <button
+                onClick={() => {
+                  setShowPauseModal(false);
+                  // Synchronously mark as unpaused for callbacks/timers
+                  isPausedRef.current = false;
+                  resumeGame();
+                  if (!gameOver && highlightedButtons.length === 0 && !isProcessingRef.current) {
+                    highlightNewButtons();
+                  }
+                }}
+                className="px-6 py-3 border-4 border-primary bg-primary text-primary-foreground pixel-border font-bold hover:bg-primary/80 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                CONTINUE
+              </button>
+              <button
+                onClick={() => {
+                  setShowPauseModal(false);
+                  endGame();
+                  router.push('/');
+                }}
+                className="px-6 py-3 border-4 border-destructive bg-destructive text-destructive-foreground pixel-border font-bold hover:bg-destructive/80 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-destructive"
+              >
+                EXIT
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       </div>
