@@ -9,7 +9,7 @@ interface SettingsModalProps {
 }
 
 /**
- * Unified SettingsModal - combines audio and keybinding settings
+ * Unified SettingsModal - combines audio, keybinding, and comfort settings
  */
 export function SettingsModal({ onClose }: SettingsModalProps) {
   const {
@@ -21,6 +21,14 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
     toggleMusic,
     setSoundVolume,
     setMusicVolume,
+    screenShakeEnabled,
+    screenFlashEnabled,
+    reducedEffects,
+    highContrastMode,
+    setScreenShakeEnabled,
+    setScreenFlashEnabled,
+    setReducedEffects,
+    setHighContrastMode,
   } = useGameState();
 
   const handleSoundVolumeChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -119,9 +127,84 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
             </div>
           </section>
 
-          {/* Keybindings Settings (embedded) */}
-          <section>
+          {/* Keybindings + Comfort Settings (right column) */}
+          <section className="space-y-6">
+            {/* Keybindings Settings (embedded) */}
             <KeybindingsSettings onClose={onClose} embedded />
+
+            {/* Comfort & Accessibility */}
+            <div className="space-y-3">
+              <div>
+                <h3 className="text-xl font-bold text-primary mb-2 pixel-border inline-block px-3 py-1">
+                  COMFORT & ACCESSIBILITY
+                </h3>
+                <p className="text-xs text-foreground/70">
+                  Adjust visual intensity and motion to match your preferences.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-2 text-xs sm:text-sm">
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5 accent-primary"
+                    checked={screenShakeEnabled}
+                    onChange={(e) => setScreenShakeEnabled(e.target.checked)}
+                  />
+                  <span>
+                    <span className="font-semibold">Screen shake</span>
+                    <span className="block text-foreground/70">
+                      Disable this if camera movement feels uncomfortable.
+                    </span>
+                  </span>
+                </label>
+
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5 accent-primary"
+                    checked={screenFlashEnabled}
+                    onChange={(e) => setScreenFlashEnabled(e.target.checked)}
+                  />
+                  <span>
+                    <span className="font-semibold">Screen flash</span>
+                    <span className="block text-foreground/70">
+                      Turns on/off the full-screen flash for hits and errors.
+                    </span>
+                  </span>
+                </label>
+
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5 accent-primary"
+                    checked={reducedEffects}
+                    onChange={(e) => setReducedEffects(e.target.checked)}
+                  />
+                  <span>
+                    <span className="font-semibold">Reduced effects</span>
+                    <span className="block text-foreground/70">
+                      Shorter flashes and toned-down motion for a calmer experience.
+                    </span>
+                  </span>
+                </label>
+
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5 accent-primary"
+                    checked={highContrastMode}
+                    onChange={(e) => setHighContrastMode(e.target.checked)}
+                  />
+                  <span>
+                    <span className="font-semibold">High-contrast flashes</span>
+                    <span className="block text-foreground/70">
+                      Makes success/error flashes more pronounced for better visibility.
+                    </span>
+                  </span>
+                </label>
+              </div>
+            </div>
           </section>
         </div>
       </div>
@@ -129,4 +212,4 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
   );
 }
 
-
+export default SettingsModal;

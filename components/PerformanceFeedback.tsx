@@ -136,11 +136,10 @@ export function PerformanceFeedback({
     let priority = 0; // Higher priority messages override lower ones
     
     // Only process reaction time if it's new (different from last processed)
-    // Only show messages for fast reactions to avoid spam
     if (reactionTime !== null && reactionTime !== lastReactionTimeRef.current) {
       lastReactionTimeRef.current = reactionTime;
 
-      // Only show feedback for fast reactions (lower priority than combo/score)
+      // Positive feedback for fast reactions (lower priority than combo/score)
       if (reactionTime > 0 && reactionTime < 250) {
         if (reactionTime < 150) {
           newMessage = {
@@ -161,6 +160,16 @@ export function PerformanceFeedback({
           };
           priority = 40; // Lower priority than combo/score
         }
+      } else if (reactionTime >= 400) {
+        // Gentle coaching when reactions are consistently slow
+        newMessage = {
+          id: `msg-${messageIdCounter.current++}`,
+          type: 'reaction-slow',
+          message: getRandomMessage(REACTION_SLOW_MESSAGES),
+          color: '#ffff66',
+          timestamp: Date.now(),
+        };
+        priority = 20; // Low priority – combo/score messages will override
       }
     }
 

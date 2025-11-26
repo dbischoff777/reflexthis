@@ -8,7 +8,7 @@ import { ModeSelector } from '@/components/ModeSelector';
 import { SessionStatsDisplay } from '@/components/SessionStatsDisplay';
 import { DemoMode } from '@/components/DemoMode';
 import { LoadingScreen } from '@/components/LoadingScreen';
-import { SettingsModal } from '@/components/SettingsModal';
+import SettingsModal from '@/components/SettingsModal';
 import { DifficultyPreset } from '@/lib/difficulty';
 import { GameMode } from '@/lib/gameModes';
 import { GameProvider, useGameState } from '@/lib/GameContext';

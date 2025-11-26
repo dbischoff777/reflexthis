@@ -32,10 +32,18 @@ export interface GameState {
   difficulty: DifficultyPreset;
   gameMode: GameMode;
   sessionStatistics: SessionStatistics;
+  screenShakeEnabled: boolean;
+  screenFlashEnabled: boolean;
+  reducedEffects: boolean;
+  highContrastMode: boolean;
   toggleSound: () => void;
   toggleMusic: () => void;
   setSoundVolume: (volume: number) => void;
   setMusicVolume: (volume: number) => void;
+  setScreenShakeEnabled: (enabled: boolean) => void;
+  setScreenFlashEnabled: (enabled: boolean) => void;
+  setReducedEffects: (enabled: boolean) => void;
+  setHighContrastMode: (enabled: boolean) => void;
   pauseGame: () => void;
   resumeGame: () => void;
   setDifficulty: (difficulty: DifficultyPreset) => void;
@@ -60,6 +68,10 @@ const STORAGE_KEYS = {
   BEST_COMBO: 'reflexthis_bestCombo',
   DIFFICULTY: 'reflexthis_difficulty',
   GAME_MODE: 'reflexthis_gameMode',
+  SCREEN_SHAKE_ENABLED: 'reflexthis_screenShakeEnabled',
+  SCREEN_FLASH_ENABLED: 'reflexthis_screenFlashEnabled',
+  REDUCED_EFFECTS: 'reflexthis_reducedEffects',
+  HIGH_CONTRAST_MODE: 'reflexthis_highContrastMode',
 } as const;
 
 export function GameProvider({ children }: { children: ReactNode }) {
@@ -81,6 +93,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
   );
   const [isGameStarted, setIsGameStarted] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [screenShakeEnabled, setScreenShakeEnabledState] = useState(true);
+  const [screenFlashEnabled, setScreenFlashEnabledState] = useState(true);
+  const [reducedEffects, setReducedEffectsState] = useState(false);
+  const [highContrastMode, setHighContrastModeState] = useState(false);
 
   const gameStartTimeRef = useRef<number | null>(null);
   const [reactionTimeStats, setReactionTimeStats] = useState<ReactionTimeStats>({
@@ -156,6 +172,27 @@ export function GameProvider({ children }: { children: ReactNode }) {
           }
         } else {
           setBackgroundMusicVolume(0.3);
+        }
+
+        // Load visual comfort settings
+        const savedScreenShake = localStorage.getItem(STORAGE_KEYS.SCREEN_SHAKE_ENABLED);
+        if (savedScreenShake !== null) {
+          setScreenShakeEnabledState(savedScreenShake === 'true');
+        }
+
+        const savedScreenFlash = localStorage.getItem(STORAGE_KEYS.SCREEN_FLASH_ENABLED);
+        if (savedScreenFlash !== null) {
+          setScreenFlashEnabledState(savedScreenFlash === 'true');
+        }
+
+        const savedReducedEffects = localStorage.getItem(STORAGE_KEYS.REDUCED_EFFECTS);
+        if (savedReducedEffects !== null) {
+          setReducedEffectsState(savedReducedEffects === 'true');
+        }
+
+        const savedHighContrast = localStorage.getItem(STORAGE_KEYS.HIGH_CONTRAST_MODE);
+        if (savedHighContrast !== null) {
+          setHighContrastModeState(savedHighContrast === 'true');
         }
 
         // Preload sounds for better performance
@@ -251,6 +288,34 @@ export function GameProvider({ children }: { children: ReactNode }) {
       localStorage.setItem(STORAGE_KEYS.MUSIC_VOLUME, String(clamped));
     }
     setBackgroundMusicVolume(clamped);
+  }, []);
+
+  const setScreenShakeEnabled = useCallback((enabled: boolean) => {
+    setScreenShakeEnabledState(enabled);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEYS.SCREEN_SHAKE_ENABLED, String(enabled));
+    }
+  }, []);
+
+  const setScreenFlashEnabled = useCallback((enabled: boolean) => {
+    setScreenFlashEnabledState(enabled);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEYS.SCREEN_FLASH_ENABLED, String(enabled));
+    }
+  }, []);
+
+  const setReducedEffects = useCallback((enabled: boolean) => {
+    setReducedEffectsState(enabled);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEYS.REDUCED_EFFECTS, String(enabled));
+    }
+  }, []);
+
+  const setHighContrastMode = useCallback((enabled: boolean) => {
+    setHighContrastModeState(enabled);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEYS.HIGH_CONTRAST_MODE, String(enabled));
+    }
   }, []);
 
   // Set difficulty preset
@@ -470,10 +535,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
         difficulty,
         gameMode,
         sessionStatistics,
+        screenShakeEnabled,
+        screenFlashEnabled,
+        reducedEffects,
+        highContrastMode,
         toggleSound,
         toggleMusic,
         setSoundVolume,
         setMusicVolume,
+        setScreenShakeEnabled,
+        setScreenFlashEnabled,
+        setReducedEffects,
+        setHighContrastMode,
         pauseGame,
         resumeGame,
         setDifficulty: handleSetDifficulty,

@@ -25,7 +25,7 @@ import { LoadingScreen } from '@/components/LoadingScreen';
 import { ReadyScreen } from '@/components/ReadyScreen';
 import { RetroHudWidgets } from '@/components/RetroHudWidgets';
 import { DynamicAmbience } from '@/components/DynamicAmbience';
-import { SettingsModal } from '@/components/SettingsModal';
+import SettingsModal from '@/components/SettingsModal';
 import { PerformanceFeedback } from '@/components/PerformanceFeedback';
 import { getKeybindings, getKeyDisplayName, DEFAULT_KEYBINDINGS } from '@/lib/keybindings';
 
@@ -45,6 +45,10 @@ export default function GamePage() {
     difficulty,
     gameMode,
     isPaused,
+    screenShakeEnabled,
+    screenFlashEnabled,
+    reducedEffects,
+    highContrastMode,
     pauseGame,
     resumeGame,
     toggleSound,
@@ -159,14 +163,18 @@ export default function GamePage() {
         currentHighlightedRef.current = [];
         highlightStartTimeRef.current = null;
         
-        // Trigger screen shake for missed buttons
-        setScreenShake(true);
-        setTimeout(() => {
-          setScreenShake(false);
-        }, 400);
+        // Trigger screen shake for missed buttons (respect comfort settings)
+        if (screenShakeEnabled && !reducedEffects) {
+          setScreenShake(true);
+          setTimeout(() => {
+            setScreenShake(false);
+          }, 400);
+        }
         
-        setScreenFlash('error');
-        setTimeout(() => setScreenFlash(null), 300);
+        if (screenFlashEnabled) {
+          setScreenFlash('error');
+          setTimeout(() => setScreenFlash(null), reducedEffects ? 150 : 300);
+        }
         decrementLives();
       }
       
@@ -204,8 +212,14 @@ export default function GamePage() {
         }, 300);
 
         incrementScore(reactionTime);
-        setScreenFlash('success');
-        setTimeout(() => setScreenFlash(null), 200);
+        // Success flash (respect comfort settings)
+        if (screenFlashEnabled) {
+          setScreenFlash('success');
+          setTimeout(
+            () => setScreenFlash(null),
+            reducedEffects ? 120 : 200
+          );
+        }
         
         // Reset reaction time after a short delay to allow feedback to process
         setTimeout(() => {
@@ -236,15 +250,19 @@ export default function GamePage() {
           setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: null }));
         }, 300);
 
-        // Trigger screen shake
-        setScreenShake(true);
-        setTimeout(() => {
-          setScreenShake(false);
-        }, 400);
+        // Trigger screen shake (respect comfort settings)
+        if (screenShakeEnabled && !reducedEffects) {
+          setScreenShake(true);
+          setTimeout(() => {
+            setScreenShake(false);
+          }, 400);
+        }
 
         playSound('error', soundEnabled);
-        setScreenFlash('error');
-        setTimeout(() => setScreenFlash(null), 300);
+        if (screenFlashEnabled) {
+          setScreenFlash('error');
+          setTimeout(() => setScreenFlash(null), reducedEffects ? 150 : 300);
+        }
         highlightStartTimeRef.current = null;
         setHighlightDuration(0);
         decrementLives();
@@ -253,12 +271,17 @@ export default function GamePage() {
     [
       highlightedButtons,
       gameOver,
+      isReady,
+      reactionTimeStats,
       incrementScore,
       setHighlightedButtons,
       decrementLives,
       clearHighlightTimer,
       highlightNewButtons,
       soundEnabled,
+      screenShakeEnabled,
+      screenFlashEnabled,
+      reducedEffects,
     ]
   );
   
@@ -441,8 +464,10 @@ export default function GamePage() {
           previousComboRef.current = combo;
           previousScoreRef.current = score;
           
+        if (screenFlashEnabled) {
           setScreenFlash('success');
-          setTimeout(() => setScreenFlash(null), 200);
+          setTimeout(() => setScreenFlash(null), reducedEffects ? 120 : 200);
+        }
           
           // Generate next sequence
           setTimeout(() => {
@@ -455,15 +480,19 @@ export default function GamePage() {
             setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: null }));
           }, 300);
 
-          // Trigger screen shake
+        // Trigger screen shake (respect comfort settings)
+        if (screenShakeEnabled && !reducedEffects) {
           setScreenShake(true);
           setTimeout(() => {
             setScreenShake(false);
           }, 400);
+        }
 
-          playSound('error', soundEnabled);
+        playSound('error', soundEnabled);
+        if (screenFlashEnabled) {
           setScreenFlash('error');
-          setTimeout(() => setScreenFlash(null), 300);
+          setTimeout(() => setScreenFlash(null), reducedEffects ? 150 : 300);
+        }
           setPlayerSequence([]);
           decrementLives();
           
@@ -483,15 +512,22 @@ export default function GamePage() {
             setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: null }));
           }, 300);
 
-          // Trigger screen shake
-          setScreenShake(true);
-          setTimeout(() => {
-            setScreenShake(false);
-          }, 400);
+          // Trigger screen shake (respect comfort settings)
+          if (screenShakeEnabled && !reducedEffects) {
+            setScreenShake(true);
+            setTimeout(() => {
+              setScreenShake(false);
+            }, 400);
+          }
 
           playSound('error', soundEnabled);
-          setScreenFlash('error');
-          setTimeout(() => setScreenFlash(null), 300);
+          if (screenFlashEnabled) {
+            setScreenFlash('error');
+            setTimeout(
+              () => setScreenFlash(null),
+              reducedEffects ? 150 : 300
+            );
+          }
           setPlayerSequence([]);
           decrementLives();
           
@@ -515,6 +551,7 @@ export default function GamePage() {
     [
       gameOver,
       isReady,
+      isReady,
       isWaitingForInput,
       isShowingSequence,
       playerSequence,
@@ -523,6 +560,9 @@ export default function GamePage() {
       decrementLives,
       soundEnabled,
       showSequence,
+      screenShakeEnabled,
+      screenFlashEnabled,
+      reducedEffects,
     ]
   );
   
@@ -705,7 +745,13 @@ export default function GamePage() {
           <DynamicAmbience />
       
       {/* Screen Flash Effect */}
-      {screenFlash && <ScreenFlash type={screenFlash} />}
+      {screenFlash && screenFlashEnabled && (
+        <ScreenFlash
+          type={screenFlash}
+          duration={reducedEffects ? 150 : undefined}
+          highContrast={highContrastMode}
+        />
+      )}
       
       {/* Header */}
       <header className="relative z-10 p-2 sm:p-3 border-b-4 border-primary bg-card/40 pixel-border overflow-hidden flex justify-center">

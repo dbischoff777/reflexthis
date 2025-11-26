@@ -15,6 +15,38 @@ interface GameOverModalProps {
   onRestart: () => void;
 }
 
+function getCoachingTip(
+  score: number,
+  bestCombo: number,
+  stats: ReactionTimeStats
+): string | null {
+  const hasStats = stats.allTimes.length > 0;
+
+  if (!hasStats) {
+    return 'Play a few longer runs to gather more data – your coach will have better tips next time.';
+  }
+
+  const { average, fastest, allTimes } = stats;
+
+  if (average !== null && fastest !== null && average - fastest > 200) {
+    return 'Your best reactions are much faster than your average. Focus on staying calm and repeating those great hits consistently.';
+  }
+
+  if (bestCombo < 5 && allTimes.length >= 15) {
+    return 'Try to slow down slightly and avoid early key presses. Fewer mistakes will let your combo – and score – climb much higher.';
+  }
+
+  if (score > 0 && average !== null && average > 450) {
+    return 'Work on reacting a bit earlier after each highlight appears. Aim to bring your average reaction time under 400ms.';
+  }
+
+  if (score > 0 && bestCombo >= 10) {
+    return 'You can already hold strong combos. Try pushing for one or two more hits per streak to reach the next level.';
+  }
+
+  return 'Keep an eye on your combo and avoid rushed inputs. Clean, accurate hits will multiply your score quickly.';
+}
+
 /**
  * GameOverModal component - Displays game over screen with score and restart options
  */
@@ -28,6 +60,7 @@ export function GameOverModal({
 }: GameOverModalProps) {
   const [displayedScore, setDisplayedScore] = useState(0);
   const [isCounting, setIsCounting] = useState(true);
+  const coachingTip = getCoachingTip(score, bestCombo, reactionTimeStats);
 
   // Animate score count-up
   useEffect(() => {
@@ -119,40 +152,51 @@ export function GameOverModal({
 
         {/* Stats */}
         {(bestCombo > 0 || reactionTimeStats.allTimes.length > 0) && (
-          <div className="mb-6 p-4 bg-card border-4 border-border pixel-border">
-            <h3 className="text-sm font-semibold text-primary mb-3">Game Statistics</h3>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              {bestCombo > 0 && (
-                <div>
-                  <p className="text-muted-foreground mb-1">Best Combo</p>
-                  <p className="text-lg font-bold text-accent">{bestCombo}x</p>
-                </div>
-              )}
-              {reactionTimeStats.average !== null && (
-                <div>
-                  <p className="text-muted-foreground mb-1">Avg Reaction</p>
-                  <p className="text-lg font-bold text-primary">
-                    {Math.round(reactionTimeStats.average)}ms
-                  </p>
-                </div>
-              )}
-              {reactionTimeStats.fastest !== null && (
-                <div>
-                  <p className="text-muted-foreground mb-1">Fastest</p>
-                  <p className="text-lg font-bold text-green-400">
-                    {Math.round(reactionTimeStats.fastest)}ms
-                  </p>
-                </div>
-              )}
-              {reactionTimeStats.allTimes.length > 0 && (
-                <div>
-                  <p className="text-muted-foreground mb-1">Total Presses</p>
-                  <p className="text-lg font-bold text-primary">
-                    {reactionTimeStats.allTimes.length}
-                  </p>
-                </div>
-              )}
+          <div className="mb-6 space-y-4">
+            <div className="p-4 bg-card border-4 border-border pixel-border">
+              <h3 className="text-sm font-semibold text-primary mb-3">Game Statistics</h3>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                {bestCombo > 0 && (
+                  <div>
+                    <p className="text-muted-foreground mb-1">Best Combo</p>
+                    <p className="text-lg font-bold text-accent">{bestCombo}x</p>
+                  </div>
+                )}
+                {reactionTimeStats.average !== null && (
+                  <div>
+                    <p className="text-muted-foreground mb-1">Avg Reaction</p>
+                    <p className="text-lg font-bold text-primary">
+                      {Math.round(reactionTimeStats.average)}ms
+                    </p>
+                  </div>
+                )}
+                {reactionTimeStats.fastest !== null && (
+                  <div>
+                    <p className="text-muted-foreground mb-1">Fastest</p>
+                    <p className="text-lg font-bold text-green-400">
+                      {Math.round(reactionTimeStats.fastest)}ms
+                    </p>
+                  </div>
+                )}
+                {reactionTimeStats.allTimes.length > 0 && (
+                  <div>
+                    <p className="text-muted-foreground mb-1">Total Presses</p>
+                    <p className="text-lg font-bold text-primary">
+                      {reactionTimeStats.allTimes.length}
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
+
+            {coachingTip && (
+              <div className="p-4 bg-card/80 border-2 border-primary pixel-border">
+                <h3 className="text-xs font-semibold text-primary mb-2 uppercase tracking-wide">
+                  Coach&apos;s Tip
+                </h3>
+                <p className="text-xs text-foreground/80">{coachingTip}</p>
+              </div>
+            )}
           </div>
         )}
 
