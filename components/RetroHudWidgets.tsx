@@ -161,7 +161,7 @@ export function RetroHudWidgets({
               className="hud-control-indicator"
               data-active={soundEnabled ? 'true' : 'false'}
             />
-            <span>SND</span>
+            <span className="text-lg leading-none">🔊</span>
           </button>
           <button
             className="hud-control-button"
@@ -173,17 +173,17 @@ export function RetroHudWidgets({
               className="hud-control-indicator"
               data-active={musicEnabled ? 'true' : 'false'}
             />
-            <span>MSC</span>
+            <span className="text-lg leading-none">🎵</span>
           </button>
           {onOpenSettings && (
             <button
               className="hud-control-button"
               onClick={onOpenSettings}
               draggable={false}
-              aria-label="Open keybindings settings"
+              aria-label="Open settings"
             >
               <span className="hud-control-indicator" data-active="false" />
-              <span>KEYS</span>
+              <span className="text-lg leading-none">⚙</span>
             </button>
           )}
           <button
