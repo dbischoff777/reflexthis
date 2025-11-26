@@ -129,6 +129,7 @@ export function PerformanceFeedback({
   const lastProcessedComboRef = useRef(previousCombo);
   const lastProcessedScoreRef = useRef(previousScore);
   const lastReactionTimeRef = useRef<number | null>(null);
+  const lastMessageTimeRef = useRef(0);
 
   // Generate feedback based on performance metrics
   useEffect(() => {
@@ -139,8 +140,10 @@ export function PerformanceFeedback({
     if (reactionTime !== null && reactionTime !== lastReactionTimeRef.current) {
       lastReactionTimeRef.current = reactionTime;
 
-      // Positive feedback for fast reactions (lower priority than combo/score)
-      if (reactionTime > 0 && reactionTime < 250) {
+      // Positive feedback for fast reactions (lower priority than combo/score).
+      // Only show occasionally and when the player has at least a small combo,
+      // to avoid spamming early in the run.
+      if (reactionTime > 0 && reactionTime < 250 && combo >= 5 && Math.random() < 0.4) {
         if (reactionTime < 150) {
           newMessage = {
             id: `msg-${messageIdCounter.current++}`,
@@ -160,8 +163,9 @@ export function PerformanceFeedback({
           };
           priority = 40; // Lower priority than combo/score
         }
-      } else if (reactionTime >= 400) {
-        // Gentle coaching when reactions are consistently slow
+      } else if (reactionTime >= 500 && combo < 5 && Math.random() < 0.25) {
+        // Gentle coaching when reactions are consistently slow, but only occasionally
+        // and mostly early in the run (low combo) to reduce noise.
         newMessage = {
           id: `msg-${messageIdCounter.current++}`,
           type: 'reaction-slow',
@@ -265,9 +269,23 @@ export function PerformanceFeedback({
       }
     }
 
-    // Set the single message (replaces any existing message)
+    // Set the single message (replaces any existing message), with a simple cooldown
+    // to prevent spamming the player with frequent popups.
     if (newMessage) {
-      setCurrentMessage(newMessage);
+      const now = Date.now();
+      const timeSinceLast = now - lastMessageTimeRef.current;
+      const isHighImpact =
+        newMessage.type.startsWith('combo-') ||
+        newMessage.type === 'score-milestone' ||
+        newMessage.type === 'new-best' ||
+        newMessage.type === 'perfect-timing';
+
+      const minGapMs = isHighImpact ? 800 : 2500;
+
+      if (timeSinceLast >= minGapMs || isHighImpact) {
+        lastMessageTimeRef.current = now;
+        setCurrentMessage(newMessage);
+      }
     }
 
     // Update refs only when values actually change
