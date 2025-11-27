@@ -7,6 +7,15 @@ const nextConfig: NextConfig = {
   // Enable React strict mode for better development experience
   reactStrictMode: true,
   
+  // Output standalone for Electron packaging
+  output: 'standalone',
+  
+  // Ensure static files are properly handled in standalone build
+  distDir: '.next',
+  
+  // Ensure basePath is not set (causes issues with static file serving)
+  basePath: undefined,
+  
   // Optimize images
   images: {
     formats: ['image/avif', 'image/webp'],
