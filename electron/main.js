@@ -1,4 +1,4 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const { spawn } = require('child_process');
 const fs = require('fs');
@@ -52,6 +52,7 @@ function createWindow() {
     icon: path.join(__dirname, '../public/favicon.ico'),
     show: false, // Don't show until ready
     titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
+    autoHideMenuBar: true, // Hide menu bar (File, View, etc.)
   });
 
   // Show window when ready to prevent visual flash
@@ -523,5 +524,13 @@ app.on('before-quit', () => {
   if (nextServer) {
     nextServer.kill();
   }
+});
+
+// Handle quit request from renderer
+ipcMain.handle('app-quit', () => {
+  if (nextServer) {
+    nextServer.kill();
+  }
+  app.quit();
 });
 
