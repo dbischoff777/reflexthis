@@ -122,7 +122,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
               </div>
 
               <p className="text-xs text-foreground/60 mt-1">
-                Music only plays during active games and will pause automatically when the game is paused.
+                Controls both menu music (landing page) and game music. Game music only plays during active games and will pause automatically when the game is paused.
               </p>
             </div>
           </section>

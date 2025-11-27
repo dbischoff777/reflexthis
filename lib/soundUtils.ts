@@ -6,10 +6,12 @@
 const audioCache: Record<string, HTMLAudioElement> = {};
 const audioContextCache: AudioContext | null = null;
 let backgroundMusic: HTMLAudioElement | null = null;
+let menuMusic: HTMLAudioElement | null = null;
 
 // Global volume controls (0-1), can be updated from UI
 let soundEffectsVolume = 0.7;
 let musicVolume = 0.3;
+let menuMusicVolume = 0.3;
 
 const SOUNDS = {
   highlight: '/sounds/highlight.mp3',
@@ -262,5 +264,96 @@ export function setBackgroundMusicVolume(volume: number): void {
  */
 export function setSoundEffectsVolume(volume: number): void {
   soundEffectsVolume = Math.max(0, Math.min(1, volume));
+}
+
+/**
+ * Menu music management (for landing page)
+ */
+const MENU_MUSIC_PATH = '/sounds/music/menu-music.mp3';
+
+/**
+ * Initialize menu music
+ */
+function initMenuMusic(): HTMLAudioElement | null {
+  if (typeof window === 'undefined') return null;
+
+  if (!menuMusic) {
+    try {
+      menuMusic = new Audio(MENU_MUSIC_PATH);
+      menuMusic.loop = true;
+      menuMusic.volume = menuMusicVolume;
+      menuMusic.preload = 'auto';
+      
+      // Handle loading errors gracefully
+      menuMusic.addEventListener('error', () => {
+        if (process.env.NODE_ENV === 'development') {
+          console.debug('Menu music file not found (will be silent)');
+        }
+      });
+    } catch (error) {
+      if (process.env.NODE_ENV === 'development') {
+        console.debug('Could not initialize menu music:', error);
+      }
+      return null;
+    }
+  }
+
+  return menuMusic;
+}
+
+/**
+ * Play menu music (for landing page)
+ * @param enabled - Whether menu music is enabled
+ */
+export function playMenuMusic(enabled: boolean = true): void {
+  if (!enabled || typeof window === 'undefined') {
+    stopMenuMusic();
+    return;
+  }
+
+  const music = initMenuMusic();
+  if (!music) return;
+
+  // Only play if not already playing
+  if (music.paused) {
+    music.volume = menuMusicVolume;
+    music.play().catch((error) => {
+      // Silently handle autoplay restrictions
+      if (process.env.NODE_ENV === 'development') {
+        console.debug('Could not play menu music (may require user interaction):', error);
+      }
+    });
+  }
+}
+
+/**
+ * Stop menu music
+ */
+export function stopMenuMusic(): void {
+  if (typeof window === 'undefined') return;
+  
+  if (menuMusic) {
+    try {
+      menuMusic.pause();
+      menuMusic.currentTime = 0;
+    } catch (error) {
+      // Silently handle any errors
+      if (process.env.NODE_ENV === 'development') {
+        console.debug('Error stopping menu music:', error);
+      }
+    }
+  }
+}
+
+/**
+ * Set menu music volume
+ * @param volume - Volume between 0 and 1
+ */
+export function setMenuMusicVolume(volume: number): void {
+  menuMusicVolume = Math.max(0, Math.min(1, volume));
+  const music = initMenuMusic();
+  if (music) {
+    music.volume = menuMusicVolume;
+  }
 }
 

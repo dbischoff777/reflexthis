@@ -19,7 +19,7 @@ import {
   getSequenceTiming,
   checkSequence,
 } from '@/lib/sequenceUtils';
-import { playSound, setGamePageActive } from '@/lib/soundUtils';
+import { playSound, setGamePageActive, stopMenuMusic } from '@/lib/soundUtils';
 import { useKeyboardControls } from '@/hooks/useKeyboardControls';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import { ReadyScreen } from '@/components/ReadyScreen';
@@ -353,8 +353,10 @@ export default function GamePage() {
   }, [gameMode, lives, setLives, gameOver]);
   
   // Mark game page as active when mounted, inactive when unmounted
+  // Stop menu music when entering game page
   useEffect(() => {
     setGamePageActive(true);
+    stopMenuMusic();
     return () => {
       setGamePageActive(false);
       // Clear all timers to prevent sounds from playing after navigation

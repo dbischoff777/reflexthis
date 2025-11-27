@@ -12,28 +12,37 @@ import SettingsModal from '@/components/SettingsModal';
 import { DifficultyPreset } from '@/lib/difficulty';
 import { GameMode } from '@/lib/gameModes';
 import { GameProvider, useGameState } from '@/lib/GameContext';
-import { stopBackgroundMusic, setGamePageActive } from '@/lib/soundUtils';
+import { stopBackgroundMusic, setGamePageActive, playMenuMusic, stopMenuMusic } from '@/lib/soundUtils';
 
 function LandingPageContent() {
-  const { difficulty, setDifficulty, gameMode, setGameMode, sessionStatistics } = useGameState();
+  const { difficulty, setDifficulty, gameMode, setGameMode, sessionStatistics, musicEnabled } = useGameState();
   const [showMode, setShowMode] = useState(false);
   const [showDifficulty, setShowDifficulty] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
 
-  // Ensure music is stopped on landing page and prevent any game sounds
+  // Ensure game music is stopped on landing page and prevent any game sounds
+  // Play menu music if enabled
   useEffect(() => {
     stopBackgroundMusic();
     // Mark that we're not on the game page to prevent sounds
     setGamePageActive(false);
     
+    // Play menu music if music is enabled
+    if (musicEnabled) {
+      playMenuMusic(true);
+    } else {
+      stopMenuMusic();
+    }
+    
     // Also stop on cleanup/unmount
     return () => {
       stopBackgroundMusic();
+      stopMenuMusic();
       setGamePageActive(false);
     };
-  }, []);
+  }, [musicEnabled]);
 
   // Handle ESC key for exit confirmation
   useEffect(() => {

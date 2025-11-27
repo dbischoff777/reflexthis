@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
-import { playSound, preloadSounds, playBackgroundMusic, stopBackgroundMusic, setBackgroundMusicVolume, setSoundEffectsVolume } from '@/lib/soundUtils';
+import { playSound, preloadSounds, playBackgroundMusic, stopBackgroundMusic, setBackgroundMusicVolume, setSoundEffectsVolume, playMenuMusic, stopMenuMusic, setMenuMusicVolume } from '@/lib/soundUtils';
 import { getComboMultiplier } from '@/lib/gameUtils';
 import { DifficultyPreset, DIFFICULTY_PRESETS } from '@/lib/difficulty';
 import { saveGameSession, calculateSessionStatistics, SessionStatistics } from '@/lib/sessionStats';
@@ -169,9 +169,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
           if (!isNaN(parsed)) {
             setMusicVolumeState(parsed);
             setBackgroundMusicVolume(parsed);
+            setMenuMusicVolume(parsed);
           }
         } else {
           setBackgroundMusicVolume(0.3);
+          setMenuMusicVolume(0.3);
         }
 
         // Load visual comfort settings
@@ -229,7 +231,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     });
   }, [soundVolume]);
 
-  // Save music preference to localStorage and control music playback
+  // Save music preference to localStorage and control music playback (both game and menu music)
   const toggleMusic = useCallback(() => {
     setMusicEnabled((prev) => {
       const newValue = !prev;
@@ -238,6 +240,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       if (!newValue) {
         setMusicVolumeState(0);
         setBackgroundMusicVolume(0);
+        setMenuMusicVolume(0);
         if (typeof window !== 'undefined') {
           localStorage.setItem(STORAGE_KEYS.MUSIC_VOLUME, String(0));
         }
@@ -246,6 +249,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         const defaultVolume = 0.3;
         setMusicVolumeState(defaultVolume);
         setBackgroundMusicVolume(defaultVolume);
+        setMenuMusicVolume(defaultVolume);
         if (typeof window !== 'undefined') {
           localStorage.setItem(STORAGE_KEYS.MUSIC_VOLUME, String(defaultVolume));
         }
@@ -255,11 +259,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
         localStorage.setItem(STORAGE_KEYS.MUSIC_ENABLED, String(newValue));
       }
       
-      // Control music playback
+      // Control game music playback
       if (newValue && !gameOver) {
         playBackgroundMusic(true);
       } else {
         stopBackgroundMusic();
+      }
+      
+      // Control menu music playback
+      if (newValue) {
+        playMenuMusic(true);
+      } else {
+        stopMenuMusic();
       }
       
       return newValue;
@@ -282,12 +293,21 @@ export function GameProvider({ children }: { children: ReactNode }) {
     const clamped = Math.max(0, Math.min(1, volume));
     setMusicVolumeState(clamped);
     // Update enabled flag based on volume
-    setMusicEnabled(clamped > 0);
+    const isEnabled = clamped > 0;
+    setMusicEnabled(isEnabled);
     if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEYS.MUSIC_ENABLED, String(clamped > 0));
+      localStorage.setItem(STORAGE_KEYS.MUSIC_ENABLED, String(isEnabled));
       localStorage.setItem(STORAGE_KEYS.MUSIC_VOLUME, String(clamped));
     }
     setBackgroundMusicVolume(clamped);
+    setMenuMusicVolume(clamped);
+    
+    // Control menu music playback based on volume
+    if (isEnabled) {
+      playMenuMusic(true);
+    } else {
+      stopMenuMusic();
+    }
   }, []);
 
   const setScreenShakeEnabled = useCallback((enabled: boolean) => {
