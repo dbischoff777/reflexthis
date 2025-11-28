@@ -387,15 +387,15 @@ const ALL_ACHIEVEMENTS: Achievement[] = [
   {
     id: 'mode_nightmare',
     title: 'Nightmare Conqueror',
-    description: 'Score 100+ in Nightmare mode.',
+    description: 'Score 500+ in Nightmare mode.',
     category: 'mode',
     icon: '🔥',
     rarity: 'legendary',
-    target: 100,
+    target: 500,
     gameMode: 'nightmare',
     checkCondition: (stats, sessions) => {
       const nightmareSessions = sessions.filter(s => s.gameMode === 'nightmare');
-      return nightmareSessions.some(s => s.score >= 100);
+      return nightmareSessions.some(s => s.score >= 500);
     },
     getProgress: (stats, sessions) => {
       const nightmareSessions = sessions.filter(s => s.gameMode === 'nightmare');
@@ -403,8 +403,32 @@ const ALL_ACHIEVEMENTS: Achievement[] = [
         ? Math.max(...nightmareSessions.map(s => s.score))
         : 0;
       return {
-        current: Math.min(bestNightmare, 100),
-        target: 100,
+        current: Math.min(bestNightmare, 500),
+        target: 500,
+      };
+    },
+  },
+  {
+    id: 'mode_nightmare_master',
+    title: 'Nightmare Master',
+    description: 'Score 1000000+ in Nightmare mode. The ultimate challenge.',
+    category: 'mode',
+    icon: '💀',
+    rarity: 'legendary',
+    target: 1000000,
+    gameMode: 'nightmare',
+    checkCondition: (stats, sessions) => {
+      const nightmareSessions = sessions.filter(s => s.gameMode === 'nightmare');
+      return nightmareSessions.some(s => s.score >= 1000000);
+    },
+    getProgress: (stats, sessions) => {
+      const nightmareSessions = sessions.filter(s => s.gameMode === 'nightmare');
+      const bestNightmare = nightmareSessions.length > 0
+        ? Math.max(...nightmareSessions.map(s => s.score))
+        : 0;
+      return {
+        current: Math.min(bestNightmare, 1000000),
+        target: 1000000,
       };
     },
   },
