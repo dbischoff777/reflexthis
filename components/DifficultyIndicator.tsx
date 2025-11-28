@@ -20,6 +20,7 @@ export function DifficultyIndicator({
     medium: 'text-accent border-accent bg-accent/20',
     hard: 'text-destructive border-destructive bg-destructive/20',
     custom: 'text-primary border-primary bg-primary/20',
+    nightmare: 'text-secondary border-secondary bg-secondary/20',
   };
 
   const difficultyNames = {
@@ -27,6 +28,7 @@ export function DifficultyIndicator({
     medium: 'MED',
     hard: 'HARD',
     custom: 'CUSTOM',
+    nightmare: 'NIGHTMARE',
   };
 
   return (

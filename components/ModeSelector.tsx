@@ -20,7 +20,7 @@ export function ModeSelector({
   onCancel,
   disabled = false,
 }: ModeSelectorProps) {
-  const modes: GameMode[] = ['reflex', 'sequence', 'survival'];
+  const modes: GameMode[] = ['reflex', 'sequence', 'survival', 'nightmare'];
 
   // Handle ESC key to cancel
   useEffect(() => {
@@ -66,7 +66,9 @@ export function ModeSelector({
                 isSelected
                   ? 'border-primary bg-primary/30'
                   : 'border-border bg-card hover:border-primary hover:bg-primary/20',
-                disabled && 'opacity-50 cursor-not-allowed'
+                disabled && 'opacity-50 cursor-not-allowed',
+                // Center nightmare mode on large screens when it's alone in the row
+                mode === 'nightmare' && 'lg:col-start-2'
               )}
             >
               <div className="flex items-center justify-between mb-2">
@@ -84,6 +86,7 @@ export function ModeSelector({
                 {mode === 'reflex' && 'Hit fast'}
                 {mode === 'sequence' && 'Repeat pattern'}
                 {mode === 'survival' && 'One life only'}
+                {mode === 'nightmare' && 'Nightmare mode'}
               </p>
             </button>
           );

@@ -9,6 +9,7 @@ interface DifficultySelectorProps {
   onSelect: (difficulty: DifficultyPreset) => void;
   onCancel?: () => void;
   disabled?: boolean;
+  gameMode?: string;
 }
 
 /**
@@ -19,8 +20,12 @@ export function DifficultySelector({
   onSelect,
   onCancel,
   disabled = false,
+  gameMode,
 }: DifficultySelectorProps) {
-  const difficulties: DifficultyPreset[] = ['easy', 'medium', 'hard', 'custom'];
+  // For nightmare mode, only show nightmare difficulty
+  const difficulties: DifficultyPreset[] = gameMode === 'nightmare' 
+    ? ['nightmare'] 
+    : ['easy', 'medium', 'hard', 'custom'];
 
   // Handle ESC key to cancel
   useEffect(() => {

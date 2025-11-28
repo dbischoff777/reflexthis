@@ -94,6 +94,10 @@ export function setGamePageActive(active: boolean) {
   isGamePageActive = active;
 }
 
+export function getIsGamePageActive(): boolean {
+  return isGamePageActive;
+}
+
 /**
  * Play a sound effect
  * @param sound - The sound type to play

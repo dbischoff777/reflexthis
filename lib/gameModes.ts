@@ -2,7 +2,7 @@
  * Game mode definitions for ReflexThis
  */
 
-export type GameMode = 'reflex' | 'sequence' | 'survival';
+export type GameMode = 'reflex' | 'sequence' | 'survival' | 'nightmare';
 
 export interface GameModeInfo {
   id: GameMode;
@@ -29,6 +29,12 @@ export const GAME_MODES: Record<GameMode, GameModeInfo> = {
     name: 'Survival',
     description: 'One mistake and it\'s game over! How long can you survive?',
     icon: '💀',
+  },
+  nightmare: {
+    id: 'nightmare',
+    name: 'Nightmare',
+    description: 'Brutal challenge for the top 0.1% of players. Extreme speed and difficulty.',
+    icon: '🔥',
   },
 };
 

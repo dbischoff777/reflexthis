@@ -111,6 +111,10 @@ function LandingPageContent() {
               onSelect={(mode) => {
                 setGameMode(mode);
                 setShowMode(false);
+                // Auto-select nightmare difficulty when nightmare mode is chosen
+                if (mode === 'nightmare') {
+                  setDifficulty('nightmare');
+                }
                 setShowDifficulty(true);
               }}
               onCancel={() => setShowMode(false)}
@@ -124,6 +128,7 @@ function LandingPageContent() {
             <DifficultySelector
               selected={difficulty}
               onSelect={setDifficulty}
+              gameMode={gameMode}
               onCancel={() => {
                 setShowDifficulty(false);
                 setShowMode(true);
@@ -142,10 +147,10 @@ function LandingPageContent() {
                   // Start game - navigate directly, loading screen will show on game page
                   // Don't prevent default, let Next.js handle navigation
                 } else if (showMode) {
-                  // Proceed to difficulty selection
+                  // ModeSelector is displayed - user must select a mode first
+                  // Don't allow navigation until a mode is selected via ModeSelector
                   e.preventDefault();
-                  setShowMode(false);
-                  setShowDifficulty(true);
+                  // The ModeSelector's onSelect callback will handle navigation
                 } else if (!showMode && !showDifficulty) {
                   e.preventDefault();
                   setShowMode(true);

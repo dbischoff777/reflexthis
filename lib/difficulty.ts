@@ -2,7 +2,7 @@
  * Difficulty preset system for ReflexThis game
  */
 
-export type DifficultyPreset = 'easy' | 'medium' | 'hard' | 'custom';
+export type DifficultyPreset = 'easy' | 'medium' | 'hard' | 'custom' | 'nightmare';
 
 export interface DifficultyConfig {
   name: string;
@@ -46,6 +46,14 @@ export const DIFFICULTY_PRESETS: Record<DifficultyPreset, DifficultyConfig> = {
     speedIncrease: 0.7, // Original progressive scaling
     description: 'Progressive difficulty that scales with your score.',
   },
+  nightmare: {
+    name: 'Nightmare',
+    baseDuration: 300, // Extremely fast - brutal from the start
+    minDuration: 150, // Near human reaction limit
+    maxButtons: 10, // All buttons - maximum chaos
+    speedIncrease: 0.85, // Very fast difficulty increase
+    description: 'Brutal challenge for elite players only. Extreme speed and maximum buttons.',
+  },
 };
 
 /**
@@ -87,6 +95,13 @@ export function getButtonsToHighlightForDifficulty(
     // Hard: Multiple buttons appear sooner
     if (score < 20) return 1;
     if (score < 50) return Math.random() < 0.5 ? 1 : 2;
+    return Math.floor(Math.random() * config.maxButtons) + 1;
+  }
+  
+  if (preset === 'nightmare') {
+    // Nightmare: Multiple buttons appear almost immediately
+    if (score < 10) return 1;
+    if (score < 30) return Math.random() < 0.6 ? 2 : 1;
     return Math.floor(Math.random() * config.maxButtons) + 1;
   }
   

@@ -20,6 +20,7 @@ export function ReadyScreen({ onReady, gameMode }: ReadyScreenProps) {
     if (gameMode === 'reflex') return 'REFLEX';
     if (gameMode === 'sequence') return 'SEQUENCE';
     if (gameMode === 'survival') return 'SURVIVAL';
+    if (gameMode === 'nightmare') return 'NIGHTMARE';
     return 'GAME';
   };
 
@@ -120,6 +121,12 @@ export function ReadyScreen({ onReady, gameMode }: ReadyScreenProps) {
             <p className="text-xs sm:text-sm text-foreground/80">
               <span className="font-semibold text-primary">Survival mode:</span>{' '}
               you only have a single life. Every mistake ends the run and difficulty ramps up quickly with faster highlights and more buttons on screen.
+            </p>
+          )}
+          {gameMode === 'nightmare' && (
+            <p className="text-xs sm:text-sm text-foreground/80">
+              <span className="font-semibold text-primary">Nightmare mode:</span>{' '}
+              brutal challenge for elite players. Extreme speed (150-350ms), up to 6 buttons simultaneously, and rapid difficulty scaling. Only for the top 0.1%.
             </p>
           )}
         </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
-import { playSound, preloadSounds, playBackgroundMusic, stopBackgroundMusic, setBackgroundMusicVolume, setSoundEffectsVolume, playMenuMusic, stopMenuMusic, setMenuMusicVolume } from '@/lib/soundUtils';
+import { playSound, preloadSounds, playBackgroundMusic, stopBackgroundMusic, setBackgroundMusicVolume, setSoundEffectsVolume, playMenuMusic, stopMenuMusic, setMenuMusicVolume, getIsGamePageActive } from '@/lib/soundUtils';
 import { getComboMultiplier } from '@/lib/gameUtils';
 import { DifficultyPreset, DIFFICULTY_PRESETS } from '@/lib/difficulty';
 import { saveGameSession, calculateSessionStatistics, SessionStatistics } from '@/lib/sessionStats';
@@ -142,13 +142,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
         // Load difficulty preference
         const savedDifficulty = localStorage.getItem(STORAGE_KEYS.DIFFICULTY);
-        if (savedDifficulty && ['easy', 'medium', 'hard', 'custom'].includes(savedDifficulty)) {
+        if (savedDifficulty && ['easy', 'medium', 'hard', 'custom', 'nightmare'].includes(savedDifficulty)) {
           setDifficulty(savedDifficulty as DifficultyPreset);
         }
 
         // Load game mode preference
         const savedMode = localStorage.getItem(STORAGE_KEYS.GAME_MODE);
-        if (savedMode && ['reflex', 'sequence', 'survival'].includes(savedMode)) {
+        if (savedMode && ['reflex', 'sequence', 'survival', 'nightmare'].includes(savedMode)) {
           setGameMode(savedMode as GameMode);
         }
 
@@ -231,8 +231,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
     });
   }, [soundVolume]);
 
-  // Save music preference to localStorage and control music playback (both game and menu music)
+  // Save music preference to localStorage and control music playback (context-aware)
   const toggleMusic = useCallback(() => {
+    const isOnGamePage = getIsGamePageActive();
+    
     setMusicEnabled((prev) => {
       const newValue = !prev;
 
@@ -259,18 +261,21 @@ export function GameProvider({ children }: { children: ReactNode }) {
         localStorage.setItem(STORAGE_KEYS.MUSIC_ENABLED, String(newValue));
       }
       
-      // Control game music playback
-      if (newValue && !gameOver) {
-        playBackgroundMusic(true);
+      // Context-aware music control
+      if (isOnGamePage) {
+        // On game page: only control game music
+        if (newValue && !gameOver) {
+          playBackgroundMusic(true);
+        } else {
+          stopBackgroundMusic();
+        }
       } else {
-        stopBackgroundMusic();
-      }
-      
-      // Control menu music playback
-      if (newValue) {
-        playMenuMusic(true);
-      } else {
-        stopMenuMusic();
+        // On landing page: only control menu music
+        if (newValue) {
+          playMenuMusic(true);
+        } else {
+          stopMenuMusic();
+        }
       }
       
       return newValue;
@@ -291,6 +296,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const setMusicVolume = useCallback((volume: number) => {
     const clamped = Math.max(0, Math.min(1, volume));
+    const isOnGamePage = getIsGamePageActive();
+    
     setMusicVolumeState(clamped);
     // Update enabled flag based on volume
     const isEnabled = clamped > 0;
@@ -299,16 +306,33 @@ export function GameProvider({ children }: { children: ReactNode }) {
       localStorage.setItem(STORAGE_KEYS.MUSIC_ENABLED, String(isEnabled));
       localStorage.setItem(STORAGE_KEYS.MUSIC_VOLUME, String(clamped));
     }
-    setBackgroundMusicVolume(clamped);
-    setMenuMusicVolume(clamped);
     
-    // Control menu music playback based on volume
-    if (isEnabled) {
-      playMenuMusic(true);
+    // Context-aware volume updates - only update the volume for the currently active music
+    if (isOnGamePage) {
+      // On game page: only update game music volume
+      setBackgroundMusicVolume(clamped);
     } else {
-      stopMenuMusic();
+      // On landing page: only update menu music volume
+      setMenuMusicVolume(clamped);
     }
-  }, []);
+    
+    // Context-aware playback control
+    if (isOnGamePage) {
+      // On game page: only control game music
+      if (isEnabled && !gameOver) {
+        playBackgroundMusic(true);
+      } else {
+        stopBackgroundMusic();
+      }
+    } else {
+      // On landing page: only control menu music
+      if (isEnabled) {
+        playMenuMusic(true);
+      } else {
+        stopMenuMusic();
+      }
+    }
+  }, [gameOver]);
 
   const setScreenShakeEnabled = useCallback((enabled: boolean) => {
     setScreenShakeEnabledState(enabled);

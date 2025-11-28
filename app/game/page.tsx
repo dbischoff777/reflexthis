@@ -314,9 +314,9 @@ export default function GamePage() {
     }
   }, [resetGame]);
 
-  // Start reflex game when component mounts or game resets (only after ready)
+  // Start reflex/nightmare game when component mounts or game resets (only after ready)
   useEffect(() => {
-    if (gameMode === 'reflex' && !gameOver && isReady && !isPaused) {
+    if ((gameMode === 'reflex' || gameMode === 'nightmare') && !gameOver && isReady && !isPaused) {
       // Small delay to ensure state is ready
       const startTimer = setTimeout(() => {
         highlightNewButtons();
@@ -334,9 +334,9 @@ export default function GamePage() {
     currentHighlightedRef.current = highlightedButtons;
   }, [highlightedButtons]);
 
-  // Restart reflex/survival game loop when game resets (only after ready)
+  // Restart reflex/survival/nightmare game loop when game resets (only after ready)
   useEffect(() => {
-    if ((gameMode === 'reflex' || gameMode === 'survival') && !gameOver && isReady && !isPaused && highlightedButtons.length === 0 && !isProcessingRef.current) {
+    if ((gameMode === 'reflex' || gameMode === 'survival' || gameMode === 'nightmare') && !gameOver && isReady && !isPaused && highlightedButtons.length === 0 && !isProcessingRef.current) {
       const restartTimer = setTimeout(() => {
         highlightNewButtons();
       }, 500);
@@ -827,6 +827,7 @@ export default function GamePage() {
               {gameMode === 'reflex' && 'Reflex'}
               {gameMode === 'sequence' && 'Sequence'}
               {gameMode === 'survival' && 'Survival'}
+              {gameMode === 'nightmare' && 'Nightmare'}
             </span>
             <button
               type="button"
@@ -854,6 +855,11 @@ export default function GamePage() {
               {gameMode === 'survival' && (
                 <p className="text-[12px] sm:text-sm text-foreground/80 break-words">
                   One life only – every mistake ends the run, and difficulty rises fast.
+                </p>
+              )}
+              {gameMode === 'nightmare' && (
+                <p className="text-[12px] sm:text-sm text-foreground/80 break-words">
+                  Extreme speed and difficulty – for elite players only. Up to 6 buttons, 150ms minimum reaction time.
                 </p>
               )}
             </div>

@@ -51,6 +51,15 @@ export const SEQUENCE_DIFFICULTY_PRESETS: Record<DifficultyPreset, SequenceDiffi
     sequenceIncreaseRate: 0.6, // Progressive scaling
     description: 'Progressive difficulty that scales with your score.',
   },
+  nightmare: {
+    name: 'Nightmare',
+    sequenceDisplayDuration: 250, // Extremely fast - brutal
+    sequenceGapDuration: 50, // Very short gap
+    maxSequenceLength: 20, // Very long sequences
+    startingSequenceLength: 6, // Start with longer sequences
+    sequenceIncreaseRate: 0.85, // Very fast increase
+    description: 'Brutal challenge for elite players only. Extreme speed and long sequences.',
+  },
 };
 
 /**

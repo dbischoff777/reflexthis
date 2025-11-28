@@ -27,12 +27,14 @@ const difficultyAccentMap: Record<DifficultyPreset, string> = {
   medium: '#00f0ff',
   hard: '#ff00ff',
   custom: '#ffff00',
+  nightmare: '#ff00ff',
 };
 
 const modeLabelMap: Record<GameMode, string> = {
   reflex: 'Reflex',
   sequence: 'Sequence',
   survival: 'Survival',
+  nightmare: 'Nightmare',
 };
 
 export function RetroHudWidgets({
