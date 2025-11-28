@@ -814,7 +814,7 @@ export default function GamePage() {
                   Watch the sequence...
                 </div>
               ) : isWaitingForInput ? (
-                <div className="text-xs sm:text-sm font-bold text-accent">
+                <div className="text-xs sm:text-sm font-bold text-secondary">
                   Repeat: {playerSequence.length}/{sequence.length}
                 </div>
               ) : null}
@@ -822,7 +822,7 @@ export default function GamePage() {
           )}
 
           {/* Compact mode pill with ? toggle */}
-          <div className="flex items-center gap-2 bg-card/80 border-2 border-border px-3 py-1 rounded-sm pixel-border text-[10px] sm:text-xs">
+          <div className="flex items-center gap-2 bg-card/80 border-2 border-border px-3 py-1 rounded-sm pixel-border text-[12px] sm:text-sm">
             <span className="font-semibold text-primary uppercase">
               {gameMode === 'reflex' && 'Reflex'}
               {gameMode === 'sequence' && 'Sequence'}
@@ -842,17 +842,17 @@ export default function GamePage() {
           {showModeHelp && (
             <div className="mt-1 bg-card/95 border-2 border-primary pixel-border px-3 py-2 max-w-xs shadow-lg">
               {gameMode === 'reflex' && (
-                <p className="text-[10px] sm:text-xs text-foreground/80">
+                <p className="text-[12px] sm:text-sm text-foreground/80 break-words">
                   Hit highlighted buttons quickly and avoid mistakes to keep your combo and score growing.
                 </p>
               )}
               {gameMode === 'sequence' && (
-                <p className="text-[10px] sm:text-xs text-foreground/80">
+                <p className="text-[12px] sm:text-sm text-foreground/80 break-words">
                   Watch the pattern, then press the same buttons in order without errors.
                 </p>
               )}
               {gameMode === 'survival' && (
-                <p className="text-[10px] sm:text-xs text-foreground/80">
+                <p className="text-[12px] sm:text-sm text-foreground/80 break-words">
                   One life only – every mistake ends the run, and difficulty rises fast.
                 </p>
               )}
@@ -876,7 +876,7 @@ export default function GamePage() {
             ))}
           </div>
           {/* Top row key hints */}
-          <div className="flex justify-center gap-2 sm:gap-3 md:gap-4 lg:gap-6 mb-2 sm:mb-3 md:mb-4 lg:mb-6 text-[10px] sm:text-xs text-foreground/70 font-mono">
+          <div className="flex justify-center gap-2 sm:gap-3 md:gap-4 lg:gap-6 mb-2 sm:mb-3 md:mb-4 lg:mb-6 text-[12px] sm:text-sm text-foreground/70 font-mono">
             {[1, 2, 3].map((id) => (
               <span key={id} className="min-w-[40px] text-center opacity-80">
                 {keybindingHints[id]}
@@ -899,7 +899,7 @@ export default function GamePage() {
             ))}
           </div>
           {/* Middle row key hints */}
-          <div className="flex justify-center gap-2 sm:gap-3 md:gap-4 lg:gap-6 mb-2 sm:mb-3 md:mb-4 lg:mb-6 text-[10px] sm:text-xs text-foreground/70 font-mono">
+          <div className="flex justify-center gap-2 sm:gap-3 md:gap-4 lg:gap-6 mb-2 sm:mb-3 md:mb-4 lg:mb-6 text-[12px] sm:text-sm text-foreground/70 font-mono">
             {[4, 5, 6, 7].map((id) => (
               <span key={id} className="min-w-[40px] text-center opacity-80">
                 {keybindingHints[id]}
@@ -922,7 +922,7 @@ export default function GamePage() {
             ))}
           </div>
           {/* Bottom row key hints */}
-          <div className="flex justify-center gap-2 sm:gap-3 md:gap-4 lg:gap-6 mt-2 sm:mt-3 md:mt-4 lg:mt-6 text-[10px] sm:text-xs text-foreground/70 font-mono">
+          <div className="flex justify-center gap-2 sm:gap-3 md:gap-4 lg:gap-6 mt-2 sm:mt-3 md:mt-4 lg:mt-6 text-[12px] sm:text-sm text-foreground/70 font-mono">
             {[8, 9, 10].map((id) => (
               <span key={id} className="min-w-[40px] text-center opacity-80">
                 {keybindingHints[id]}
@@ -997,7 +997,7 @@ export default function GamePage() {
                   endGame();
                   router.push('/');
                 }}
-                className="px-6 py-3 border-4 border-destructive bg-destructive text-destructive-foreground pixel-border font-bold hover:bg-destructive/80 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-destructive"
+                className="px-6 py-3 border-4 border-secondary bg-secondary text-secondary-foreground pixel-border font-bold hover:bg-secondary/80 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-secondary"
               >
                 EXIT
               </button>

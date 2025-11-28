@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 
 interface ReadyScreenProps {
@@ -8,29 +7,12 @@ interface ReadyScreenProps {
   gameMode?: string;
 }
 
-const READY_STORAGE_KEY = 'reflexthis_seen_tutorial';
-
 /**
  * ReadyScreen component
- * - First time: shows a one-page tutorial (controls + how to play well)
- * - Later: shows a compact READY screen
+ * - Always shows tutorial content (controls + how to play well)
  */
 export function ReadyScreen({ onReady, gameMode }: ReadyScreenProps) {
-  const [hasSeenTutorial, setHasSeenTutorial] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      setHasSeenTutorial(true);
-      return;
-    }
-    const stored = window.localStorage.getItem(READY_STORAGE_KEY);
-    setHasSeenTutorial(stored === 'true');
-  }, []);
-
   const handleStart = () => {
-    if (typeof window !== 'undefined' && !hasSeenTutorial) {
-      window.localStorage.setItem(READY_STORAGE_KEY, 'true');
-    }
     onReady();
   };
 
@@ -51,7 +33,7 @@ export function ReadyScreen({ onReady, gameMode }: ReadyScreenProps) {
         {gameMode && (
           <div className="space-y-1">
             <p className="text-sm sm:text-base text-muted-foreground">You are about to play:</p>
-            <p className="text-2xl sm:text-3xl font-bold text-accent pixel-border px-4 py-2 inline-block border-4 border-accent">
+            <p className="text-2xl sm:text-3xl font-bold text-secondary pixel-border px-4 py-2 inline-block border-4 border-secondary">
               {getModeName()}
             </p>
           </div>
@@ -150,54 +132,12 @@ export function ReadyScreen({ onReady, gameMode }: ReadyScreenProps) {
     </div>
   );
 
-  const renderReadyOnlyContent = () => (
-    <div className="text-center space-y-8">
-      <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-primary text-glow pixel-border px-4 py-2 inline-block border-4 border-primary">
-        REFLEX THIS
-      </h1>
-
-      {gameMode && (
-        <div className="space-y-2">
-          <p className="text-lg sm:text-xl text-muted-foreground">Mode:</p>
-          <p className="text-2xl sm:text-3xl font-bold text-accent pixel-border px-4 py-2 inline-block border-4 border-accent">
-            {getModeName()}
-          </p>
-        </div>
-      )}
-
-      <div className="space-y-6">
-        <p className="text-xl sm:text-2xl font-bold text-primary pixel-border px-3 py-1 inline-block border-2 border-primary">
-          READY?
-        </p>
-
-        <p className="text-xs sm:text-sm text-muted-foreground max-w-md mx-auto">
-          Hit the highlighted buttons as fast as you can. Keep your combo alive, avoid mistakes, and chase a new high score.
-        </p>
-      </div>
-    </div>
-  );
-
-  // While we don't yet know if the tutorial was seen, show a simple loading state
-  if (hasSeenTutorial === null) {
-    return (
-      <div className="fixed inset-0 z-50 bg-background flex items-center justify-center crt-scanlines">
-        <div className="text-center space-y-4">
-          <h1 className="text-3xl sm:text-4xl font-bold text-primary text-glow">
-            REFLEX THIS
-          </h1>
-          <p className="text-xs text-muted-foreground font-mono">
-            Initializing tutorial...
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="fixed inset-0 z-50 bg-background flex items-center justify-center crt-scanlines">
-      <div className="relative w-full h-full flex items-center justify-center px-4">
+      <div className="relative w-full h-full flex items-center justify-center px-4 overflow-y-auto py-8">
         <div className="relative z-10 w-full max-w-5xl">
-          {hasSeenTutorial ? renderReadyOnlyContent() : renderTutorialContent()}
+          {renderTutorialContent()}
 
           <div className="mt-8 flex justify-center">
             <button
@@ -206,7 +146,7 @@ export function ReadyScreen({ onReady, gameMode }: ReadyScreenProps) {
               className={cn(
                 'px-8 py-4 text-xl sm:text-2xl font-bold',
                 'border-4 border-primary bg-primary text-primary-foreground',
-                'hover:border-accent hover:bg-accent',
+                'hover:border-secondary hover:bg-secondary',
                 'transition-all duration-100 active:scale-95',
                 'focus:outline-none focus:ring-2 focus:ring-primary',
                 'pixel-border',
@@ -216,7 +156,7 @@ export function ReadyScreen({ onReady, gameMode }: ReadyScreenProps) {
                 imageRendering: 'pixelated' as any,
               }}
             >
-              {hasSeenTutorial ? 'START' : "GOT IT – LET'S PLAY"}
+              START
             </button>
           </div>
         </div>

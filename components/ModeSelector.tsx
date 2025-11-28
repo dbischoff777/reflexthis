@@ -80,8 +80,10 @@ export function ModeSelector({
                   </span>
                 )}
               </div>
-              <p className="text-xs sm:text-sm text-muted-foreground">
-                {modeInfo.description}
+              <p className="text-sm text-muted-foreground leading-tight text-center">
+                {mode === 'reflex' && 'Hit fast'}
+                {mode === 'sequence' && 'Repeat pattern'}
+                {mode === 'survival' && 'One life only'}
               </p>
             </button>
           );

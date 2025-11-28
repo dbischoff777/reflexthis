@@ -77,10 +77,10 @@ export function DifficultySelector({
                   </span>
                 )}
               </div>
-              <p className="text-xs sm:text-sm text-muted-foreground">
+              <p className="text-sm sm:text-base text-muted-foreground break-words">
                 {config.description}
               </p>
-              <div className="mt-2 text-xs text-muted-foreground">
+              <div className="mt-2 text-sm text-muted-foreground">
                 <div>Base: {config.baseDuration}ms</div>
                 <div>Min: {config.minDuration}ms</div>
                 <div>Max Buttons: {config.maxButtons}</div>

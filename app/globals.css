@@ -58,8 +58,8 @@
   --secondary-foreground: #ffffff;
   --muted: #000000;
   --muted-foreground: #00ffff;
-  --accent: #ffff00;
-  --accent-foreground: #000000;
+  --accent: #ff00ff;
+  --accent-foreground: #ffffff;
   --destructive: #ff0000;
   --border: #00ffff;
   --input: #0000ff;
@@ -92,8 +92,8 @@
   --secondary-foreground: #ffffff;
   --muted: #000000;
   --muted-foreground: #00ffff;
-  --accent: #ffff00;
-  --accent-foreground: #000000;
+  --accent: #ff00ff;
+  --accent-foreground: #ffffff;
   --destructive: #ff0000;
   --border: #00ffff;
   --input: #0000ff;

@@ -15,7 +15,7 @@ import { GameProvider, useGameState } from '@/lib/GameContext';
 import { stopBackgroundMusic, setGamePageActive, playMenuMusic, stopMenuMusic } from '@/lib/soundUtils';
 
 function LandingPageContent() {
-  const { difficulty, setDifficulty, gameMode, setGameMode, sessionStatistics, musicEnabled } = useGameState();
+  const { difficulty, setDifficulty, gameMode, setGameMode, sessionStatistics, musicEnabled, toggleMusic } = useGameState();
   const [showMode, setShowMode] = useState(false);
   const [showDifficulty, setShowDifficulty] = useState(false);
   const [showStats, setShowStats] = useState(false);
@@ -84,7 +84,7 @@ function LandingPageContent() {
           <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-primary text-glow mb-4 tracking-tight pixel-border px-6 py-3 inline-block border-4 border-primary">
             REFLEX THIS
           </h1>
-          <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto break-words">
             Test your reflexes!
           </p>
         </div>
@@ -151,7 +151,7 @@ function LandingPageContent() {
                   setShowMode(true);
                 }
               }}
-              className="group relative inline-flex items-center justify-center min-h-[56px] px-8 py-4 text-lg sm:text-xl font-bold border-4 border-primary bg-primary text-primary-foreground transition-all duration-100 hover:border-accent hover:bg-accent active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary pixel-border"
+              className="group relative inline-flex items-center justify-center min-h-[56px] px-8 py-4 text-lg sm:text-xl font-bold border-4 border-primary bg-primary text-primary-foreground transition-all duration-100 hover:border-secondary hover:bg-secondary active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary pixel-border"
             >
               <span className="relative z-10">
                 {showDifficulty ? 'Start Game' : showMode ? 'Select Difficulty' : 'Start Game'}
@@ -188,7 +188,7 @@ function LandingPageContent() {
           <button
             onClick={() => setShowExitConfirm(true)}
             draggable={false}
-            className="inline-flex items-center justify-center min-h-[56px] px-6 py-3 text-base sm:text-lg font-semibold border-4 border-destructive bg-card text-foreground hover:border-destructive hover:bg-destructive/20 transition-all duration-100 focus:outline-none focus:ring-2 focus:ring-destructive pixel-border"
+            className="inline-flex items-center justify-center min-h-[56px] px-6 py-3 text-base sm:text-lg font-semibold border-4 border-secondary bg-card text-foreground hover:border-secondary hover:bg-secondary/20 transition-all duration-100 focus:outline-none focus:ring-2 focus:ring-secondary pixel-border"
           >
             Exit Game
           </button>
@@ -205,11 +205,11 @@ function LandingPageContent() {
       {/* Exit Confirmation Modal */}
       {showExitConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
-          <div className="bg-card border-4 border-destructive pixel-border p-4 sm:p-6 md:p-8 max-w-sm w-full mx-4 text-center">
-            <h2 className="text-2xl sm:text-3xl font-bold text-destructive mb-4 pixel-border px-4 py-2 inline-block">
+          <div className="bg-card border-4 border-secondary pixel-border p-4 sm:p-6 md:p-8 max-w-sm w-full mx-4 text-center">
+            <h2 className="text-2xl sm:text-3xl font-bold text-secondary mb-4 pixel-border px-4 py-2 inline-block break-words">
               EXIT GAME?
             </h2>
-            <p className="text-sm text-foreground/80 mb-6">
+            <p className="text-sm text-foreground/80 mb-6 break-words">
               Are you sure you want to exit the game?
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -221,7 +221,7 @@ function LandingPageContent() {
               </button>
               <button
                 onClick={handleExit}
-                className="px-6 py-3 border-4 border-destructive bg-destructive text-destructive-foreground pixel-border font-bold hover:bg-destructive/80 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-destructive"
+                className="px-6 py-3 border-4 border-secondary bg-secondary text-secondary-foreground pixel-border font-bold hover:bg-secondary/80 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-secondary"
               >
                 EXIT
               </button>
@@ -229,6 +229,25 @@ function LandingPageContent() {
           </div>
         </div>
       )}
+      
+      {/* Music Mute Button - Fixed position */}
+      <button
+        onClick={toggleMusic}
+        draggable={false}
+        className="fixed top-4 right-4 z-50 inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 border-4 border-primary bg-card text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary pixel-border"
+        aria-label={musicEnabled ? 'Mute music' : 'Unmute music'}
+      >
+        {musicEnabled ? (
+          <svg className="w-6 h-6 sm:w-7 sm:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 14.142M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+          </svg>
+        ) : (
+          <svg className="w-6 h-6 sm:w-7 sm:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+          </svg>
+        )}
+      </button>
       
       {/* Build Info Footer */}
       <footer className="relative z-10 w-full flex justify-center pb-4">
