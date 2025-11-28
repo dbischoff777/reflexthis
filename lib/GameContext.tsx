@@ -4,8 +4,9 @@ import { createContext, useContext, useState, useEffect, useCallback, useRef, Re
 import { playSound, preloadSounds, playBackgroundMusic, stopBackgroundMusic, setBackgroundMusicVolume, setSoundEffectsVolume, playMenuMusic, stopMenuMusic, setMenuMusicVolume, getIsGamePageActive } from '@/lib/soundUtils';
 import { getComboMultiplier } from '@/lib/gameUtils';
 import { DifficultyPreset, DIFFICULTY_PRESETS } from '@/lib/difficulty';
-import { saveGameSession, calculateSessionStatistics, SessionStatistics } from '@/lib/sessionStats';
+import { saveGameSession, calculateSessionStatistics, SessionStatistics, getGameSessions } from '@/lib/sessionStats';
 import { GameMode } from '@/lib/gameModes';
+import { checkAndUnlockAchievements } from '@/lib/achievements';
 
 export interface ReactionTimeStats {
   current: number | null;
@@ -36,6 +37,7 @@ export interface GameState {
   screenFlashEnabled: boolean;
   reducedEffects: boolean;
   highContrastMode: boolean;
+  newlyUnlockedAchievements: string[];
   toggleSound: () => void;
   toggleMusic: () => void;
   setSoundVolume: (volume: number) => void;
@@ -97,8 +99,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [screenFlashEnabled, setScreenFlashEnabledState] = useState(true);
   const [reducedEffects, setReducedEffectsState] = useState(false);
   const [highContrastMode, setHighContrastModeState] = useState(false);
+  const [newlyUnlockedAchievements, setNewlyUnlockedAchievements] = useState<string[]>([]);
 
   const gameStartTimeRef = useRef<number | null>(null);
+  const achievementClearTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [reactionTimeStats, setReactionTimeStats] = useState<ReactionTimeStats>({
     current: null,
     fastest: null,
@@ -486,12 +490,31 @@ export function GameProvider({ children }: { children: ReactNode }) {
           fastestReactionTime: reactionTimeStats.fastest,
           totalPresses: reactionTimeStats.allTimes.length,
           difficulty,
+          gameMode,
           timestamp: Date.now(),
           duration,
         });
         
         // Update session statistics
-        setSessionStatistics(calculateSessionStatistics());
+        const updatedStats = calculateSessionStatistics();
+        setSessionStatistics(updatedStats);
+        
+        // Check and unlock achievements
+        const sessions = getGameSessions();
+        const newlyUnlocked = checkAndUnlockAchievements(updatedStats, sessions);
+        if (newlyUnlocked.length > 0) {
+          setNewlyUnlockedAchievements(newlyUnlocked);
+          // Clear any existing timeout before creating a new one
+          if (achievementClearTimeoutRef.current) {
+            clearTimeout(achievementClearTimeoutRef.current);
+          }
+          // Clear after 5 seconds
+          achievementClearTimeoutRef.current = setTimeout(() => {
+            setNewlyUnlockedAchievements([]);
+            achievementClearTimeoutRef.current = null;
+          }, 5000);
+        }
+        
         gameStartTimeRef.current = null;
       }
       
@@ -501,7 +524,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
       // Stop background music when game ends
       stopBackgroundMusic();
     }
-  }, [gameOver, score, bestCombo, combo, reactionTimeStats, difficulty]);
+    
+    // Cleanup function to clear timeout on unmount or when dependencies change
+    return () => {
+      if (achievementClearTimeoutRef.current) {
+        clearTimeout(achievementClearTimeoutRef.current);
+        achievementClearTimeoutRef.current = null;
+      }
+    };
+  }, [gameOver, score, bestCombo, combo, reactionTimeStats.average, reactionTimeStats.fastest, reactionTimeStats.allTimes.length, difficulty, gameMode]);
 
   // Control background music based on game state and music preference
   // Only start music when we're actually in a game session (game has started)
@@ -602,6 +633,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         resetGame,
         startGame,
         endGame,
+        newlyUnlockedAchievements,
       }}
     >
       {children}

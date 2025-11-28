@@ -161,31 +161,52 @@ export function SessionStatsDisplay({ stats }: SessionStatsDisplayProps) {
             <div className="space-y-2">
               {meta.achievements.map((a) => {
                 const progressPercent = Math.round((a.current / a.target) * 100);
+                const rarityColors = {
+                  common: a.achieved ? 'bg-muted/20 border-muted' : 'bg-card border-border',
+                  rare: a.achieved ? 'bg-primary/20 border-primary' : 'bg-card border-border',
+                  epic: a.achieved ? 'bg-secondary/20 border-secondary' : 'bg-card border-border',
+                  legendary: a.achieved ? 'bg-chart-3/20 border-chart-3' : 'bg-card border-border',
+                };
                 return (
                   <div
                     key={a.id}
                     className={cn(
-                      'p-2 border-2 pixel-border text-xs sm:text-[13px] flex flex-col gap-1',
-                      a.achieved
-                        ? 'bg-chart-3/10 border-chart-3'
-                        : 'bg-card border-border'
+                      'p-3 border-2 pixel-border text-xs sm:text-[13px] flex gap-3',
+                      rarityColors[a.rarity] || rarityColors.common
                     )}
                   >
-                    <div className="flex justify-between items-center gap-2">
-                      <span className="font-semibold text-primary">{a.title}</span>
-                      <span className="text-[11px] text-muted-foreground font-mono">
-                        {a.current}/{a.target}
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-foreground/70 break-words">{a.description}</p>
-                    <div className="h-1.5 bg-background/60 border border-border mt-1 overflow-hidden">
-                      <div
-                        className={cn(
-                          'h-full transition-all',
-                          a.achieved ? 'bg-chart-3' : 'bg-primary/70'
-                        )}
-                        style={{ width: `${Math.min(progressPercent, 100)}%` }}
-                      />
+                    <div className="text-2xl flex-shrink-0">{a.icon}</div>
+                    <div className="flex-1 min-w-0 flex flex-col gap-1">
+                      <div className="flex justify-between items-start gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <span className="font-semibold text-primary break-words">{a.title}</span>
+                            {a.achieved && (
+                              <span className="text-[10px] px-1.5 py-0.5 border border-chart-3 bg-chart-3/20 text-chart-3 pixel-border flex-shrink-0">
+                                ✓
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-foreground/70 break-words">{a.description}</p>
+                        </div>
+                        <span className="text-[11px] text-muted-foreground font-mono flex-shrink-0">
+                          {a.current}/{a.target}
+                        </span>
+                      </div>
+                      {!a.achieved && (
+                        <div className="h-1.5 bg-background/60 border border-border mt-1 overflow-hidden">
+                          <div
+                            className={cn(
+                              'h-full transition-all',
+                              a.rarity === 'legendary' && 'bg-chart-3',
+                              a.rarity === 'epic' && 'bg-secondary',
+                              a.rarity === 'rare' && 'bg-primary',
+                              a.rarity === 'common' && 'bg-muted'
+                            )}
+                            style={{ width: `${Math.min(progressPercent, 100)}%` }}
+                          />
+                        </div>
+                      )}
                     </div>
                   </div>
                 );

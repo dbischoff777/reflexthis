@@ -27,6 +27,7 @@ import { RetroHudWidgets } from '@/components/RetroHudWidgets';
 import { DynamicAmbience } from '@/components/DynamicAmbience';
 import SettingsModal from '@/components/SettingsModal';
 import { PerformanceFeedback } from '@/components/PerformanceFeedback';
+import { AchievementNotification } from '@/components/AchievementNotification';
 import { getKeybindings, getKeyDisplayName, DEFAULT_KEYBINDINGS } from '@/lib/keybindings';
 
 export default function GamePage() {
@@ -60,6 +61,7 @@ export default function GamePage() {
     setLives,
     incrementScore,
     decrementLives,
+    newlyUnlockedAchievements,
   } = useGameState();
   
   const maxLives = gameMode === 'survival' ? 1 : 5;
@@ -728,6 +730,7 @@ export default function GamePage() {
 
   return (
     <>
+      <AchievementNotification achievementIds={newlyUnlockedAchievements} />
       <OrientationHandler />
       {isLoading ? (
         <LoadingScreen

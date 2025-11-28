@@ -1,4 +1,5 @@
 import { type SessionStatistics, type GameSession, getGameSessions } from '@/lib/sessionStats';
+import { getAchievementProgress, type AchievementCategory } from '@/lib/achievements';
 
 export interface AchievementProgress {
   id: string;
@@ -7,6 +8,9 @@ export interface AchievementProgress {
   achieved: boolean;
   current: number;
   target: number;
+  category: AchievementCategory;
+  icon: string;
+  rarity: 'common' | 'rare' | 'epic' | 'legendary';
 }
 
 export interface RankProgress {
@@ -67,52 +71,20 @@ function computeAchievements(
   stats: SessionStatistics,
   sessions: GameSession[]
 ): AchievementProgress[] {
-  const bestCombo = stats.bestCombo ?? 0;
-  const bestScore = stats.bestScore ?? 0;
-
-  // Longest Hard run in seconds
-  const hardRuns = sessions.filter((s) => s.difficulty === 'hard');
-  const longestHardSeconds =
-    hardRuns.length > 0
-      ? Math.max(...hardRuns.map((s) => Math.floor(s.duration / 1000)))
-      : 0;
-
-  const achievements: AchievementProgress[] = [
-    {
-      id: 'combo_20',
-      title: 'Combo Initiate',
-      description: 'Reach a 20x combo in a single run.',
-      achieved: bestCombo >= 20,
-      current: Math.min(bestCombo, 20),
-      target: 20,
-    },
-    {
-      id: 'combo_30',
-      title: 'Combo Master',
-      description: 'Reach a 30x combo in a single run.',
-      achieved: bestCombo >= 30,
-      current: Math.min(bestCombo, 30),
-      target: 30,
-    },
-    {
-      id: 'score_500',
-      title: 'Score Hunter',
-      description: 'Score 500 or more points in a single run.',
-      achieved: bestScore >= 500,
-      current: Math.min(bestScore, 500),
-      target: 500,
-    },
-    {
-      id: 'hard_90s',
-      title: 'Hard Endurance',
-      description: 'Survive for 90 seconds on Hard difficulty.',
-      achieved: longestHardSeconds >= 90,
-      current: Math.min(longestHardSeconds, 90),
-      target: 90,
-    },
-  ];
-
-  return achievements;
+  // Use the new achievement system
+  const achievementProgress = getAchievementProgress(stats, sessions);
+  
+  return achievementProgress.map(a => ({
+    id: a.id,
+    title: a.title,
+    description: a.description,
+    achieved: a.unlocked,
+    current: a.progress.current,
+    target: a.progress.target,
+    category: a.category,
+    icon: a.icon,
+    rarity: a.rarity,
+  }));
 }
 
 function computeRecommendation(

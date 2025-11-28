@@ -1,0 +1,92 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { getAchievementById } from '@/lib/achievements';
+import { cn } from '@/lib/utils';
+
+interface AchievementNotificationProps {
+  achievementIds: string[];
+}
+
+const RARITY_COLORS = {
+  common: 'border-border bg-card',
+  rare: 'border-primary bg-primary/10',
+  epic: 'border-secondary bg-secondary/10',
+  legendary: 'border-chart-3 bg-chart-3/10',
+};
+
+/**
+ * Achievement notification component that displays unlocked achievements
+ */
+export function AchievementNotification({ achievementIds }: AchievementNotificationProps) {
+  const [visibleAchievements, setVisibleAchievements] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (achievementIds.length === 0) {
+      setVisibleAchievements([]);
+      return;
+    }
+
+    // Show achievements one at a time with delay
+    achievementIds.forEach((id, index) => {
+      setTimeout(() => {
+        setVisibleAchievements((prev) => [...prev, id]);
+        
+        // Hide after 4 seconds
+        setTimeout(() => {
+          setVisibleAchievements((prev) => prev.filter(aid => aid !== id));
+        }, 4000);
+      }, index * 500); // Stagger notifications
+    });
+  }, [achievementIds]);
+
+  if (visibleAchievements.length === 0) return null;
+
+  return (
+    <div className="fixed top-20 right-4 z-50 space-y-2 pointer-events-none">
+      {visibleAchievements.map((id) => {
+        const achievement = getAchievementById(id);
+        if (!achievement) return null;
+
+        const rarityColor = RARITY_COLORS[achievement.rarity];
+
+        return (
+          <div
+            key={id}
+            className={cn(
+              'p-4 border-4 pixel-border',
+              rarityColor,
+              'min-w-[280px] max-w-[320px] shadow-lg',
+              'animate-[slideInRight_0.3s_ease-out]'
+            )}
+          >
+            <div className="flex items-start gap-3">
+              <div className="text-3xl flex-shrink-0">{achievement.icon}</div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="font-bold text-primary text-sm">Achievement Unlocked!</span>
+                  <span className={cn(
+                    'text-xs px-1.5 py-0.5 border pixel-border',
+                    achievement.rarity === 'legendary' && 'bg-chart-3/20 border-chart-3 text-chart-3',
+                    achievement.rarity === 'epic' && 'bg-secondary/20 border-secondary text-secondary',
+                    achievement.rarity === 'rare' && 'bg-primary/20 border-primary text-primary',
+                    achievement.rarity === 'common' && 'bg-muted border-border text-muted-foreground'
+                  )}>
+                    {achievement.rarity.toUpperCase()}
+                  </span>
+                </div>
+                <p className="font-semibold text-foreground text-sm mb-1 break-words">
+                  {achievement.title}
+                </p>
+                <p className="text-xs text-muted-foreground break-words">
+                  {achievement.description}
+                </p>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+

@@ -10,6 +10,7 @@ export interface GameSession {
   fastestReactionTime: number | null;
   totalPresses: number;
   difficulty: string;
+  gameMode?: string; // Optional for backward compatibility
   timestamp: number; // Unix timestamp in milliseconds
   duration: number; // Game duration in milliseconds
 }
