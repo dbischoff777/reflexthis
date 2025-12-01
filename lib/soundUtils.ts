@@ -19,6 +19,7 @@ const SOUNDS = {
   error: '/sounds/error.mp3',
   lifeLost: '/sounds/life-lost.mp3',
   gameOver: '/sounds/game-over.mp3',
+  combo: '/sounds/combo.mp3',
 } as const;
 
 export type SoundType = keyof typeof SOUNDS;
@@ -167,6 +168,12 @@ function playFallbackSound(sound: SoundType): void {
       generateBeepSound(600, 0.2, 'sine');
       setTimeout(() => generateBeepSound(400, 0.3, 'sine'), 200);
       setTimeout(() => generateBeepSound(200, 0.4, 'sine'), 500);
+      break;
+    case 'combo':
+      // Play an ascending celebratory tone
+      generateBeepSound(600, 0.15, 'sine');
+      setTimeout(() => generateBeepSound(800, 0.15, 'sine'), 100);
+      setTimeout(() => generateBeepSound(1000, 0.2, 'sine'), 200);
       break;
   }
 }

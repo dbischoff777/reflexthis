@@ -104,6 +104,9 @@ export default function GamePage() {
         lastMilestoneRef.current = milestone;
         setComboMilestone(milestone);
         
+        // Play combo sound
+        playSound('combo', soundEnabled);
+        
         // Trigger screen flash for combo milestone
         let flashTimer: NodeJS.Timeout | null = null;
         if (screenFlashEnabled) {
@@ -135,7 +138,7 @@ export default function GamePage() {
     if (combo === 0) {
       lastMilestoneRef.current = 0;
     }
-  }, [combo, screenFlashEnabled, reducedEffects]);
+  }, [combo, screenFlashEnabled, reducedEffects, soundEnabled]);
   
   // Update previous values when combo/score change
   useEffect(() => {
