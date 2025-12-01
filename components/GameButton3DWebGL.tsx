@@ -448,7 +448,11 @@ const ParticleBurst = memo(function ParticleBurst({ trigger, position }: Particl
   });
   
   return (
-    <instancedMesh ref={meshRef} args={[undefined, undefined, PARTICLE_COUNT * 2]}>
+    <instancedMesh 
+      ref={meshRef} 
+      args={[undefined, undefined, PARTICLE_COUNT * 2]}
+      frustumCulled={false}
+    >
       <sphereGeometry args={[1, 6, 6]} />
       <meshBasicMaterial 
         transparent 
@@ -650,7 +654,11 @@ const Shockwave = memo(function Shockwave({ trigger, position }: ShockwaveProps)
   });
   
   return (
-    <mesh ref={meshRef} position={[position[0], position[1], position[2] + 0.05]}>
+    <mesh 
+      ref={meshRef} 
+      position={[position[0], position[1], position[2] + 0.05]}
+      frustumCulled={false}
+    >
       <planeGeometry args={[1.2, 1.2]} />
       <primitive object={shaderMaterial} ref={materialRef} attach="material" />
     </mesh>
@@ -788,7 +796,7 @@ const FloatingParticles = memo(function FloatingParticles({ active, color, posit
   });
   
   return (
-    <points ref={particlesRef} position={position}>
+    <points ref={particlesRef} position={position} frustumCulled={false}>
       <bufferGeometry>
         <bufferAttribute
           attach="attributes-position"
@@ -878,7 +886,7 @@ const ElectricArc = memo(function ElectricArc({ startPos, endPos, active, color 
   if (!active) return null;
   
   return (
-    <line ref={lineRef}>
+    <line ref={lineRef} frustumCulled={false}>
       <bufferGeometry>
         <bufferAttribute
           attach="attributes-position"
