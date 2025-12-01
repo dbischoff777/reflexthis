@@ -24,7 +24,7 @@ import { useKeyboardControls } from '@/hooks/useKeyboardControls';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import { ReadyScreen } from '@/components/ReadyScreen';
 import { RetroHudWidgets } from '@/components/RetroHudWidgets';
-import { DynamicAmbience } from '@/components/DynamicAmbience';
+// DynamicAmbience removed - effects now handled by 3D BackgroundGrid in GameButton3DWebGL
 import SettingsModal from '@/components/SettingsModal';
 import { PerformanceFeedback } from '@/components/PerformanceFeedback';
 import { AchievementNotification } from '@/components/AchievementNotification';
@@ -794,8 +794,6 @@ export default function GamePage() {
         "relative h-screen bg-background text-foreground flex flex-col overflow-hidden no-select",
         screenShake && "screen-shake-medium"
       )}>
-          <DynamicAmbience />
-      
       {/* Screen Flash Effect */}
       {screenFlash && screenFlashEnabled && (
         <ScreenFlash
@@ -925,6 +923,14 @@ export default function GamePage() {
               onPress={(index) => getButtonHandler()(index)}
               disabled={gameOver || isPaused}
               keyLabels={keybindingHints}
+              gameState={{
+                combo,
+                lives,
+                maxLives,
+                gameOver,
+                score,
+                difficulty,
+              }}
             />
           </div>
         </div>

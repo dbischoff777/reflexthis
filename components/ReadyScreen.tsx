@@ -25,7 +25,7 @@ export function ReadyScreen({ onReady, gameMode }: ReadyScreenProps) {
   };
 
   const renderTutorialContent = () => (
-    <div className="space-y-8 max-w-3xl mx-auto text-left">
+    <div className="space-y-4 sm:space-y-6 max-w-3xl mx-auto text-left">
       {/* Title + Mode */}
       <div className="text-center space-y-4">
         <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-primary text-glow pixel-border px-4 py-2 inline-block border-4 border-primary">
@@ -42,7 +42,7 @@ export function ReadyScreen({ onReady, gameMode }: ReadyScreenProps) {
       </div>
 
       {/* 3-4-3 grid + default keys */}
-      <section className="grid gap-6 md:grid-cols-[minmax(0,1.1fr)_minmax(0,1.2fr)] items-start">
+      <section className="grid gap-4 sm:gap-6 md:grid-cols-[minmax(0,1.1fr)_minmax(0,1.2fr)] items-start">
         <div className="space-y-4">
           <h2 className="text-lg sm:text-xl font-bold text-primary pixel-border inline-block px-3 py-1 border-2 border-primary">
             Controls – Default Layout
@@ -141,12 +141,12 @@ export function ReadyScreen({ onReady, gameMode }: ReadyScreenProps) {
 
 
   return (
-    <div className="fixed inset-0 z-50 bg-background flex items-center justify-center crt-scanlines">
-      <div className="relative w-full h-full flex items-center justify-center px-4 overflow-y-auto py-8">
+    <div className="fixed inset-0 z-50 bg-background flex items-center justify-center crt-scanlines overflow-hidden">
+      <div className="relative w-full h-full flex items-center justify-center px-4 py-4 sm:py-6 overflow-y-auto">
         <div className="relative z-10 w-full max-w-5xl">
           {renderTutorialContent()}
 
-          <div className="mt-8 flex justify-center">
+          <div className="mt-4 sm:mt-6 flex justify-center">
             <button
               onClick={handleStart}
               draggable={false}
