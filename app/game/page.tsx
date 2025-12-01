@@ -135,7 +135,7 @@ export default function GamePage() {
     if (combo === 0) {
       lastMilestoneRef.current = 0;
     }
-  }, [combo]);
+  }, [combo, screenFlashEnabled, reducedEffects]);
   
   // Update previous values when combo/score change
   useEffect(() => {

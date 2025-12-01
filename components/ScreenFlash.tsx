@@ -21,7 +21,7 @@ export function ScreenFlash({ type, duration = 300, highContrast = false }: Scre
       setShow(false);
     }, duration);
     return () => clearTimeout(timer);
-  }, [duration]);
+  }, [type, duration]);
 
   if (!show) return null;
 

@@ -1467,10 +1467,14 @@ const ButtonMesh = memo(function ButtonMesh({
         const easeOut = 1 - Math.pow(1 - bounce1, 3);
         targetDepth.current = BASE_DEPTH * (0.15 + easeOut * 0.25); // Bounce to 0.4
       } else if (feedbackElapsed < 0.3) {
-        // Second smaller bounce (150ms)
+        // Second smaller bounce (150ms) - starts from 0.4 where first bounce ended
         const bounce2 = (feedbackElapsed - 0.15) / 0.15;
-        const overshoot = Math.sin(bounce2 * Math.PI) * 0.15 * Math.exp(-bounce2 * 3);
-        targetDepth.current = BASE_DEPTH * (0.9 + overshoot);
+        // Bounce from 0.4 up to ~1.0, then settle back to ~0.4
+        // Use sine wave for smooth bounce, with damping for natural decay
+        const sineBounce = Math.sin(bounce2 * Math.PI); // 0 → 1 → 0
+        const damping = Math.exp(-bounce2 * 2); // Exponential decay
+        const overshoot = sineBounce * 0.6 * damping; // Peaks at midpoint, decays smoothly
+        targetDepth.current = BASE_DEPTH * (0.4 + overshoot); // Smoothly transitions from 0.4 → ~1.0 → ~0.4
       } else {
         // Settle back to normal with slight overshoot
         const settle = Math.min((feedbackElapsed - 0.3) / 0.2, 1);
