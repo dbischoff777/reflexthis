@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useRef, useCallback, useState } from 'react';
+import { useEffect, useRef, useCallback, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useGameState } from '@/lib/GameContext';
-import { GameButton } from '@/components/GameButton';
+import { GameButtonGridWebGL } from '@/components/GameButton3DWebGL';
 import { GameOverModal } from '@/components/GameOverModal';
 import { OrientationHandler } from '@/components/OrientationHandler';
 import { ScreenFlash } from '@/components/ScreenFlash';
@@ -74,6 +74,9 @@ export default function GamePage() {
   const isProcessingRef = useRef(false);
   const currentHighlightedRef = useRef<number[]>([]);
   const highlightStartTimeRef = useRef<number | null>(null);
+  // State version of highlightStartTime for memo dependency tracking
+  // (ref alone doesn't trigger re-renders, causing stale values in memoized data)
+  const [highlightStartTimeState, setHighlightStartTimeState] = useState<number | null>(null);
   const isPausedRef = useRef(false);
   const [screenFlash, setScreenFlash] = useState<'error' | 'success' | null>(null);
   const [highlightDuration, setHighlightDuration] = useState(0);
@@ -115,6 +118,27 @@ export default function GamePage() {
     return result;
   })();
 
+  // Memoized button data for 3D grid to prevent unnecessary re-renders
+  // Only recalculates when button states actually change
+  const buttonGridData = useMemo(() => {
+    return Array.from({ length: 10 }, (_, i) => {
+      const id = i + 1;
+      const feedback = buttonPressFeedback[id];
+      const isHighlighted = highlightedButtons.includes(id);
+      // Only pass highlightStartTime when we have both a highlighted button AND a valid timestamp
+      // This prevents undefined from being used in arithmetic (Date.now() - highlightStartTime)
+      const validHighlightTime = isHighlighted && highlightStartTimeState !== null
+        ? highlightStartTimeState
+        : undefined;
+      return {
+        index: id,
+        highlighted: isHighlighted,
+        highlightStartTime: validHighlightTime,
+        pressFeedback: (feedback === 'correct' ? 'success' : feedback === 'incorrect' ? 'error' : null) as 'success' | 'error' | null,
+      };
+    });
+  }, [highlightedButtons, buttonPressFeedback, highlightStartTimeState]);
+
   // Clear highlight timer
   const clearHighlightTimer = useCallback(() => {
     if (timerRef.current) {
@@ -149,7 +173,9 @@ export default function GamePage() {
 
     setHighlightedButtons(newHighlighted);
     currentHighlightedRef.current = newHighlighted;
-    highlightStartTimeRef.current = Date.now(); // Track when buttons were highlighted
+    const timestamp = Date.now();
+    highlightStartTimeRef.current = timestamp; // Track when buttons were highlighted
+    setHighlightStartTimeState(timestamp); // Update state for memo dependency
     isProcessingRef.current = false;
 
     // Play highlight sound
@@ -164,6 +190,7 @@ export default function GamePage() {
         setHighlightedButtons([]);
         currentHighlightedRef.current = [];
         highlightStartTimeRef.current = null;
+        setHighlightStartTimeState(null);
         
         // Trigger screen shake for missed buttons (respect comfort settings)
         if (screenShakeEnabled && !reducedEffects) {
@@ -177,17 +204,19 @@ export default function GamePage() {
           setScreenFlash('error');
           setTimeout(() => setScreenFlash(null), reducedEffects ? 150 : 300);
         }
+        // Calculate new lives before calling decrementLives (which updates state async)
+        const livesAfterDecrement = lives - 1;
         decrementLives();
-      }
-      
-      // Schedule next highlight after a short delay (if game not over)
-      if (!gameOver) {
-        nextHighlightTimerRef.current = setTimeout(() => {
-          highlightNewButtonsInternal();
-        }, 1000);
+        
+        // Schedule next highlight if player will still have lives after this decrement
+        if (livesAfterDecrement > 0) {
+          nextHighlightTimerRef.current = setTimeout(() => {
+            highlightNewButtonsInternal();
+          }, 1000);
+        }
       }
     }, duration);
-  }, [score, difficulty, gameOver, isReady, setHighlightedButtons, decrementLives, clearHighlightTimer, soundEnabled]);
+  }, [score, difficulty, lives, isReady, setHighlightedButtons, decrementLives, clearHighlightTimer, soundEnabled]);
 
   // Handle button press (Reflex mode)
   const handleReflexButtonPress = useCallback(
@@ -239,6 +268,7 @@ export default function GamePage() {
         // If all highlighted buttons are pressed, reset highlight time
         if (updatedHighlighted.length === 0) {
           highlightStartTimeRef.current = null;
+          setHighlightStartTimeState(null);
           setHighlightDuration(0);
           clearHighlightTimer();
           nextHighlightTimerRef.current = setTimeout(() => {
@@ -265,14 +295,30 @@ export default function GamePage() {
           setScreenFlash('error');
           setTimeout(() => setScreenFlash(null), reducedEffects ? 150 : 300);
         }
+        
+        // Clear highlighted buttons (match behavior when timer expires)
+        setHighlightedButtons([]);
+        currentHighlightedRef.current = [];
         highlightStartTimeRef.current = null;
+        setHighlightStartTimeState(null);
         setHighlightDuration(0);
+        clearHighlightTimer();
+        
+        // Calculate new lives before calling decrementLives (which updates state async)
+        const livesAfterDecrement = lives - 1;
         decrementLives();
+        
+        // Schedule next highlight if player will still have lives after this decrement
+        if (livesAfterDecrement > 0) {
+          nextHighlightTimerRef.current = setTimeout(() => {
+            highlightNewButtons();
+          }, 1000);
+        }
       }
     },
     [
       highlightedButtons,
-      gameOver,
+      lives,
       isReady,
       reactionTimeStats,
       incrementScore,
@@ -682,6 +728,7 @@ export default function GamePage() {
     setHighlightedButtons([]);
     currentHighlightedRef.current = [];
     highlightStartTimeRef.current = null;
+    setHighlightStartTimeState(null);
     setHighlightDuration(0);
     isProcessingRef.current = false;
   }, [pauseGame, clearHighlightTimer, setHighlightedButtons]);
@@ -869,74 +916,16 @@ export default function GamePage() {
           )}
         </div>
         
-        <div className="button-grid w-full max-w-2xl">
-          {/* Top Row - 3 buttons */}
-          <div className="grid-row top-row flex justify-center gap-2 sm:gap-3 md:gap-4 lg:gap-6 mb-1 sm:mb-2 md:mb-3 lg:mb-4">
-            {[1, 2, 3].map((id) => (
-              <GameButton
-                key={id}
-                id={id}
-                highlighted={highlightedButtons.includes(id)}
-                onPress={() => getButtonHandler()(id)}
-                highlightStartTime={highlightStartTimeRef.current || undefined}
-                highlightDuration={highlightDuration}
-                pressFeedback={buttonPressFeedback[id] || null}
-              />
-            ))}
-          </div>
-          {/* Top row key hints */}
-          <div className="flex justify-center gap-2 sm:gap-3 md:gap-4 lg:gap-6 mb-2 sm:mb-3 md:mb-4 lg:mb-6 text-[12px] sm:text-sm text-foreground/70 font-mono">
-            {[1, 2, 3].map((id) => (
-              <span key={id} className="min-w-[40px] text-center opacity-80">
-                {keybindingHints[id]}
-              </span>
-            ))}
-          </div>
-          
-          {/* Middle Row - 4 buttons */}
-          <div className="grid-row middle-row flex justify-center gap-2 sm:gap-3 md:gap-4 lg:gap-6 mb-1 sm:mb-2 md:mb-3 lg:mb-4">
-            {[4, 5, 6, 7].map((id) => (
-              <GameButton
-                key={id}
-                id={id}
-                highlighted={highlightedButtons.includes(id)}
-                onPress={() => getButtonHandler()(id)}
-                highlightStartTime={highlightStartTimeRef.current || undefined}
-                highlightDuration={highlightDuration}
-                pressFeedback={buttonPressFeedback[id] || null}
-              />
-            ))}
-          </div>
-          {/* Middle row key hints */}
-          <div className="flex justify-center gap-2 sm:gap-3 md:gap-4 lg:gap-6 mb-2 sm:mb-3 md:mb-4 lg:mb-6 text-[12px] sm:text-sm text-foreground/70 font-mono">
-            {[4, 5, 6, 7].map((id) => (
-              <span key={id} className="min-w-[40px] text-center opacity-80">
-                {keybindingHints[id]}
-              </span>
-            ))}
-          </div>
-          
-          {/* Bottom Row - 3 buttons */}
-          <div className="grid-row bottom-row flex justify-center gap-2 sm:gap-3 md:gap-4 lg:gap-6">
-            {[8, 9, 10].map((id) => (
-              <GameButton
-                key={id}
-                id={id}
-                highlighted={highlightedButtons.includes(id)}
-                onPress={() => getButtonHandler()(id)}
-                highlightStartTime={highlightStartTimeRef.current || undefined}
-                highlightDuration={highlightDuration}
-                pressFeedback={buttonPressFeedback[id] || null}
-              />
-            ))}
-          </div>
-          {/* Bottom row key hints */}
-          <div className="flex justify-center gap-2 sm:gap-3 md:gap-4 lg:gap-6 mt-2 sm:mt-3 md:mt-4 lg:mt-6 text-[12px] sm:text-sm text-foreground/70 font-mono">
-            {[8, 9, 10].map((id) => (
-              <span key={id} className="min-w-[40px] text-center opacity-80">
-                {keybindingHints[id]}
-              </span>
-            ))}
+        {/* 3D WebGL Button Grid */}
+        <div className="w-full max-w-2xl">
+          <div className="w-full h-[340px] sm:h-[400px] md:h-[450px]">
+            <GameButtonGridWebGL
+              buttons={buttonGridData}
+              highlightDuration={highlightDuration}
+              onPress={(index) => getButtonHandler()(index)}
+              disabled={gameOver || isPaused}
+              keyLabels={keybindingHints}
+            />
           </div>
         </div>
       </main>
