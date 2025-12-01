@@ -25,116 +25,112 @@ export function ReadyScreen({ onReady, gameMode }: ReadyScreenProps) {
   };
 
   const renderTutorialContent = () => (
-    <div className="space-y-4 sm:space-y-6 max-w-3xl mx-auto text-left">
-      {/* Title + Mode */}
-      <div className="text-center space-y-4">
-        <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-primary text-glow pixel-border px-4 py-2 inline-block border-4 border-primary">
+    <div className="space-y-2 sm:space-y-3 md:space-y-4 max-w-3xl mx-auto text-left">
+      {/* Title + Mode - compact on mobile */}
+      <div className="text-center space-y-1 sm:space-y-2">
+        <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold text-primary text-glow pixel-border px-3 py-1 sm:px-4 sm:py-2 inline-block border-2 sm:border-4 border-primary">
           REFLEX THIS
         </h1>
         {gameMode && (
-          <div className="space-y-1">
-            <p className="text-sm sm:text-base text-muted-foreground">You are about to play:</p>
-            <p className="text-2xl sm:text-3xl font-bold text-secondary pixel-border px-4 py-2 inline-block border-4 border-secondary">
+          <div className="flex items-center justify-center gap-2">
+            <span className="text-xs sm:text-sm text-muted-foreground">Mode:</span>
+            <span className="text-lg sm:text-2xl font-bold text-secondary pixel-border px-2 py-0.5 sm:px-3 sm:py-1 inline-block border-2 border-secondary">
               {getModeName()}
-            </p>
+            </span>
           </div>
         )}
       </div>
 
       {/* 3-4-3 grid + default keys */}
-      <section className="grid gap-4 sm:gap-6 md:grid-cols-[minmax(0,1.1fr)_minmax(0,1.2fr)] items-start">
-        <div className="space-y-4">
-          <h2 className="text-lg sm:text-xl font-bold text-primary pixel-border inline-block px-3 py-1 border-2 border-primary">
-            Controls – Default Layout
+      <section className="grid gap-2 sm:gap-4 md:grid-cols-[minmax(0,1.1fr)_minmax(0,1.2fr)] items-start">
+        <div className="space-y-1 sm:space-y-2">
+          <h2 className="text-sm sm:text-lg font-bold text-primary pixel-border inline-block px-2 py-0.5 sm:px-3 sm:py-1 border-2 border-primary">
+            Controls
           </h2>
-          <p className="text-xs sm:text-sm text-muted-foreground">
-            The buttons are laid out in a 3–4–3 grid. By default they are mapped to a QWERTZ-friendly keyboard:
+          <p className="text-[10px] sm:text-xs text-muted-foreground hidden sm:block">
+            3–4–3 grid mapped to QWERTZ keyboard:
           </p>
 
-          <div className="inline-block rounded-md bg-card/60 border-4 border-primary pixel-border px-4 py-3 text-xs sm:text-sm">
-            <div className="flex flex-col items-center gap-2">
-              <div className="flex gap-2">
-                <span className="px-2 py-1 border border-border bg-background/80 font-mono">Q</span>
-                <span className="px-2 py-1 border border-border bg-background/80 font-mono">W</span>
-                <span className="px-2 py-1 border border-border bg-background/80 font-mono">E</span>
+          <div className="inline-block rounded-md bg-card/60 border-2 sm:border-4 border-primary pixel-border px-2 py-1.5 sm:px-3 sm:py-2 text-[10px] sm:text-xs">
+            <div className="flex flex-col items-center gap-1 sm:gap-1.5">
+              <div className="flex gap-1 sm:gap-1.5">
+                <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 border border-border bg-background/80 font-mono">Q</span>
+                <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 border border-border bg-background/80 font-mono">W</span>
+                <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 border border-border bg-background/80 font-mono">E</span>
               </div>
-              <div className="flex gap-2">
-                <span className="px-2 py-1 border border-border bg-background/80 font-mono">A</span>
-                <span className="px-2 py-1 border border-border bg-background/80 font-mono">S</span>
-                <span className="px-2 py-1 border border-border bg-background/80 font-mono">D</span>
-                <span className="px-2 py-1 border border-border bg-background/80 font-mono">F</span>
+              <div className="flex gap-1 sm:gap-1.5">
+                <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 border border-border bg-background/80 font-mono">A</span>
+                <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 border border-border bg-background/80 font-mono">S</span>
+                <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 border border-border bg-background/80 font-mono">D</span>
+                <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 border border-border bg-background/80 font-mono">F</span>
               </div>
-              <div className="flex gap-2">
-                <span className="px-2 py-1 border border-border bg-background/80 font-mono">Y</span>
-                <span className="px-2 py-1 border border-border bg-background/80 font-mono">X</span>
-                <span className="px-2 py-1 border border-border bg-background/80 font-mono">C</span>
+              <div className="flex gap-1 sm:gap-1.5">
+                <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 border border-border bg-background/80 font-mono">Y</span>
+                <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 border border-border bg-background/80 font-mono">X</span>
+                <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 border border-border bg-background/80 font-mono">C</span>
               </div>
             </div>
-            <p className="mt-3 text-[11px] text-muted-foreground">
-              You can change these later in <span className="font-semibold">Settings → Keybindings</span>.
+            <p className="mt-1.5 sm:mt-2 text-[9px] sm:text-[10px] text-muted-foreground">
+              Change in <span className="font-semibold">Settings → Keybindings</span>
             </p>
           </div>
         </div>
 
-        {/* What counts as “good” + mode details */}
-        <div className="space-y-4">
-          <h2 className="text-lg sm:text-xl font-bold text-primary pixel-border inline-block px-3 py-1 border-2 border-primary">
-            How to Play Well
+        {/* What counts as "good" + mode details */}
+        <div className="space-y-1 sm:space-y-2">
+          <h2 className="text-sm sm:text-lg font-bold text-primary pixel-border inline-block px-2 py-0.5 sm:px-3 sm:py-1 border-2 border-primary">
+            How to Play
           </h2>
-          <ul className="space-y-2 text-xs sm:text-sm text-muted-foreground">
+          <ul className="space-y-0.5 sm:space-y-1 text-[10px] sm:text-xs text-muted-foreground">
             <li>
               <span className="font-semibold text-primary">Fast reactions:</span>{' '}
-              hit highlighted buttons <span className="font-mono">as quickly as you can</span> after they appear.
+              hit highlighted buttons quickly.
             </li>
             <li>
               <span className="font-semibold text-primary">No misses:</span>{' '}
-              pressing the wrong button or letting highlights time out will cost you lives and reset your combo.
+              wrong buttons cost lives and reset combo.
             </li>
             <li>
               <span className="font-semibold text-primary">Keep the combo:</span>{' '}
-              each correct hit increases your combo meter; higher combo = more points per hit.
+              higher combo = more points per hit.
             </li>
-            <li>
-              <span className="font-semibold text-primary">Survival mode:</span>{' '}
-              you only get <span className="font-mono">1 life</span> – a single mistake ends the run.
-            </li>
-            <li>
+            <li className="hidden sm:list-item">
               <span className="font-semibold text-primary">Difficulty:</span>{' '}
-              as your score climbs, highlights get faster and more buttons appear at once.
+              speed increases as score climbs.
             </li>
           </ul>
 
-          {/* Mode-specific explanation */}
+          {/* Mode-specific explanation - shorter */}
           {gameMode === 'reflex' && (
-            <p className="text-xs sm:text-sm text-foreground/80">
-              <span className="font-semibold text-primary">Reflex mode:</span>{' '}
-              hit highlighted buttons before they disappear. Wrong keys or timeouts cost lives and reset your combo. A higher combo means more points per hit.
+            <p className="text-[10px] sm:text-xs text-foreground/80">
+              <span className="font-semibold text-primary">Reflex:</span>{' '}
+              Hit buttons before they disappear. Build combos for bonus points.
             </p>
           )}
           {gameMode === 'sequence' && (
-            <p className="text-xs sm:text-sm text-foreground/80">
-              <span className="font-semibold text-primary">Sequence mode:</span>{' '}
-              first watch the pattern, then repeat it exactly. A mistake loses a life and restarts the sequence; each success makes the sequence longer.
+            <p className="text-[10px] sm:text-xs text-foreground/80">
+              <span className="font-semibold text-primary">Sequence:</span>{' '}
+              Watch the pattern, then repeat it exactly. Mistakes restart.
             </p>
           )}
           {gameMode === 'survival' && (
-            <p className="text-xs sm:text-sm text-foreground/80">
-              <span className="font-semibold text-primary">Survival mode:</span>{' '}
-              you only have a single life. Every mistake ends the run and difficulty ramps up quickly with faster highlights and more buttons on screen.
+            <p className="text-[10px] sm:text-xs text-foreground/80">
+              <span className="font-semibold text-primary">Survival:</span>{' '}
+              One life only. Any mistake ends the run immediately.
             </p>
           )}
           {gameMode === 'nightmare' && (
-            <p className="text-xs sm:text-sm text-foreground/80">
-              <span className="font-semibold text-primary">Nightmare mode:</span>{' '}
-              brutal challenge for elite players. Extreme speed (150-350ms), up to 6 buttons simultaneously, and rapid difficulty scaling. Only for the top 0.1%.
+            <p className="text-[10px] sm:text-xs text-foreground/80">
+              <span className="font-semibold text-primary">Nightmare:</span>{' '}
+              Extreme speed, up to 6 buttons. For elite players only.
             </p>
           )}
         </div>
       </section>
 
-      {/* Footer / hint */}
-      <p className="text-[11px] sm:text-xs text-center text-foreground/70 font-mono">
-        Tip: You can open settings in-game from the HUD (gear icon) to adjust audio and keybindings.
+      {/* Footer / hint - hidden on very small screens */}
+      <p className="text-[9px] sm:text-[10px] text-center text-foreground/60 font-mono hidden sm:block">
+        Tip: Open settings in-game (gear icon) to adjust keybindings.
       </p>
     </div>
   );
@@ -142,17 +138,17 @@ export function ReadyScreen({ onReady, gameMode }: ReadyScreenProps) {
 
   return (
     <div className="fixed inset-0 z-50 bg-background flex items-center justify-center crt-scanlines overflow-hidden">
-      <div className="relative w-full h-full flex items-center justify-center px-4 py-4 sm:py-6 overflow-y-auto">
-        <div className="relative z-10 w-full max-w-5xl">
+      <div className="relative w-full h-full flex items-center justify-center px-2 sm:px-4 py-2 sm:py-4 overflow-hidden">
+        <div className="relative z-10 w-full max-w-4xl">
           {renderTutorialContent()}
 
-          <div className="mt-4 sm:mt-6 flex justify-center">
+          <div className="mt-2 sm:mt-4 flex justify-center">
             <button
               onClick={handleStart}
               draggable={false}
               className={cn(
-                'px-8 py-4 text-xl sm:text-2xl font-bold',
-                'border-4 border-primary bg-primary text-primary-foreground',
+                'px-6 py-2 sm:px-8 sm:py-3 text-lg sm:text-xl font-bold',
+                'border-2 sm:border-4 border-primary bg-primary text-primary-foreground',
                 'hover:border-secondary hover:bg-secondary',
                 'transition-all duration-100 active:scale-95',
                 'focus:outline-none focus:ring-2 focus:ring-primary',
@@ -171,7 +167,7 @@ export function ReadyScreen({ onReady, gameMode }: ReadyScreenProps) {
         {/* Animated border effect */}
         <div className="absolute inset-0 pointer-events-none">
           <div
-            className="absolute inset-0 border-8 border-primary opacity-20"
+            className="absolute inset-0 border-4 sm:border-8 border-primary opacity-20"
             style={{
               animation: 'pixel-pulse 2s infinite',
             }}
