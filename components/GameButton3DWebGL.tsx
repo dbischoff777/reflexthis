@@ -155,13 +155,18 @@ interface BackgroundGridProps {
     difficulty: string; // DifficultyPreset from game context
   };
   highlightedCount?: number;
+  comboMilestone?: number | null; // Triggered when combo hits 5, 10, 20, 30, 50
 }
 
-const BackgroundGrid = memo(function BackgroundGrid({ gameState, highlightedCount = 0 }: BackgroundGridProps) {
+const BackgroundGrid = memo(function BackgroundGrid({ gameState, highlightedCount = 0, comboMilestone }: BackgroundGridProps) {
   // Accumulated phases - these increment over time at variable speeds without resetting
   const phaseRef = useRef({ pulse: 0, scan: 0, color: 0 });
   const lastTimeRef = useRef(0);
   const currentSpeedRef = useRef(1.0);
+  
+  // Combo celebration state
+  const celebrationRef = useRef({ active: false, startTime: 0, intensity: 0 });
+  const prevMilestoneRef = useRef<number | null>(null);
   
   const shaderMaterial = useMemo(() => {
     return new THREE.ShaderMaterial({
@@ -180,6 +185,9 @@ const BackgroundGrid = memo(function BackgroundGrid({ gameState, highlightedCoun
         uPulsePhase: { value: 0 },
         uScanPhase: { value: 0 },
         uColorPhase: { value: 0 },
+        // Celebration effect
+        uCelebration: { value: 0 },
+        uCelebrationColor: { value: new THREE.Color(0x00ffff) },
       },
       vertexShader: `
         varying vec2 vUv;
@@ -201,6 +209,8 @@ const BackgroundGrid = memo(function BackgroundGrid({ gameState, highlightedCoun
         uniform float uPulsePhase;
         uniform float uScanPhase;
         uniform float uColorPhase;
+        uniform float uCelebration;
+        uniform vec3 uCelebrationColor;
         varying vec2 vUv;
         
         void main() {
@@ -249,6 +259,25 @@ const BackgroundGrid = memo(function BackgroundGrid({ gameState, highlightedCoun
           // Edge warning glow (urgency)
           float edgeGlow = (1.0 - vignette) * uUrgency * urgencyPulse * 0.5;
           
+          // COMBO CELEBRATION EFFECT - expanding ring burst from center
+          float celebrationRing = 0.0;
+          if (uCelebration > 0.01) {
+            // Expanding ring from center
+            float ringProgress = 1.0 - uCelebration; // 0 to 1 as celebration fades
+            float ringRadius = ringProgress * 1.5; // Ring expands outward
+            float ringWidth = 0.15 * uCelebration; // Ring gets thinner as it expands
+            float distFromCenter = length((vUv - center) * vec2(1.2, 1.0));
+            celebrationRing = smoothstep(ringRadius - ringWidth, ringRadius, distFromCenter) *
+                             smoothstep(ringRadius + ringWidth, ringRadius, distFromCenter);
+            celebrationRing *= uCelebration * 2.0; // Brightness fades with celebration
+            
+            // Add radial burst lines
+            float angle = atan(vUv.y - center.y, vUv.x - center.x);
+            float rays = abs(sin(angle * 8.0)) * 0.5 + 0.5;
+            rays *= smoothstep(0.6, 0.0, distFromCenter) * uCelebration;
+            celebrationRing += rays * 0.5;
+          }
+          
           // Dynamic accent color mixing based on state - uses accumulated color phase
           vec3 urgencyColor = vec3(1.0, 0.2, 0.3);
           vec3 comboColor = mix(uAccent, uAccent2, 0.5 + sin(uColorPhase) * 0.3);
@@ -269,12 +298,16 @@ const BackgroundGrid = memo(function BackgroundGrid({ gameState, highlightedCoun
           color += comboColor * centerGlow;
           color += urgencyColor * edgeGlow;
           
+          // Add celebration effect
+          color += uCelebrationColor * celebrationRing;
+          
           // Game over purple tint
           color = mix(color, gameOverColor * 0.3, uGameOver * 0.4);
           
           // Alpha with edge fade
           float alpha = (0.85 + uIntensity * 0.1) * vignette;
           alpha = max(alpha, edgeGlow * 0.8); // Keep edge glow visible
+          alpha = max(alpha, celebrationRing * 0.5); // Keep celebration visible
           
           gl_FragColor = vec4(color, alpha);
         }
@@ -321,6 +354,53 @@ const BackgroundGrid = memo(function BackgroundGrid({ gameState, highlightedCoun
       mat.uniforms.uUrgency.value = THREE.MathUtils.lerp(mat.uniforms.uUrgency.value, urgency, 0.1);
       mat.uniforms.uComboGlow.value = THREE.MathUtils.lerp(mat.uniforms.uComboGlow.value, comboGlow, 0.08);
       mat.uniforms.uGameOver.value = THREE.MathUtils.lerp(mat.uniforms.uGameOver.value, gameOver ? 1.0 : 0.0, 0.1);
+    }
+    
+    // COMBO CELEBRATION DETECTION AND EFFECT
+    // Detect when comboMilestone prop changes (triggered by game page)
+    if (comboMilestone && comboMilestone !== prevMilestoneRef.current) {
+      prevMilestoneRef.current = comboMilestone;
+      celebrationRef.current.active = true;
+      celebrationRef.current.startTime = currentTime;
+      
+      // Set celebration color and intensity based on milestone level
+      if (comboMilestone >= 50) {
+        celebrationRef.current.intensity = 1.5;
+        mat.uniforms.uCelebrationColor.value.setRGB(1.0, 0.3, 1.0); // Magenta/gold
+      } else if (comboMilestone >= 30) {
+        celebrationRef.current.intensity = 1.2;
+        mat.uniforms.uCelebrationColor.value.setRGB(1.0, 0.5, 0.0); // Orange
+      } else if (comboMilestone >= 20) {
+        celebrationRef.current.intensity = 1.0;
+        mat.uniforms.uCelebrationColor.value.setRGB(1.0, 0.0, 1.0); // Magenta
+      } else if (comboMilestone >= 10) {
+        celebrationRef.current.intensity = 0.8;
+        mat.uniforms.uCelebrationColor.value.setRGB(0.0, 1.0, 1.0); // Cyan
+      } else {
+        celebrationRef.current.intensity = 0.6;
+        mat.uniforms.uCelebrationColor.value.setRGB(0.2, 1.0, 0.5); // Green
+      }
+    }
+    
+    // Reset milestone tracking when prop becomes null
+    if (!comboMilestone) {
+      prevMilestoneRef.current = null;
+    }
+    
+    // Animate celebration effect (fade out over time)
+    if (celebrationRef.current.active) {
+      const celebrationDuration = 0.8; // seconds
+      const elapsed = currentTime - celebrationRef.current.startTime;
+      const progress = Math.min(elapsed / celebrationDuration, 1.0);
+      
+      // Ease out curve
+      const celebration = (1.0 - progress * progress) * celebrationRef.current.intensity;
+      mat.uniforms.uCelebration.value = celebration;
+      
+      if (progress >= 1.0) {
+        celebrationRef.current.active = false;
+        mat.uniforms.uCelebration.value = 0;
+      }
     }
     
     // Smoothly transition speed (no sudden jumps)
@@ -554,6 +634,144 @@ const HolographicRing = memo(function HolographicRing({ active, progress, color 
   return (
     <mesh ref={ringRef} position={[0, 0, 0.08]} rotation={[0, 0, 0]}>
       <ringGeometry args={[0.38, 0.52, 64]} />
+      <primitive object={shaderMaterial} ref={materialRef} attach="material" />
+    </mesh>
+  );
+});
+
+// ============================================================================
+// COUNTDOWN RING (Visual timer showing remaining time)
+// ============================================================================
+
+interface CountdownRingProps {
+  active: boolean;
+  progress: number; // 0 = full time remaining, 1 = time expired
+}
+
+const CountdownRing = memo(function CountdownRing({ active, progress }: CountdownRingProps) {
+  const ringRef = useRef<THREE.Mesh>(null);
+  const materialRef = useRef<THREE.ShaderMaterial>(null);
+  
+  const shaderMaterial = useMemo(() => {
+    return new THREE.ShaderMaterial({
+      uniforms: {
+        uTime: { value: 0 },
+        uProgress: { value: 0 },
+        uActive: { value: 0 },
+      },
+      vertexShader: `
+        varying vec2 vUv;
+        varying vec3 vPosition;
+        void main() {
+          vUv = uv;
+          vPosition = position;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        uniform float uTime;
+        uniform float uProgress;
+        uniform float uActive;
+        varying vec2 vUv;
+        varying vec3 vPosition;
+        
+        // Color palette for urgency levels
+        vec3 getUrgencyColor(float progress) {
+          // Cyan (0%) -> Green (25%) -> Yellow (50%) -> Orange (75%) -> Red (100%)
+          vec3 cyan = vec3(0.0, 1.0, 1.0);
+          vec3 green = vec3(0.2, 1.0, 0.4);
+          vec3 yellow = vec3(1.0, 1.0, 0.0);
+          vec3 orange = vec3(1.0, 0.5, 0.0);
+          vec3 red = vec3(1.0, 0.15, 0.1);
+          
+          if (progress < 0.25) {
+            return mix(cyan, green, progress * 4.0);
+          } else if (progress < 0.5) {
+            return mix(green, yellow, (progress - 0.25) * 4.0);
+          } else if (progress < 0.75) {
+            return mix(yellow, orange, (progress - 0.5) * 4.0);
+          } else {
+            return mix(orange, red, (progress - 0.75) * 4.0);
+          }
+        }
+        
+        void main() {
+          // Calculate angle from top (12 o'clock position)
+          float angle = atan(vPosition.x, vPosition.y); // Swapped for top-start
+          float normalizedAngle = (angle + 3.14159) / (2.0 * 3.14159);
+          
+          // Remaining time fills from top, clockwise
+          float remaining = 1.0 - uProgress;
+          float fillMask = step(normalizedAngle, remaining);
+          
+          // Ring geometry
+          float dist = length(vPosition.xy);
+          float innerRadius = 0.52;
+          float outerRadius = 0.62;
+          
+          // Smooth ring edges
+          float ring = smoothstep(innerRadius - 0.02, innerRadius + 0.01, dist) * 
+                       smoothstep(outerRadius + 0.02, outerRadius - 0.01, dist);
+          
+          // Urgency pulse - faster when time is running out
+          float pulseSpeed = 2.0 + uProgress * 15.0;
+          float pulseIntensity = 0.15 + uProgress * 0.35;
+          float pulse = 1.0 + sin(uTime * pulseSpeed) * pulseIntensity;
+          
+          // Glow at the leading edge of the countdown
+          float edgeGlow = 0.0;
+          float edgeWidth = 0.08;
+          if (abs(normalizedAngle - remaining) < edgeWidth && remaining > 0.02) {
+            edgeGlow = (1.0 - abs(normalizedAngle - remaining) / edgeWidth) * 2.0;
+          }
+          
+          // Get color based on urgency
+          vec3 baseColor = getUrgencyColor(uProgress);
+          
+          // Add brightness boost when critical
+          float criticalBoost = uProgress > 0.7 ? (uProgress - 0.7) * 3.0 : 0.0;
+          vec3 finalColor = baseColor * (1.2 + criticalBoost) * pulse;
+          
+          // Combine fill and glow
+          float alpha = (ring * fillMask + edgeGlow * ring) * uActive;
+          
+          // Add subtle background ring to show full circle
+          float bgRing = ring * (1.0 - fillMask) * 0.15 * uActive;
+          vec3 bgColor = vec3(0.3, 0.3, 0.4);
+          
+          vec3 outputColor = finalColor * (ring * fillMask + edgeGlow * ring) + bgColor * bgRing;
+          float outputAlpha = alpha + bgRing;
+          
+          gl_FragColor = vec4(outputColor, outputAlpha * 0.95);
+        }
+      `,
+      transparent: true,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+  }, []);
+  
+  useFrame((state) => {
+    if (!materialRef.current) return;
+    const mat = shaderMaterial;
+    mat.uniforms.uTime.value = state.clock.elapsedTime;
+    mat.uniforms.uProgress.value = progress;
+    mat.uniforms.uActive.value = THREE.MathUtils.lerp(
+      mat.uniforms.uActive.value,
+      active ? 1 : 0,
+      0.2
+    );
+  });
+  
+  return (
+    <mesh 
+      ref={ringRef} 
+      position={[0, 0, 0.06]} 
+      rotation={[0, 0, 0]}
+      frustumCulled={false}
+    >
+      <ringGeometry args={[0.48, 0.66, 64]} />
       <primitive object={shaderMaterial} ref={materialRef} attach="material" />
     </mesh>
   );
@@ -1357,11 +1575,17 @@ const ButtonMesh = memo(function ButtonMesh({
         color={urgencyColorRef.current}
       />
       
-      {/* Holographic Ring Effect */}
+      {/* Holographic Ring Effect - decorative animated segments */}
       <HolographicRing 
         active={highlighted} 
         progress={progressRef.current}
         color={urgencyColorRef.current}
+      />
+      
+      {/* Countdown Ring - clear visual timer showing remaining time */}
+      <CountdownRing 
+        active={highlighted} 
+        progress={progressRef.current}
       />
       
       {/* Shockwave Effect on press */}
@@ -1470,6 +1694,8 @@ interface GameButtonGridWebGLProps {
     score: number;
     difficulty: string; // DifficultyPreset from game context
   };
+  // Combo milestone for celebration effects (5, 10, 20, 30, 50)
+  comboMilestone?: number | null;
 }
 
 // Ripple event for cross-button communication
@@ -1494,6 +1720,7 @@ export const GameButtonGridWebGL = memo(function GameButtonGridWebGL({
   keyLabels = {},
   showLabels = true,
   gameState,
+  comboMilestone,
 }: GameButtonGridWebGLProps) {
   const lastPressTime = useRef<number>(0);
   const [rippleEvents, setRippleEvents] = useState<RippleEvent[]>([]);
@@ -1620,6 +1847,7 @@ export const GameButtonGridWebGL = memo(function GameButtonGridWebGL({
           <BackgroundGrid 
             gameState={gameState} 
             highlightedCount={buttons.filter(b => b.highlighted).length}
+            comboMilestone={comboMilestone}
           />
           
           {/* Reflection Surface (floor) */}

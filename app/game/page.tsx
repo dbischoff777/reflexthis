@@ -90,6 +90,35 @@ export default function GamePage() {
   const [currentReactionTime, setCurrentReactionTime] = useState<number | null>(null);
   const [isNewBestReaction, setIsNewBestReaction] = useState(false);
   
+  // Track combo milestones for celebration effects (5, 10, 20, 30, 50)
+  const [comboMilestone, setComboMilestone] = useState<number | null>(null);
+  const lastMilestoneRef = useRef<number>(0);
+  
+  // Detect combo milestones
+  useEffect(() => {
+    const milestones = [5, 10, 20, 30, 50];
+    
+    // Check if we crossed a new milestone threshold
+    for (const milestone of milestones) {
+      if (combo >= milestone && previousComboRef.current < milestone && milestone > lastMilestoneRef.current) {
+        lastMilestoneRef.current = milestone;
+        setComboMilestone(milestone);
+        
+        // Clear milestone after animation duration
+        const timer = setTimeout(() => {
+          setComboMilestone(null);
+        }, 1000);
+        
+        return () => clearTimeout(timer);
+      }
+    }
+    
+    // Reset milestone tracking when combo resets to 0
+    if (combo === 0) {
+      lastMilestoneRef.current = 0;
+    }
+  }, [combo]);
+  
   // Update previous values when combo/score change
   useEffect(() => {
     previousComboRef.current = combo;
@@ -931,6 +960,7 @@ export default function GamePage() {
                 score,
                 difficulty,
               }}
+              comboMilestone={comboMilestone}
             />
           </div>
         </div>
