@@ -17,20 +17,92 @@ import * as THREE from 'three';
 import { triggerHaptic } from '@/lib/hapticUtils';
 
 // ============================================================================
+// DYNAMIC BLOOM COMPONENT (responds to combo milestones)
+// ============================================================================
+
+interface DynamicBloomProps {
+  comboMilestone?: number | null;
+  baseIntensity?: number;
+}
+
+const DynamicBloom = memo(function DynamicBloom({ comboMilestone, baseIntensity = 0.7 }: DynamicBloomProps) {
+  const [intensity, setIntensity] = useState(baseIntensity);
+  const celebrationIntensityRef = useRef(0);
+  const lastMilestoneRef = useRef<number | null>(null);
+  const startTimeRef = useRef(0);
+  
+  useFrame((state) => {
+    const time = state.clock.elapsedTime;
+    
+    // Detect new combo milestone
+    if (comboMilestone && comboMilestone !== lastMilestoneRef.current) {
+      lastMilestoneRef.current = comboMilestone;
+      startTimeRef.current = time;
+      
+      // Higher milestones = more intense bloom burst
+      if (comboMilestone >= 50) {
+        celebrationIntensityRef.current = 2.5; // Maximum burst
+      } else if (comboMilestone >= 30) {
+        celebrationIntensityRef.current = 2.0; // Strong burst
+      } else if (comboMilestone >= 20) {
+        celebrationIntensityRef.current = 1.5; // Moderate burst
+      } else if (comboMilestone >= 10) {
+        celebrationIntensityRef.current = 1.2; // Subtle burst
+      } else {
+        celebrationIntensityRef.current = 1.0; // Small burst
+      }
+    }
+    
+    // Animate bloom burst (fade out over time)
+    if (celebrationIntensityRef.current > 0) {
+      const elapsed = time - startTimeRef.current;
+      const duration = 0.6; // 600ms bloom burst
+      
+      if (elapsed < duration) {
+        const progress = elapsed / duration;
+        const fade = 1 - progress * progress; // Ease out
+        const currentBurst = celebrationIntensityRef.current * fade;
+        setIntensity(baseIntensity + currentBurst);
+      } else {
+        celebrationIntensityRef.current = 0;
+        setIntensity(baseIntensity);
+      }
+    } else {
+      // Smoothly return to base intensity
+      setIntensity(prev => THREE.MathUtils.lerp(prev, baseIntensity, 0.1));
+    }
+  });
+  
+  return (
+    <Bloom
+      intensity={intensity}
+      luminanceThreshold={0.3}
+      luminanceSmoothing={0.9}
+      mipmapBlur
+      radius={0.7}
+    />
+  );
+});
+
+// ============================================================================
 // CAMERA SHAKE COMPONENT
 // ============================================================================
 
 interface CameraShakeProps {
   errorEvents: RippleEvent[];
+  comboMilestone?: number | null;
 }
 
-const CameraShake = memo(function CameraShake({ errorEvents }: CameraShakeProps) {
+const CameraShake = memo(function CameraShake({ errorEvents, comboMilestone }: CameraShakeProps) {
   const shakeRef = useRef({ x: 0, y: 0, intensity: 0 });
+  const celebrationShakeRef = useRef({ x: 0, y: 0, intensity: 0, startTime: 0 });
   const lastErrorTime = useRef(0);
+  const lastMilestoneRef = useRef<number | null>(null);
   const baseY = 0.2; // Match camera's base Y position
   
   useFrame((state, delta) => {
     const camera = state.camera;
+    const time = state.clock.elapsedTime;
     
     // Check for new error events
     for (const event of errorEvents) {
@@ -40,23 +112,74 @@ const CameraShake = memo(function CameraShake({ errorEvents }: CameraShakeProps)
       }
     }
     
-    // Apply shake with decay
+    // Check for combo milestone celebration shake
+    if (comboMilestone && comboMilestone !== lastMilestoneRef.current) {
+      lastMilestoneRef.current = comboMilestone;
+      celebrationShakeRef.current.startTime = time;
+      
+      // Higher milestones = more intense shake
+      if (comboMilestone >= 30) {
+        celebrationShakeRef.current.intensity = 0.12; // Strong shake
+      } else if (comboMilestone >= 20) {
+        celebrationShakeRef.current.intensity = 0.08; // Moderate shake
+      } else {
+        celebrationShakeRef.current.intensity = 0.04; // Subtle shake
+      }
+    }
+    
+    // Apply celebration shake (upward pulse + horizontal shake)
+    let totalShakeX = 0;
+    let totalShakeY = 0;
+    
+    if (celebrationShakeRef.current.intensity > 0.001) {
+      const elapsed = time - celebrationShakeRef.current.startTime;
+      const duration = 0.4; // 400ms celebration shake
+      
+      if (elapsed < duration) {
+        const progress = elapsed / duration;
+        const decay = 1 - progress; // Linear decay
+        
+        // Upward pulse (celebratory bounce)
+        const pulse = Math.sin(progress * Math.PI * 2) * 0.3 + 0.7;
+        celebrationShakeRef.current.y = pulse * celebrationShakeRef.current.intensity * decay;
+        
+        // Horizontal shake (excitement)
+        const shakeTime = time * 35;
+        celebrationShakeRef.current.x = Math.sin(shakeTime) * celebrationShakeRef.current.intensity * decay * 0.6;
+        
+        totalShakeX += celebrationShakeRef.current.x;
+        totalShakeY += celebrationShakeRef.current.y;
+        
+        // Decay intensity
+        celebrationShakeRef.current.intensity *= 0.92;
+      } else {
+        celebrationShakeRef.current.intensity = 0;
+      }
+    }
+    
+    // Apply error shake with decay
     if (shakeRef.current.intensity > 0.001) {
-      const time = state.clock.elapsedTime * 45;
-      shakeRef.current.x = Math.sin(time) * shakeRef.current.intensity;
-      shakeRef.current.y = Math.cos(time * 1.3) * shakeRef.current.intensity * 0.7;
+      const shakeTime = time * 45;
+      shakeRef.current.x = Math.sin(shakeTime) * shakeRef.current.intensity;
+      shakeRef.current.y = Math.cos(shakeTime * 1.3) * shakeRef.current.intensity * 0.7;
+      
+      totalShakeX += shakeRef.current.x;
+      totalShakeY += shakeRef.current.y;
       
       // Decay shake rapidly
       shakeRef.current.intensity *= 0.88;
-      
-      // Apply to camera
-      camera.position.x = shakeRef.current.x;
-      camera.position.y = baseY + shakeRef.current.y;
+    }
+    
+    // Apply combined shake to camera
+    if (Math.abs(totalShakeX) > 0.001 || Math.abs(totalShakeY) > 0.001) {
+      camera.position.x = totalShakeX;
+      camera.position.y = baseY + totalShakeY;
     } else {
       // Smoothly return to rest position
       camera.position.x = THREE.MathUtils.lerp(camera.position.x, 0, delta * 12);
       camera.position.y = THREE.MathUtils.lerp(camera.position.y, baseY, delta * 12);
       shakeRef.current.intensity = 0;
+      celebrationShakeRef.current.intensity = 0;
     }
   });
   
@@ -1329,21 +1452,48 @@ const ButtonMesh = memo(function ButtonMesh({
       anticipationPhase.current = 0;
     }
     
-    // Determine target depth with spring physics feel
+    // Determine target depth with enhanced spring physics feel
     if (pressed) {
-      targetDepth.current = BASE_DEPTH * 0.3;
+      // Immediate press: quick depress
+      targetDepth.current = BASE_DEPTH * 0.25;
     } else if (pressFeedback === 'success') {
-      // Success: quick squash then spring back
-      const successBounce = feedbackElapsed < 0.1 
-        ? BASE_DEPTH * 0.2  // Initial squash
-        : BASE_DEPTH * (0.8 + Math.sin(feedbackElapsed * 15) * 0.2 * Math.exp(-feedbackElapsed * 5));
-      targetDepth.current = successBounce;
+      // Success: enhanced spring-back with multiple bounces
+      if (feedbackElapsed < 0.05) {
+        // Initial squash (50ms)
+        targetDepth.current = BASE_DEPTH * 0.15;
+      } else if (feedbackElapsed < 0.15) {
+        // First bounce up (100ms)
+        const bounce1 = (feedbackElapsed - 0.05) / 0.1;
+        const easeOut = 1 - Math.pow(1 - bounce1, 3);
+        targetDepth.current = BASE_DEPTH * (0.15 + easeOut * 0.25); // Bounce to 0.4
+      } else if (feedbackElapsed < 0.3) {
+        // Second smaller bounce (150ms)
+        const bounce2 = (feedbackElapsed - 0.15) / 0.15;
+        const overshoot = Math.sin(bounce2 * Math.PI) * 0.15 * Math.exp(-bounce2 * 3);
+        targetDepth.current = BASE_DEPTH * (0.9 + overshoot);
+      } else {
+        // Settle back to normal with slight overshoot
+        const settle = Math.min((feedbackElapsed - 0.3) / 0.2, 1);
+        const finalOvershoot = Math.sin(settle * Math.PI * 0.5) * 0.05 * (1 - settle);
+        targetDepth.current = BASE_DEPTH * (1.0 + finalOvershoot);
+      }
     } else if (pressFeedback === 'error') {
-      // Error: pushed down hard then slight bounce
-      const errorBounce = feedbackElapsed < 0.08
-        ? BASE_DEPTH * 0.15  // Hard push
-        : BASE_DEPTH * (0.6 + Math.sin(feedbackElapsed * 20) * 0.1 * Math.exp(-feedbackElapsed * 6));
-      targetDepth.current = errorBounce;
+      // Error: hard push down then quick recovery with shake
+      if (feedbackElapsed < 0.06) {
+        // Hard push (60ms)
+        targetDepth.current = BASE_DEPTH * 0.12;
+      } else if (feedbackElapsed < 0.2) {
+        // Quick recovery with slight overshoot
+        const recover = (feedbackElapsed - 0.06) / 0.14;
+        const easeOut = 1 - Math.pow(1 - recover, 2);
+        const shake = Math.sin(feedbackElapsed * 40) * 0.03 * (1 - recover);
+        targetDepth.current = BASE_DEPTH * (0.12 + easeOut * 0.88 + shake);
+      } else {
+        // Settle with final small bounce
+        const settle = Math.min((feedbackElapsed - 0.2) / 0.15, 1);
+        const finalBounce = Math.sin(settle * Math.PI) * 0.02 * (1 - settle);
+        targetDepth.current = BASE_DEPTH * (1.0 + finalBounce);
+      }
     } else if (highlighted) {
       // Anticipation: brief sink before rising
       if (anticipationPhase.current < 1) {
@@ -1387,94 +1537,291 @@ const ButtonMesh = memo(function ButtonMesh({
       const urgencyColor = getUrgencyColor(progress.current);
       const pulse = Math.sin(pulsePhase.current) * 0.05 + 0.95;
       
+      // Modern radial gradient: brighter at center, darker at edges
+      const centerDist = Math.sqrt(position[0] * position[0] + position[1] * position[1]);
+      const maxDist = 2.5;
+      const gradientFactor = 1.0 - (centerDist / maxDist) * 0.3; // 0.7 to 1.0
+      
+      // Base color with gradient variation
+      const baseIntensity = 0.7 * pulse;
+      const centerIntensity = 0.9 * pulse;
+      const colorIntensity = THREE.MathUtils.lerp(baseIntensity, centerIntensity, gradientFactor);
+      
       material.color.setRGB(
-        urgencyColor.r * pulse * 0.7, 
-        urgencyColor.g * pulse * 0.7, 
-        urgencyColor.b * pulse * 0.7
+        urgencyColor.r * colorIntensity, 
+        urgencyColor.g * colorIntensity, 
+        urgencyColor.b * colorIntensity
       );
+      
+      // Enhanced emissive gradient (stronger glow at center)
+      const emissiveBase = 0.25;
+      const emissiveCenter = 0.4;
+      const emissiveIntensity = THREE.MathUtils.lerp(emissiveBase, emissiveCenter, gradientFactor);
+      
       material.emissive.setRGB(
-        urgencyColor.r * 0.25,
-        urgencyColor.g * 0.25,
-        urgencyColor.b * 0.25
+        urgencyColor.r * emissiveIntensity,
+        urgencyColor.g * emissiveIntensity,
+        urgencyColor.b * emissiveIntensity
       );
-      material.emissiveIntensity = 0.3 + progress.current * 0.5;
+      material.emissiveIntensity = (0.3 + progress.current * 0.5) * (1.0 + gradientFactor * 0.3);
       material.metalness = baseMetalness - progress.current * 0.1;
       material.roughness = baseRoughness + progress.current * 0.1;
       material.clearcoat = baseClearcoat;
       material.clearcoatRoughness = 0.1 + progress.current * 0.1;
     } else if (pressFeedback === 'success') {
-      // Success animation: pop scale + pulsing green glow
-      const popProgress = Math.min(feedbackElapsed * 8, 1); // Quick 125ms pop
-      const popScale = popProgress < 0.5 
-        ? 1 + Math.sin(popProgress * Math.PI) * 0.15  // Scale up
-        : 1 + Math.sin(popProgress * Math.PI) * 0.15 * (1 - (popProgress - 0.5) * 2); // Scale back
+      // Enhanced success animation: multi-stage scale pulse + vibrant color flash
+      let popScale = 1.0;
       
-      // Pulsing glow that fades
-      const glowPulse = Math.sin(feedbackElapsed * 20) * 0.3 + 0.7;
-      const glowFade = Math.max(0, 1 - feedbackElapsed * 2.5);
+      if (feedbackElapsed < 0.05) {
+        // Stage 1: Initial press down (50ms)
+        popScale = 0.92;
+      } else if (feedbackElapsed < 0.12) {
+        // Stage 2: Quick pop up with overshoot (70ms)
+        const t = (feedbackElapsed - 0.05) / 0.07;
+        const overshoot = Math.sin(t * Math.PI * 0.5) * 0.18;
+        popScale = 0.92 + overshoot; // Up to 1.10
+      } else if (feedbackElapsed < 0.25) {
+        // Stage 3: Bounce back with second smaller pulse (130ms)
+        const t = (feedbackElapsed - 0.12) / 0.13;
+        const bounce = Math.sin(t * Math.PI) * 0.08 * Math.exp(-t * 2);
+        popScale = 1.0 + bounce;
+      } else {
+        // Stage 4: Settle to normal with final micro-bounce
+        const t = Math.min((feedbackElapsed - 0.25) / 0.15, 1);
+        const settle = Math.sin(t * Math.PI * 0.5) * 0.03 * (1 - t);
+        popScale = 1.0 + settle;
+      }
+      
+      // Enhanced color flash with gradient: bright initial flash then pulsing glow
+      const flashPhase = Math.min(feedbackElapsed * 12, 1);
+      const initialFlash = flashPhase < 0.3 ? 1.0 : Math.max(0.3, 1 - (flashPhase - 0.3) * 2);
+      const glowPulse = Math.sin(feedbackElapsed * 18) * 0.25 + 0.75;
+      const glowFade = Math.max(0, 1 - feedbackElapsed * 2);
+      
+      // Radial gradient factor for success state
+      const centerDist = Math.sqrt(position[0] * position[0] + position[1] * position[1]);
+      const maxDist = 2.5;
+      const gradientFactor = 1.0 - (centerDist / maxDist) * 0.25; // 0.75 to 1.0
       
       const success = THEME_COLORS.success;
-      material.color.setRGB(success.r * 0.5, success.g * glowPulse, success.b * 0.5);
-      material.emissive.setRGB(success.r * 0.3 * glowFade, success.g * 0.6 * glowFade * glowPulse, success.b * 0.3 * glowFade);
-      material.emissiveIntensity = 1.2 * glowFade;
-      material.metalness = 0.4;
-      material.roughness = 0.15;
-      material.clearcoat = 1.0;
+      // Bright flash at start, then pulsing glow with gradient
+      const colorIntensity = initialFlash * 0.7 + glowPulse * 0.3 * glowFade;
+      const baseColor = {
+        r: success.r * (0.4 + colorIntensity * 0.6),
+        g: success.g * (0.5 + colorIntensity * 0.5),
+        b: success.b * (0.4 + colorIntensity * 0.6),
+      };
+      // Gradient: brighter green at center, darker at edges
+      const centerColor = {
+        r: success.r * (0.6 + colorIntensity * 0.4),
+        g: success.g * (0.7 + colorIntensity * 0.3),
+        b: success.b * (0.6 + colorIntensity * 0.4),
+      };
+      const finalColor = {
+        r: THREE.MathUtils.lerp(baseColor.r, centerColor.r, gradientFactor),
+        g: THREE.MathUtils.lerp(baseColor.g, centerColor.g, gradientFactor),
+        b: THREE.MathUtils.lerp(baseColor.b, centerColor.b, gradientFactor),
+      };
+      material.color.setRGB(finalColor.r, finalColor.g, finalColor.b);
       
-      // Apply pop scale
+      // Enhanced emissive gradient (stronger glow at center)
+      const emissiveBase = 0.4 * initialFlash * glowFade;
+      const emissiveCenter = 0.8 * initialFlash * glowFade;
+      const emissiveIntensity = THREE.MathUtils.lerp(emissiveBase, emissiveCenter, gradientFactor);
+      material.emissive.setRGB(
+        success.r * emissiveIntensity, 
+        success.g * emissiveIntensity * 1.2, 
+        success.b * emissiveIntensity
+      );
+      material.emissiveIntensity = (1.5 * initialFlash + 0.8 * glowPulse) * glowFade * (1.0 + gradientFactor * 0.2);
+      material.metalness = 0.5 - initialFlash * 0.2;
+      material.roughness = 0.1 + (1 - initialFlash) * 0.1;
+      material.clearcoat = 1.0;
+      material.clearcoatRoughness = 0.05;
+      
+      // Apply enhanced scale animation
       mesh.scale.x = popScale;
       mesh.scale.y = popScale;
       
     } else if (pressFeedback === 'error') {
-      // Error animation: shake with decay + red flash
-      const shakeDecay = Math.exp(-feedbackElapsed * 8); // Fast decay over ~300ms
-      const shakeIntensity = 0.12 * shakeDecay;
-      const shakeSpeed = 50;
+      // Enhanced error animation: hard push + shake + red flash
+      const shakeDecay = Math.exp(-feedbackElapsed * 6); // Decay over ~400ms
+      const shakeIntensity = 0.15 * shakeDecay;
+      const shakeSpeed = 45;
       
-      // Flash intensity fades out
-      const flashIntensity = Math.max(0, 1 - feedbackElapsed * 3);
-      const flashPulse = Math.sin(feedbackElapsed * 30) * 0.2 + 0.8;
-      
-      const error = THEME_COLORS.error;
-      material.color.setRGB(error.r * (0.6 + 0.2 * flashIntensity * flashPulse), error.g, error.b);
-      material.emissive.setRGB(error.r * 0.5 * flashIntensity, 0.0, 0.0);
-      material.emissiveIntensity = 1.0 * flashIntensity;
-      material.metalness = 0.3;
-      material.roughness = 0.35;
-      
-      // Shake effect with proper decay
-      mesh.rotation.z = Math.sin(feedbackElapsed * shakeSpeed) * shakeIntensity;
-      mesh.rotation.x = Math.cos(feedbackElapsed * shakeSpeed * 0.8) * shakeIntensity * 0.5;
-      mesh.position.x = Math.sin(feedbackElapsed * shakeSpeed * 1.3) * shakeIntensity * 0.3;
-      
-    } else {
-      // Idle state - deep blue matching game theme
-      const idlePulse = 0.03 * Math.sin(time * 2 + position[0] * 2);
-      const baseBlue = THEME_COLORS.idle;
-      
-      if (hovered) {
-        // Hover: brighter cyan-blue
-        material.color.setRGB(
-          THEME_COLORS.hover.r + idlePulse, 
-          THEME_COLORS.hover.g + idlePulse, 
-          THEME_COLORS.hover.b + idlePulse
-        );
-        material.emissive.setRGB(0.0, 0.3, 0.5);
-        material.emissiveIntensity = 0.6 + Math.sin(time * 5) * 0.15;
+      // Enhanced scale: push down then quick recovery
+      let errorScale = 1.0;
+      if (feedbackElapsed < 0.06) {
+        errorScale = 0.88; // Hard push down
+      } else if (feedbackElapsed < 0.18) {
+        const t = (feedbackElapsed - 0.06) / 0.12;
+        errorScale = 0.88 + t * 0.12; // Quick recovery
       } else {
-        material.color.setRGB(
-          baseBlue.r + idlePulse, 
-          baseBlue.g + idlePulse, 
-          baseBlue.b + idlePulse
-        );
-        material.emissive.setRGB(0.0, 0.0, 0.15);
-        material.emissiveIntensity = 0.2;
+        const t = Math.min((feedbackElapsed - 0.18) / 0.15, 1);
+        const microBounce = Math.sin(t * Math.PI) * 0.02 * (1 - t);
+        errorScale = 1.0 + microBounce;
       }
       
-      material.metalness = baseMetalness;
-      material.roughness = baseRoughness;
-      material.clearcoat = baseClearcoat;
-      material.clearcoatRoughness = 0.1;
+      // Enhanced flash with gradient: bright initial flash then pulsing fade
+      const flashPhase = Math.min(feedbackElapsed * 10, 1);
+      const initialFlash = flashPhase < 0.4 ? 1.0 : Math.max(0.2, 1 - (flashPhase - 0.4) * 1.5);
+      const flashPulse = Math.sin(feedbackElapsed * 35) * 0.3 + 0.7;
+      const flashFade = Math.max(0, 1 - feedbackElapsed * 2.5);
+      
+      // Radial gradient factor for error state
+      const centerDist = Math.sqrt(position[0] * position[0] + position[1] * position[1]);
+      const maxDist = 2.5;
+      const gradientFactor = 1.0 - (centerDist / maxDist) * 0.25; // 0.75 to 1.0
+      
+      const error = THEME_COLORS.error;
+      const colorIntensity = initialFlash * 0.8 + flashPulse * 0.2 * flashFade;
+      const baseColor = {
+        r: error.r * (0.5 + colorIntensity * 0.5),
+        g: error.g * 0.1,
+        b: error.b * 0.1,
+      };
+      // Gradient: brighter red at center, darker at edges
+      const centerColor = {
+        r: error.r * (0.7 + colorIntensity * 0.3),
+        g: error.g * 0.15,
+        b: error.b * 0.15,
+      };
+      const finalColor = {
+        r: THREE.MathUtils.lerp(baseColor.r, centerColor.r, gradientFactor),
+        g: THREE.MathUtils.lerp(baseColor.g, centerColor.g, gradientFactor),
+        b: THREE.MathUtils.lerp(baseColor.b, centerColor.b, gradientFactor),
+      };
+      material.color.setRGB(finalColor.r, finalColor.g, finalColor.b);
+      
+      // Enhanced emissive gradient (stronger glow at center)
+      const emissiveBase = 0.7 * initialFlash * flashFade;
+      const emissiveCenter = 1.2 * initialFlash * flashFade;
+      const emissiveIntensity = THREE.MathUtils.lerp(emissiveBase, emissiveCenter, gradientFactor);
+      material.emissive.setRGB(
+        error.r * emissiveIntensity, 
+        0.0, 
+        0.0
+      );
+      material.emissiveIntensity = (1.8 * initialFlash + 0.6 * flashPulse) * flashFade * (1.0 + gradientFactor * 0.2);
+      material.metalness = 0.2;
+      material.roughness = 0.4;
+      material.clearcoat = 0.6;
+      
+      // Enhanced shake effect with multiple frequencies
+      mesh.rotation.z = Math.sin(feedbackElapsed * shakeSpeed) * shakeIntensity;
+      mesh.rotation.x = Math.cos(feedbackElapsed * shakeSpeed * 0.7) * shakeIntensity * 0.6;
+      mesh.rotation.y = Math.sin(feedbackElapsed * shakeSpeed * 1.2) * shakeIntensity * 0.3;
+      mesh.position.x = Math.sin(feedbackElapsed * shakeSpeed * 1.4) * shakeIntensity * 0.4;
+      mesh.position.y = Math.cos(feedbackElapsed * shakeSpeed * 0.9) * shakeIntensity * 0.2;
+      
+      // Apply scale
+      mesh.scale.x = errorScale;
+      mesh.scale.y = errorScale;
+      
+    } else {
+      // Idle state - modern stylish gradient with animated effects
+      const idlePulse = 0.04 * Math.sin(time * 1.5 + position[0] * 1.8 + position[1] * 1.2);
+      const shimmer = Math.sin((position[0] + position[1]) * 2.5 + time * 1.2) * 0.02 + 0.98;
+      
+      // Calculate gradient factor based on button position (radial gradient)
+      const centerDist = Math.sqrt(position[0] * position[0] + position[1] * position[1]);
+      const maxDist = 2.5;
+      const gradientFactor = 1.0 - (centerDist / maxDist) * 0.5; // 0.5 to 1.0 range (more pronounced)
+      
+      // Modern gradient colors: deep navy at edges → bright cyan-blue at center
+      const edgeColor = { r: 0.05, g: 0.05, b: 0.4 }; // Deep navy edge
+      const midColor = { r: 0.0, g: 0.15, b: 0.6 }; // Mid-tone blue
+      const centerColor = { r: 0.1, g: 0.4, b: 0.85 }; // Bright cyan-blue center
+      
+      if (hovered) {
+        // Hover: vibrant gradient with enhanced cyan accent
+        const hoverEdge = { r: 0.1, g: 0.2, b: 0.6 };
+        const hoverCenter = { r: 0.2, g: 0.7, b: 1.0 };
+        
+        // Multi-stage gradient interpolation
+        let hoverColor;
+        if (gradientFactor < 0.5) {
+          // Edge to mid
+          const t = gradientFactor * 2;
+          hoverColor = {
+            r: THREE.MathUtils.lerp(hoverEdge.r, midColor.r, t) + idlePulse,
+            g: THREE.MathUtils.lerp(hoverEdge.g, midColor.g, t) + idlePulse,
+            b: THREE.MathUtils.lerp(hoverEdge.b, midColor.b, t) + idlePulse,
+          };
+        } else {
+          // Mid to center
+          const t = (gradientFactor - 0.5) * 2;
+          hoverColor = {
+            r: THREE.MathUtils.lerp(midColor.r, hoverCenter.r, t) + idlePulse,
+            g: THREE.MathUtils.lerp(midColor.g, hoverCenter.g, t) + idlePulse,
+            b: THREE.MathUtils.lerp(midColor.b, hoverCenter.b, t) + idlePulse,
+          };
+        }
+        
+        material.color.setRGB(
+          hoverColor.r * shimmer, 
+          hoverColor.g * shimmer, 
+          hoverColor.b * shimmer
+        );
+        
+        // Enhanced emissive gradient with animated pulse
+        const emissivePulse = Math.sin(time * 4) * 0.1 + 0.9;
+        const emissiveBase = 0.3;
+        const emissiveCenter = 0.7;
+        const emissiveIntensity = THREE.MathUtils.lerp(emissiveBase, emissiveCenter, gradientFactor) * emissivePulse;
+        material.emissive.setRGB(
+          0.0, 
+          0.2 + emissiveIntensity * 0.3, 
+          0.4 + emissiveIntensity * 0.4
+        );
+        material.emissiveIntensity = 0.7 + Math.sin(time * 5) * 0.2;
+        material.metalness = 0.75;
+        material.roughness = 0.2;
+        material.clearcoat = 1.0;
+        material.clearcoatRoughness = 0.08;
+      } else {
+        // Idle: stylish multi-stage gradient with subtle shimmer
+        let idleColor;
+        if (gradientFactor < 0.5) {
+          // Edge to mid
+          const t = gradientFactor * 2;
+          idleColor = {
+            r: THREE.MathUtils.lerp(edgeColor.r, midColor.r, t) + idlePulse,
+            g: THREE.MathUtils.lerp(edgeColor.g, midColor.g, t) + idlePulse,
+            b: THREE.MathUtils.lerp(edgeColor.b, midColor.b, t) + idlePulse,
+          };
+        } else {
+          // Mid to center
+          const t = (gradientFactor - 0.5) * 2;
+          idleColor = {
+            r: THREE.MathUtils.lerp(midColor.r, centerColor.r, t) + idlePulse,
+            g: THREE.MathUtils.lerp(midColor.g, centerColor.g, t) + idlePulse,
+            b: THREE.MathUtils.lerp(midColor.b, centerColor.b, t) + idlePulse,
+          };
+        }
+        
+        // Apply shimmer effect for modern feel
+        material.color.setRGB(
+          idleColor.r * shimmer, 
+          idleColor.g * shimmer, 
+          idleColor.b * shimmer
+        );
+        
+        // Enhanced emissive gradient (subtle but present)
+        const emissiveBase = 0.15;
+        const emissiveCenter = 0.35;
+        const emissiveIntensity = THREE.MathUtils.lerp(emissiveBase, emissiveCenter, gradientFactor);
+        material.emissive.setRGB(
+          0.0, 
+          0.05 + emissiveIntensity * 0.15, 
+          0.1 + emissiveIntensity * 0.25
+        );
+        material.emissiveIntensity = 0.25 + Math.sin(time * 1.5) * 0.05; // Subtle breathing effect
+        material.metalness = 0.7;
+        material.roughness = 0.25;
+        material.clearcoat = 0.85;
+        material.clearcoatRoughness = 0.1;
+      }
       
       // Smoothly return to default transforms
       mesh.rotation.z = THREE.MathUtils.lerp(mesh.rotation.z, 0, delta * 12);
@@ -1854,7 +2201,7 @@ export const GameButtonGridWebGL = memo(function GameButtonGridWebGL({
           <Environment preset="night" background={false} />
           
           {/* Camera Shake Effect */}
-          <CameraShake errorEvents={rippleEvents} />
+          <CameraShake errorEvents={rippleEvents} comboMilestone={comboMilestone} />
           
           {/* Background Grid (vertical backdrop) - reacts to game state */}
           <BackgroundGrid 
@@ -1904,14 +2251,8 @@ export const GameButtonGridWebGL = memo(function GameButtonGridWebGL({
           
           {/* Post-processing effects - enhanced for next-level visuals */}
           <EffectComposer multisampling={4}>
-            {/* Enhanced Bloom for dramatic glow effects */}
-            <Bloom
-              intensity={0.7}
-              luminanceThreshold={0.3}
-              luminanceSmoothing={0.9}
-              mipmapBlur
-              radius={0.7}
-            />
+            {/* Dynamic Bloom - responds to combo milestones */}
+            <DynamicBloom comboMilestone={comboMilestone} baseIntensity={0.7} />
             
             {/* Subtle chromatic aberration for energy feel */}
             <ChromaticAberration

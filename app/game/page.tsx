@@ -78,7 +78,7 @@ export default function GamePage() {
   // (ref alone doesn't trigger re-renders, causing stale values in memoized data)
   const [highlightStartTimeState, setHighlightStartTimeState] = useState<number | null>(null);
   const isPausedRef = useRef(false);
-  const [screenFlash, setScreenFlash] = useState<'error' | 'success' | null>(null);
+  const [screenFlash, setScreenFlash] = useState<'error' | 'success' | 'combo-5' | 'combo-10' | 'combo-20' | 'combo-30' | 'combo-50' | null>(null);
   const [highlightDuration, setHighlightDuration] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isReady, setIsReady] = useState(false);
@@ -104,12 +104,30 @@ export default function GamePage() {
         lastMilestoneRef.current = milestone;
         setComboMilestone(milestone);
         
+        // Trigger screen flash for combo milestone
+        let flashTimer: NodeJS.Timeout | null = null;
+        if (screenFlashEnabled) {
+          const flashType = `combo-${milestone}` as 'combo-5' | 'combo-10' | 'combo-20' | 'combo-30' | 'combo-50';
+          setScreenFlash(flashType);
+          // Longer duration for higher milestones
+          const flashDuration = milestone >= 30 ? 400 : milestone >= 20 ? 350 : milestone >= 10 ? 300 : 250;
+          flashTimer = setTimeout(() => {
+            setScreenFlash(null);
+          }, reducedEffects ? flashDuration * 0.5 : flashDuration);
+        }
+        
         // Clear milestone after animation duration
-        const timer = setTimeout(() => {
+        const milestoneTimer = setTimeout(() => {
           setComboMilestone(null);
         }, 1000);
         
-        return () => clearTimeout(timer);
+        // Cleanup both timers
+        return () => {
+          clearTimeout(milestoneTimer);
+          if (flashTimer) {
+            clearTimeout(flashTimer);
+          }
+        };
       }
     }
     

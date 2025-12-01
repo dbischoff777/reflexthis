@@ -1,9 +1,9 @@
 {
   "name": "reflexthis",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "private": true,
   "main": "electron/main.js",
-  "scripts": {
+  "scripts": {  
     "dev": "next dev",
     "prebuild": "node scripts/build-info.js",
     "build": "next build",
