@@ -186,7 +186,8 @@ const BackgroundGrid = memo(function BackgroundGrid({ gameState, highlightedCoun
         uScanPhase: { value: 0 },
         uColorPhase: { value: 0 },
         // Celebration effect
-        uCelebration: { value: 0 },
+        uCelebration: { value: 0 },        // Intensity (brightness)
+        uCelebrationProgress: { value: 0 }, // Animation progress 0→1 (ring expansion)
         uCelebrationColor: { value: new THREE.Color(0x00ffff) },
       },
       vertexShader: `
@@ -210,6 +211,7 @@ const BackgroundGrid = memo(function BackgroundGrid({ gameState, highlightedCoun
         uniform float uScanPhase;
         uniform float uColorPhase;
         uniform float uCelebration;
+        uniform float uCelebrationProgress;
         uniform vec3 uCelebrationColor;
         varying vec2 vUv;
         
@@ -262,20 +264,26 @@ const BackgroundGrid = memo(function BackgroundGrid({ gameState, highlightedCoun
           // COMBO CELEBRATION EFFECT - expanding ring burst from center
           float celebrationRing = 0.0;
           if (uCelebration > 0.01) {
-            // Expanding ring from center
-            float ringProgress = 1.0 - uCelebration; // 0 to 1 as celebration fades
-            float ringRadius = ringProgress * 1.5; // Ring expands outward
-            float ringWidth = 0.15 * uCelebration; // Ring gets thinner as it expands
+            // Ring expands from center outward as progress goes 0→1
+            float ringRadius = uCelebrationProgress * 1.2; // Starts at 0, expands to 1.2
+            float ringWidth = 0.12 * (1.0 - uCelebrationProgress * 0.7); // Thinner as it expands
             float distFromCenter = length((vUv - center) * vec2(1.2, 1.0));
+            
+            // Create ring shape
             celebrationRing = smoothstep(ringRadius - ringWidth, ringRadius, distFromCenter) *
                              smoothstep(ringRadius + ringWidth, ringRadius, distFromCenter);
-            celebrationRing *= uCelebration * 2.0; // Brightness fades with celebration
+            celebrationRing *= uCelebration * 1.5; // Brightness controlled by intensity
             
-            // Add radial burst lines
+            // Add radial burst lines emanating from center
             float angle = atan(vUv.y - center.y, vUv.x - center.x);
             float rays = abs(sin(angle * 8.0)) * 0.5 + 0.5;
-            rays *= smoothstep(0.6, 0.0, distFromCenter) * uCelebration;
-            celebrationRing += rays * 0.5;
+            float rayFade = smoothstep(ringRadius + 0.1, ringRadius - 0.2, distFromCenter);
+            rays *= rayFade * uCelebration * (1.0 - uCelebrationProgress * 0.5);
+            celebrationRing += rays * 0.4;
+            
+            // Add center flash at the very start
+            float centerFlash = smoothstep(0.3, 0.0, distFromCenter) * (1.0 - uCelebrationProgress) * uCelebration;
+            celebrationRing += centerFlash * 0.5;
           }
           
           // Dynamic accent color mixing based on state - uses accumulated color phase
@@ -393,13 +401,18 @@ const BackgroundGrid = memo(function BackgroundGrid({ gameState, highlightedCoun
       const elapsed = currentTime - celebrationRef.current.startTime;
       const progress = Math.min(elapsed / celebrationDuration, 1.0);
       
-      // Ease out curve
-      const celebration = (1.0 - progress * progress) * celebrationRef.current.intensity;
-      mat.uniforms.uCelebration.value = celebration;
+      // Progress goes 0→1 for ring expansion (ease out for smooth expansion)
+      const easedProgress = 1.0 - Math.pow(1.0 - progress, 2); // Ease out
+      mat.uniforms.uCelebrationProgress.value = easedProgress;
+      
+      // Intensity fades out (brightness)
+      const intensity = (1.0 - progress * progress) * celebrationRef.current.intensity;
+      mat.uniforms.uCelebration.value = intensity;
       
       if (progress >= 1.0) {
         celebrationRef.current.active = false;
         mat.uniforms.uCelebration.value = 0;
+        mat.uniforms.uCelebrationProgress.value = 0;
       }
     }
     
