@@ -21,6 +21,64 @@ function LandingPageContent() {
   const [showStats, setShowStats] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [bootstrapping, setBootstrapping] = useState(true);
+  const [bootProgress, setBootProgress] = useState(0);
+
+  // Initial boot splash: preload critical assets & hold landing until ready
+  useEffect(() => {
+    let cancelled = false;
+    let completedSteps = 0;
+    const totalSteps = 3; // icon, animation, minimum delay
+
+    const advanceProgress = () => {
+      if (cancelled) return;
+      completedSteps += 1;
+      const pct = Math.round((completedSteps / totalSteps) * 100);
+      setBootProgress(pct);
+    };
+
+    const preloadImage = (src: string) =>
+      new Promise<void>((resolve) => {
+        const img = new Image();
+        img.onload = () => resolve();
+        img.onerror = () => resolve();
+        img.src = src;
+      });
+
+    const preloadVideo = (src: string) =>
+      new Promise<void>((resolve) => {
+        const video = document.createElement('video');
+        const cleanup = () => {
+          video.onloadeddata = null;
+          video.onerror = null;
+        };
+        video.onloadeddata = () => {
+          cleanup();
+          resolve();
+        };
+        video.onerror = () => {
+          cleanup();
+          resolve();
+        };
+        video.src = src;
+        video.load();
+      });
+
+    const minDelay = new Promise<void>((resolve) => setTimeout(resolve, 2000)).then(advanceProgress);
+
+    const imagePromise = preloadImage('/logo/ReflexIcon.jpg').then(advanceProgress);
+    const videoPromise = preloadVideo('/animation/ReflexIconAnimated.mp4').then(advanceProgress);
+
+    Promise.all([imagePromise, videoPromise, minDelay]).then(() => {
+      if (!cancelled) {
+        setBootstrapping(false);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Ensure game music is stopped on landing page and prevent any game sounds
   // Play menu music if enabled
@@ -75,6 +133,37 @@ function LandingPageContent() {
       }
     }
   };
+
+  if (bootstrapping) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-background text-foreground overflow-hidden">
+        <div className="relative w-full h-full flex items-center justify-center">
+          <video
+            className="max-w-[520px] w-[70vw] max-h-[70vh] rounded-xl shadow-2xl shadow-primary/40 border-4 border-primary/60 bg-black/80 object-contain"
+            src="/animation/ReflexIconAnimated.mp4"
+            autoPlay
+            muted
+            loop
+            playsInline
+          />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-radial from-transparent via-transparent to-black/60" />
+
+          {/* Boot progress indicator */}
+          <div className="pointer-events-none absolute bottom-10 w-full flex flex-col items-center gap-2">
+            <div className="w-48 sm:w-64 border-2 border-primary bg-black/60 rounded-full overflow-hidden">
+              <div
+                className="h-2 bg-primary transition-all duration-200"
+                style={{ width: `${bootProgress}%` }}
+              />
+            </div>
+            <p className="text-xs sm:text-sm text-muted-foreground font-mono">
+              {bootProgress}%
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center bg-background text-foreground p-4 overflow-hidden">

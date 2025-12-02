@@ -24,6 +24,11 @@ const rajdhani = Rajdhani({
 export const metadata: Metadata = {
   title: "Reflex This - Reflex Training Game",
   description: "Test your reflexes!",
+  icons: {
+    icon: "/logo/ReflexIcon.jpg",
+    shortcut: "/logo/ReflexIcon.jpg",
+    apple: "/logo/ReflexIcon.jpg",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
