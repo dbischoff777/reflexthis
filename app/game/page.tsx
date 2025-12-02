@@ -257,12 +257,12 @@ export default function GamePage() {
         // Calculate new lives before calling decrementLives (which updates state async)
         const livesAfterDecrement = lives - 1;
         decrementLives();
-        
+      
         // Schedule next highlight if player will still have lives after this decrement
         if (livesAfterDecrement > 0) {
-          nextHighlightTimerRef.current = setTimeout(() => {
-            highlightNewButtonsInternal();
-          }, 1000);
+        nextHighlightTimerRef.current = setTimeout(() => {
+          highlightNewButtonsInternal();
+        }, 1000);
         }
       }
     }, duration);
@@ -901,7 +901,7 @@ export default function GamePage() {
       />
       
       {/* Main Game Area */}
-      <main className="relative z-10 flex-1 flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-hidden">
+      <main className="relative z-10 flex-1 flex items-center justify-center px-2 sm:px-4 md:px-6 py-2 sm:py-4 overflow-hidden">
         {/* Inline mode status + compact help toggle */}
         <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-20 flex flex-col items-center gap-2">
           {/* Sequence status */}
@@ -965,8 +965,8 @@ export default function GamePage() {
         </div>
         
         {/* 3D WebGL Button Grid */}
-        <div className="w-full max-w-2xl">
-          <div className="w-full h-[340px] sm:h-[400px] md:h-[450px]">
+        <div className="w-full max-w-4xl">
+          <div className="w-full h-[60vh] min-h-[280px] max-h-[720px]">
             <GameButtonGridWebGL
               buttons={buttonGridData}
               highlightDuration={highlightDuration}

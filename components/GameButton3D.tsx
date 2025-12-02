@@ -258,23 +258,39 @@ export const GameButton3D = memo(function GameButton3D({
         edgeHighlight: `rgba(255, 255, 255, 0.4)`,
       };
     }
-    // Default state with dynamic hover glow
-    const glowAlpha = 0.3 + (hoverGlowIntensity * 0.5); // 0.3 to 0.8
-    const borderAlpha = 0.3 + (hoverGlowIntensity * 0.4); // 0.3 to 0.7
-    const baseColorShift = Math.round(hoverGlowIntensity * 20); // 0 to 20
-    const baseColor = isHovered 
-      ? `rgb(${42 + baseColorShift}, ${42 + baseColorShift}, ${74 + baseColorShift})` 
-      : '#2a2a4a';
-    
+    // Default / hover state
+    const glowAlpha = 0.2 + hoverGlowIntensity * 0.4; // 0.2 → 0.6
+    const borderAlpha = 0.2 + hoverGlowIntensity * 0.4; // 0.2 → 0.6
+
+    if (isHovered) {
+      // Warm yellow/orange hover to clearly distinguish from cyan highlight state
+      const baseHue = '#ffdd55';
+      const darkerHue = adjustBrightness(baseHue, -18);
+      const deepestHue = adjustBrightness(baseHue, -38);
+
+      return {
+        topFace: `linear-gradient(135deg, ${baseHue} 0%, ${darkerHue} 35%, ${deepestHue} 75%, #8a4b00 100%)`,
+        leftSide: 'rgba(110, 70, 0, 0.95)',
+        bottomSide: 'rgba(50, 30, 0, 1)',
+        rightSide: 'rgba(130, 80, 0, 0.95)',
+        frontSide: 'rgba(90, 55, 0, 0.96)',
+        border: `rgba(255, 230, 130, ${borderAlpha})`,
+        glow: `rgba(255, 210, 80, ${glowAlpha})`,
+        edgeHighlight: `rgba(255, 255, 200, ${0.18 + hoverGlowIntensity * 0.25})`,
+      };
+    }
+
+    // Resting (non-hover, non-highlight) state – cool neutral
+    const baseColor = '#2a2a4a';
     return {
-      topFace: `linear-gradient(135deg, ${baseColor} 0%, ${adjustBrightness('#2a2a4a', -15 + baseColorShift)} 30%, ${adjustBrightness('#2a2a4a', -30 + baseColorShift)} 70%, ${adjustBrightness('#2a2a4a', -45 + baseColorShift)} 100%)`,
-      leftSide: isHovered ? `rgba(15, 25, 40, ${0.9 + hoverGlowIntensity * 0.1})` : '#0a0a18',
+      topFace: `linear-gradient(135deg, ${baseColor} 0%, ${adjustBrightness(baseColor, -15)} 30%, ${adjustBrightness(baseColor, -30)} 70%, ${adjustBrightness(baseColor, -45)} 100%)`,
+      leftSide: '#0a0a18',
       bottomSide: '#050508',
-      rightSide: isHovered ? `rgba(20, 30, 45, ${0.9 + hoverGlowIntensity * 0.1})` : '#0c0c1a',
-      frontSide: isHovered ? `rgba(12, 20, 30, ${0.9 + hoverGlowIntensity * 0.1})` : '#080810',
-      border: isHovered ? `rgba(0, 255, 255, ${borderAlpha})` : 'rgba(0, 255, 255, 0.3)',
-      glow: isHovered ? `rgba(0, 255, 255, ${glowAlpha})` : 'rgba(0, 255, 255, 0.1)',
-      edgeHighlight: isHovered ? `rgba(100, 220, 255, ${0.15 + hoverGlowIntensity * 0.2})` : 'rgba(100, 200, 255, 0.15)',
+      rightSide: '#0c0c1a',
+      frontSide: '#080810',
+      border: 'rgba(0, 255, 255, 0.3)',
+      glow: 'rgba(0, 255, 255, 0.1)',
+      edgeHighlight: 'rgba(100, 200, 255, 0.15)',
     };
   };
 

@@ -46,32 +46,35 @@ export function SessionStatsDisplay({ stats }: SessionStatsDisplayProps) {
 
   return (
     <div className="p-4 sm:p-6 bg-card border-4 border-border pixel-border">
-      <h3 className="text-xl font-bold text-primary mb-4">Session Statistics</h3>
+      <h3 className="text-lg sm:text-xl font-bold text-primary mb-4">Session Statistics</h3>
       
       {/* Tabs */}
-      <div className="flex gap-2 mb-4 border-b-2 border-border">
+      <div className="flex gap-1 sm:gap-2 mb-4 border-b border-border/70">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={cn(
-              'px-4 py-2 text-sm font-semibold transition-all duration-200 border-b-2 -mb-[2px]',
+              'relative px-3 sm:px-4 py-2 text-sm font-semibold transition-all duration-200 rounded-t-md',
               activeTab === tab.id
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
+                ? 'text-primary bg-primary/15 border-b-2 border-primary shadow-[0_3px_0_rgba(0,255,255,0.7)]'
+                : 'text-muted-foreground hover:text-foreground hover:bg-primary/5 border-b-2 border-transparent'
             )}
+            aria-selected={activeTab === tab.id}
+            role="tab"
           >
             {tab.label}
           </button>
         ))}
       </div>
 
-      <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+      {/* Tab content with consistent minimum height */}
+      <div className="min-h-[320px] max-h-[60vh] overflow-y-auto">
         {/* Overview Tab */}
         {activeTab === 'overview' && (
-          <div className="space-y-4">
+          <div className="space-y-4 min-h-[280px]">
             {/* Overview Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
           <div className="bg-card p-3 border-2 border-border pixel-border">
             <p className="text-xs text-muted-foreground mb-1">Total Games</p>
             <p className="text-2xl font-bold text-primary">{stats.totalGames}</p>
@@ -154,64 +157,71 @@ export function SessionStatsDisplay({ stats }: SessionStatsDisplayProps) {
 
         {/* Achievements Tab */}
         {activeTab === 'achievements' && (
-          <div className="space-y-4">
+          <div className="space-y-4 min-h-[280px]">
             {meta.achievements.length > 0 ? (
               <>
                 <h4 className="text-sm font-semibold text-primary">Achievements</h4>
-            <div className="space-y-2">
-              {meta.achievements.map((a) => {
-                const progressPercent = Math.round((a.current / a.target) * 100);
-                const rarityColors = {
-                  common: a.achieved ? 'bg-muted/20 border-muted' : 'bg-card border-border',
-                  rare: a.achieved ? 'bg-primary/20 border-primary' : 'bg-card border-border',
-                  epic: a.achieved ? 'bg-secondary/20 border-secondary' : 'bg-card border-border',
-                  legendary: a.achieved ? 'bg-chart-3/20 border-chart-3' : 'bg-card border-border',
-                };
-                return (
-                  <div
-                    key={a.id}
-                    className={cn(
-                      'p-3 border-2 pixel-border text-xs sm:text-[13px] flex gap-3',
-                      rarityColors[a.rarity] || rarityColors.common
-                    )}
-                  >
-                    <div className="text-2xl flex-shrink-0">{a.icon}</div>
-                    <div className="flex-1 min-w-0 flex flex-col gap-1">
-                      <div className="flex justify-between items-start gap-2">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-0.5">
-                            <span className="font-semibold text-primary break-words">{a.title}</span>
-                            {a.achieved && (
-                              <span className="text-[10px] px-1.5 py-0.5 border border-chart-3 bg-chart-3/20 text-chart-3 pixel-border flex-shrink-0">
-                                ✓
-                              </span>
-                            )}
+                <div className="space-y-2 max-h-[240px] overflow-y-auto rounded-md bg-background/10 border border-border/60 p-2 sm:p-3">
+                  {meta.achievements.map((a) => {
+                    const progressPercent = Math.round((a.current / a.target) * 100);
+                    const rarityLabel =
+                      a.rarity.charAt(0).toUpperCase() + a.rarity.slice(1);
+                    return (
+                      <div
+                        key={a.id}
+                        className={cn(
+                          'p-2 sm:p-3 border border-border/60 bg-card/80 rounded pixel-border',
+                          'text-xs sm:text-[13px] flex flex-col gap-1.5'
+                        )}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-start gap-2 min-w-0">
+                            <div className="text-xl sm:text-2xl flex-shrink-0">
+                              {a.icon}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-0.5">
+                                <span className="font-semibold text-primary break-words">
+                                  {a.title}
+                                </span>
+                                {a.achieved && (
+                                  <span className="text-[10px] px-1.5 py-0.5 border border-chart-3 bg-chart-3/20 text-chart-3 rounded pixel-border flex-shrink-0">
+                                    Unlocked
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[11px] text-foreground/70 break-words">
+                                {a.description}
+                              </p>
+                            </div>
                           </div>
-                          <p className="text-[11px] text-foreground/70 break-words">{a.description}</p>
+                          <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
+                            <span className="text-[10px] px-1.5 py-0.5 border border-border/60 bg-background/60 rounded uppercase tracking-wide">
+                              {rarityLabel}
+                            </span>
+                            <span className="text-[11px] text-muted-foreground font-mono">
+                              {a.current}/{a.target}
+                            </span>
+                          </div>
                         </div>
-                        <span className="text-[11px] text-muted-foreground font-mono flex-shrink-0">
-                          {a.current}/{a.target}
-                        </span>
+                        {!a.achieved && (
+                          <div className="h-1.5 bg-background/80 border border-border mt-1 overflow-hidden rounded-full">
+                            <div
+                              className={cn(
+                                'h-full transition-all',
+                                a.rarity === 'legendary' && 'bg-chart-3',
+                                a.rarity === 'epic' && 'bg-secondary',
+                                a.rarity === 'rare' && 'bg-primary',
+                                a.rarity === 'common' && 'bg-muted'
+                              )}
+                              style={{ width: `${Math.min(progressPercent, 100)}%` }}
+                            />
+                          </div>
+                        )}
                       </div>
-                      {!a.achieved && (
-                        <div className="h-1.5 bg-background/60 border border-border mt-1 overflow-hidden">
-                          <div
-                            className={cn(
-                              'h-full transition-all',
-                              a.rarity === 'legendary' && 'bg-chart-3',
-                              a.rarity === 'epic' && 'bg-secondary',
-                              a.rarity === 'rare' && 'bg-primary',
-                              a.rarity === 'common' && 'bg-muted'
-                            )}
-                            style={{ width: `${Math.min(progressPercent, 100)}%` }}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-              </div>
+                    );
+                  })}
+                </div>
               </>
             ) : (
               <p className="text-sm text-muted-foreground text-center py-8">
@@ -223,35 +233,42 @@ export function SessionStatsDisplay({ stats }: SessionStatsDisplayProps) {
 
         {/* History Tab */}
         {activeTab === 'history' && (
-          <div className="space-y-4">
+          <div className="space-y-4 min-h-[280px]">
             {stats.recentGames.length > 0 ? (
               <>
                 <h4 className="text-sm font-semibold text-primary">Recent Games</h4>
-            <div className="space-y-2 max-h-48 overflow-y-auto">
-              {stats.recentGames.map((game) => (
-                <div
-                  key={game.id}
-                  className="flex items-center justify-between p-2 bg-card border-2 border-border text-sm pixel-border"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="font-bold text-primary">{game.score}</span>
-                    {game.bestCombo > 0 && (
-                      <span className="text-xs text-muted-foreground">
-                        {game.bestCombo}x combo
-                      </span>
-                    )}
-                    {game.averageReactionTime && (
-                      <span className="text-xs text-muted-foreground">
-                        {formatTime(game.averageReactionTime)}
-                      </span>
-                    )}
+                <div className="space-y-2 max-h-[240px] overflow-y-auto rounded-md bg-background/10 border border-border/60 p-2 sm:p-3">
+                  <div className="hidden sm:grid grid-cols-[minmax(0,1.2fr)_minmax(0,1.1fr)_auto] text-[11px] uppercase tracking-wide text-muted-foreground/80 px-2 pb-1 border-b border-border/40">
+                    <span>Score &amp; Combo</span>
+                    <span>Reaction</span>
+                    <span className="text-right">Date</span>
                   </div>
-                  <span className="text-xs text-muted-foreground">
-                    {new Date(game.timestamp).toLocaleDateString()}
-                  </span>
+                  {stats.recentGames.map((game) => (
+                    <div
+                      key={game.id}
+                      className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,1.1fr)_auto] items-center gap-2 px-2 py-1.5 bg-card/80 border border-border/60 rounded text-xs sm:text-sm"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="font-bold text-primary">
+                          {game.score}
+                        </span>
+                        {game.bestCombo > 0 && (
+                          <span className="text-[11px] text-muted-foreground whitespace-nowrap">
+                            {game.bestCombo}x combo
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[11px] text-muted-foreground">
+                        {game.averageReactionTime
+                          ? formatTime(game.averageReactionTime)
+                          : '--'}
+                      </div>
+                      <span className="text-[11px] text-muted-foreground text-right">
+                        {new Date(game.timestamp).toLocaleDateString()}
+                      </span>
+                    </div>
+                  ))}
                 </div>
-              ))}
-              </div>
               </>
             ) : (
               <p className="text-sm text-muted-foreground text-center py-8">

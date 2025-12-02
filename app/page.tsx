@@ -80,11 +80,11 @@ function LandingPageContent() {
     <div className="relative min-h-screen flex flex-col items-center justify-center bg-background text-foreground p-4 overflow-hidden">
       <main className="relative z-10 flex flex-col items-center justify-center flex-1 w-full max-w-4xl text-center">
         {/* Hero Section */}
-        <div className="mb-8 space-y-6">
-          <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-primary text-glow mb-4 tracking-tight pixel-border px-6 py-3 inline-block border-4 border-primary">
+        <div className="mb-6 sm:mb-8 space-y-4 sm:space-y-6">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-primary text-glow mb-2 sm:mb-4 tracking-tight px-4 sm:px-6 py-2 sm:py-3 inline-block border-3 sm:border-4 border-primary rounded-lg">
             REFLEX THIS
           </h1>
-          <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto break-words">
+          <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
             Test your reflexes!
           </p>
         </div>

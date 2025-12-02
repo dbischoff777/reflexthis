@@ -66,18 +66,21 @@ export function DifficultySelector({
               disabled={disabled}
               draggable={false}
               className={cn(
-                'p-4 border-4 transition-all duration-100 text-left pixel-border',
+                'p-4 border-4 transition-all duration-150 text-left pixel-border relative',
                 'focus:outline-none focus:ring-2 focus:ring-primary',
                 isSelected
-                  ? 'border-primary bg-primary/30'
-                  : 'border-border bg-card hover:border-primary hover:bg-primary/20',
+                  ? 'border-primary bg-linear-to-r from-primary/40 via-primary/60 to-secondary/40 ring-2 ring-primary ring-offset-2 ring-offset-background shadow-lg shadow-primary/30'
+                  : 'border-border bg-card hover:border-primary/40 hover:bg-primary/5',
                 disabled && 'opacity-50 cursor-not-allowed'
               )}
             >
               <div className="flex items-center justify-between mb-2">
-                <span className="font-bold text-lg text-primary">{config.name}</span>
+                <span className={cn(
+                  'font-bold text-lg',
+                  isSelected ? 'text-primary' : 'text-foreground'
+                )}>{config.name}</span>
                 {isSelected && (
-                  <span className="text-xl" aria-label="Selected">
+                  <span className="text-xl text-primary font-bold" aria-label="Selected">
                     ✓
                   </span>
                 )}

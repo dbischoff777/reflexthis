@@ -169,7 +169,7 @@ const CameraShake = memo(function CameraShake({ errorEvents, comboMilestone }: C
       // Decay shake rapidly
       shakeRef.current.intensity *= 0.88;
     }
-    
+      
     // Apply combined shake to camera
     if (Math.abs(totalShakeX) > 0.001 || Math.abs(totalShakeY) > 0.001) {
       camera.position.x = totalShakeX;
@@ -677,101 +677,6 @@ const ParticleBurst = memo(function ParticleBurst({ trigger, position }: Particl
         depthWrite={false}
       />
     </instancedMesh>
-  );
-});
-
-// ============================================================================
-// HOLOGRAPHIC RING EFFECT
-// ============================================================================
-
-interface HolographicRingProps {
-  active: boolean;
-  progress: number;
-  color: THREE.Color;
-}
-
-const HolographicRing = memo(function HolographicRing({ active, progress, color }: HolographicRingProps) {
-  const ringRef = useRef<THREE.Mesh>(null);
-  const materialRef = useRef<THREE.ShaderMaterial>(null);
-  
-  const shaderMaterial = useMemo(() => {
-    return new THREE.ShaderMaterial({
-      uniforms: {
-        uTime: { value: 0 },
-        uProgress: { value: 0 },
-        uColor: { value: new THREE.Color(0, 1, 1) },
-        uActive: { value: 0 },
-      },
-      vertexShader: `
-        varying vec2 vUv;
-        varying vec3 vPosition;
-        void main() {
-          vUv = uv;
-          vPosition = position;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `,
-      fragmentShader: `
-        uniform float uTime;
-        uniform float uProgress;
-        uniform vec3 uColor;
-        uniform float uActive;
-        varying vec2 vUv;
-        varying vec3 vPosition;
-        
-        void main() {
-          // Create ring pattern
-          float angle = atan(vPosition.y, vPosition.x);
-          float normalizedAngle = (angle + 3.14159) / (2.0 * 3.14159);
-          
-          // Animated segments
-          float segments = 12.0;
-          float segmentProgress = fract(normalizedAngle * segments - uTime * 2.0);
-          float segmentGlow = smoothstep(0.0, 0.3, segmentProgress) * smoothstep(1.0, 0.7, segmentProgress);
-          
-          // Urgency pulse - faster as progress increases
-          float pulseSpeed = 3.0 + uProgress * 12.0;
-          float pulse = sin(uTime * pulseSpeed) * 0.3 + 0.7;
-          
-          // Edge glow
-          float dist = length(vPosition.xy);
-          float ringWidth = 0.08;
-          float innerRadius = 0.42;
-          float ring = smoothstep(innerRadius - ringWidth, innerRadius, dist) * 
-                       smoothstep(innerRadius + ringWidth * 2.0, innerRadius + ringWidth, dist);
-          
-          // Combine effects
-          float alpha = ring * segmentGlow * pulse * uActive;
-          vec3 finalColor = uColor * (1.0 + uProgress * 0.5);
-          
-          gl_FragColor = vec4(finalColor, alpha * 0.8);
-        }
-      `,
-      transparent: true,
-      side: THREE.DoubleSide,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
-    });
-  }, []);
-  
-  useFrame((state) => {
-    if (!materialRef.current) return;
-    const mat = shaderMaterial;
-    mat.uniforms.uTime.value = state.clock.elapsedTime;
-    mat.uniforms.uProgress.value = progress;
-    mat.uniforms.uColor.value.copy(color);
-    mat.uniforms.uActive.value = THREE.MathUtils.lerp(
-      mat.uniforms.uActive.value,
-      active ? 1 : 0,
-      0.15
-    );
-  });
-  
-  return (
-    <mesh ref={ringRef} position={[0, 0, 0.08]} rotation={[0, 0, 0]}>
-      <ringGeometry args={[0.38, 0.52, 64]} />
-      <primitive object={shaderMaterial} ref={materialRef} attach="material" />
-    </mesh>
   );
 });
 
@@ -1732,15 +1637,15 @@ const ButtonMesh = memo(function ButtonMesh({
       const maxDist = 2.5;
       const gradientFactor = 1.0 - (centerDist / maxDist) * 0.5; // 0.5 to 1.0 range (more pronounced)
       
-      // Modern gradient colors: deep navy at edges → bright cyan-blue at center
-      const edgeColor = { r: 0.05, g: 0.05, b: 0.4 }; // Deep navy edge
-      const midColor = { r: 0.0, g: 0.15, b: 0.6 }; // Mid-tone blue
-      const centerColor = { r: 0.1, g: 0.4, b: 0.85 }; // Bright cyan-blue center
+      // Modern gradient colors: deep navy at edges → bright cyan-blue at center (idle)
+      const edgeColor = { r: 0.05, g: 0.05, b: 0.4 }; // Deep navy edge (idle)
+      const midColor = { r: 0.0, g: 0.15, b: 0.6 }; // Mid-tone blue (idle)
+      const centerColor = { r: 0.1, g: 0.4, b: 0.85 }; // Bright cyan-blue center (idle)
       
       if (hovered) {
-        // Hover: vibrant gradient with enhanced cyan accent
-        const hoverEdge = { r: 0.1, g: 0.2, b: 0.6 };
-        const hoverCenter = { r: 0.2, g: 0.7, b: 1.0 };
+        // Hover: warm yellow/orange gradient clearly distinct from cyan highlight state
+        const hoverEdge = { r: 0.8, g: 0.55, b: 0.1 };   // Golden edge
+        const hoverCenter = { r: 1.0, g: 0.85, b: 0.2 }; // Bright yellow center
         
         // Multi-stage gradient interpolation
         let hoverColor;
@@ -1773,10 +1678,11 @@ const ButtonMesh = memo(function ButtonMesh({
         const emissiveBase = 0.3;
         const emissiveCenter = 0.7;
         const emissiveIntensity = THREE.MathUtils.lerp(emissiveBase, emissiveCenter, gradientFactor) * emissivePulse;
+        // Warm emissive glow to match yellow hover
         material.emissive.setRGB(
-          0.0, 
-          0.2 + emissiveIntensity * 0.3, 
-          0.4 + emissiveIntensity * 0.4
+          0.5 + emissiveIntensity * 0.3,  // R
+          0.4 + emissiveIntensity * 0.4,  // G
+          0.0 + emissiveIntensity * 0.1   // B
         );
         material.emissiveIntensity = 0.7 + Math.sin(time * 5) * 0.2;
         material.metalness = 0.75;
@@ -1824,7 +1730,7 @@ const ButtonMesh = memo(function ButtonMesh({
         material.metalness = 0.7;
         material.roughness = 0.25;
         material.clearcoat = 0.85;
-        material.clearcoatRoughness = 0.1;
+      material.clearcoatRoughness = 0.1;
       }
       
       // Smoothly return to default transforms
@@ -1922,7 +1828,7 @@ const ButtonMesh = memo(function ButtonMesh({
       .filter(idx => idx !== buttonIndex && idx > buttonIndex) // Only connect to higher indices to avoid duplicates
       .slice(0, 2); // Max 2 connections per button
   }, [highlighted, highlightedButtons, buttonIndex]);
-
+  
   return (
     <group position={position}>
       {/* Floating Particles around highlighted buttons */}
@@ -1934,13 +1840,6 @@ const ButtonMesh = memo(function ButtonMesh({
       
       {/* Energy Core (inner glow) */}
       <EnergyCore 
-        active={highlighted} 
-        progress={progressRef.current}
-        color={urgencyColorRef.current}
-      />
-      
-      {/* Holographic Ring Effect - decorative animated segments */}
-      <HolographicRing 
         active={highlighted} 
         progress={progressRef.current}
         color={urgencyColorRef.current}
