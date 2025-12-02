@@ -834,11 +834,6 @@ export default function GamePage() {
           message="INITIALIZING"
           onComplete={() => setIsLoading(false)}
         />
-      ) : !isReady ? (
-        <ReadyScreen
-          onReady={handleReady}
-          gameMode={gameMode}
-        />
       ) : (
       <div className={cn(
         "relative h-screen bg-background text-foreground flex flex-col overflow-hidden no-select",
@@ -902,6 +897,15 @@ export default function GamePage() {
       
       {/* Main Game Area */}
       <main className="relative z-10 flex-1 flex items-center justify-center px-2 sm:px-4 md:px-6 py-2 sm:py-4 overflow-hidden">
+        {/* Ready Screen overlay: only leave this once the player starts, while 3D grid is already rendering */}
+        {!isReady && (
+          <div className="absolute inset-0 z-30 flex items-center justify-center bg-background/80">
+            <ReadyScreen
+              onReady={handleReady}
+              gameMode={gameMode}
+            />
+          </div>
+        )}
         {/* Inline mode status + compact help toggle */}
         <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-20 flex flex-col items-center gap-2">
           {/* Sequence status */}
@@ -971,7 +975,7 @@ export default function GamePage() {
               buttons={buttonGridData}
               highlightDuration={highlightDuration}
               onPress={(index) => getButtonHandler()(index)}
-              disabled={gameOver || isPaused}
+              disabled={gameOver || isPaused || !isReady}
               keyLabels={keybindingHints}
               gameState={{
                 combo,

@@ -9,6 +9,7 @@ import { ModeSelector } from '@/components/ModeSelector';
 import { SessionStatsDisplay } from '@/components/SessionStatsDisplay';
 import { DemoMode } from '@/components/DemoMode';
 import { LoadingScreen } from '@/components/LoadingScreen';
+import { GameButtonGridWebGL } from '@/components/GameButton3DWebGL';
 import SettingsModal from '@/components/SettingsModal';
 import { DifficultyPreset } from '@/lib/difficulty';
 import { GameMode } from '@/lib/gameModes';
@@ -21,6 +22,11 @@ const LOADING_TIPS = [
   'Tip: In Reflex mode, don’t spam – hit only highlighted buttons.',
   'Tip: Adjust keybindings in Settings to match your keyboard layout.',
 ];
+
+const WARMUP_BUTTONS = Array.from({ length: 10 }, (_, i) => ({
+  index: i + 1,
+  highlighted: false,
+}));
 
 function LandingPageContent() {
   const router = useRouter();
@@ -43,6 +49,29 @@ function LandingPageContent() {
   const [bootstrapping, setBootstrapping] = useState(true);
   const [bootProgress, setBootProgress] = useState(0);
   const [bootTipIndex, setBootTipIndex] = useState(0);
+
+  // Hidden warm-up grid to pre-initialize WebGL and shaders
+  const WarmupGrid = () => (
+    <div className="pointer-events-none fixed -z-10 opacity-0 w-[1px] h-[1px] overflow-hidden">
+      <GameButtonGridWebGL
+        buttons={WARMUP_BUTTONS}
+        highlightDuration={1000}
+        onPress={() => {}}
+        disabled
+        keyLabels={{}}
+        showLabels={false}
+        gameState={{
+          combo: 0,
+          lives: 5,
+          maxLives: 5,
+          gameOver: false,
+          score: 0,
+          difficulty: 'medium',
+        }}
+        comboMilestone={null}
+      />
+    </div>
+  );
 
   // Initial boot splash: preload critical assets & hold landing until ready.
   // Only runs on first app start in this browser tab; subsequent navigations skip the splash.
@@ -197,6 +226,8 @@ function LandingPageContent() {
     if (reducedEffects || highContrastMode) {
       return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background text-foreground overflow-hidden">
+          {/* Hidden warm-up grid runs behind splash to pre-initialize WebGL */}
+          <WarmupGrid />
           <div className="relative w-full h-full flex flex-col items-center justify-center gap-6">
             <div className="flex flex-col items-center gap-3">
               <img
@@ -227,6 +258,8 @@ function LandingPageContent() {
     // Full animated splash
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-background text-foreground overflow-hidden">
+        {/* Hidden warm-up grid runs behind splash to pre-initialize WebGL */}
+        <WarmupGrid />
         <div className="relative w-full h-full flex items-center justify-center">
           <video
             className="max-w-[520px] w-[70vw] max-h-[70vh] rounded-xl shadow-2xl shadow-primary/40 border-4 border-primary/60 bg-black/80 object-contain"
@@ -390,6 +423,9 @@ function LandingPageContent() {
           </button>
         </div>
       </main>
+
+      {/* Hidden warm-up 3D grid to keep WebGL and shaders hot on landing */}
+      <WarmupGrid />
 
       {/* Unified Settings Modal */}
       {showSettings && (
