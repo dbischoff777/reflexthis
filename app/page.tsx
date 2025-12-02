@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { BuildInfo } from '@/components/BuildInfo';
 import { DifficultySelector } from '@/components/DifficultySelector';
 import { ModeSelector } from '@/components/ModeSelector';
@@ -12,10 +13,28 @@ import SettingsModal from '@/components/SettingsModal';
 import { DifficultyPreset } from '@/lib/difficulty';
 import { GameMode } from '@/lib/gameModes';
 import { GameProvider, useGameState } from '@/lib/GameContext';
-import { stopBackgroundMusic, setGamePageActive, playMenuMusic, stopMenuMusic } from '@/lib/soundUtils';
+import { stopBackgroundMusic, setGamePageActive, playMenuMusic, stopMenuMusic, preloadAudioAssets } from '@/lib/soundUtils';
+
+const LOADING_TIPS = [
+  'Tip: Turn on Reduced Effects if motion feels too intense.',
+  'Tip: Keep combos alive to massively boost your score.',
+  'Tip: In Reflex mode, don’t spam – hit only highlighted buttons.',
+  'Tip: Adjust keybindings in Settings to match your keyboard layout.',
+];
 
 function LandingPageContent() {
-  const { difficulty, setDifficulty, gameMode, setGameMode, sessionStatistics, musicEnabled, toggleMusic } = useGameState();
+  const router = useRouter();
+  const {
+    difficulty,
+    setDifficulty,
+    gameMode,
+    setGameMode,
+    sessionStatistics,
+    musicEnabled,
+    toggleMusic,
+    reducedEffects,
+    highContrastMode,
+  } = useGameState();
   const [showMode, setShowMode] = useState(false);
   const [showDifficulty, setShowDifficulty] = useState(false);
   const [showStats, setShowStats] = useState(false);
@@ -23,6 +42,7 @@ function LandingPageContent() {
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [bootstrapping, setBootstrapping] = useState(true);
   const [bootProgress, setBootProgress] = useState(0);
+  const [bootTipIndex, setBootTipIndex] = useState(0);
 
   // Initial boot splash: preload critical assets & hold landing until ready.
   // Only runs on first app start in this browser tab; subsequent navigations skip the splash.
@@ -38,7 +58,7 @@ function LandingPageContent() {
     }
 
     let completedSteps = 0;
-    const totalSteps = 3; // icon, animation, minimum delay
+    const totalSteps = 4; // icon, animation, audio, minimum delay
 
     const advanceProgress = () => {
       if (cancelled) return;
@@ -78,8 +98,17 @@ function LandingPageContent() {
 
     const imagePromise = preloadImage('/logo/ReflexIcon.jpg').then(advanceProgress);
     const videoPromise = preloadVideo('/animation/ReflexIconAnimated.mp4').then(advanceProgress);
+    const audioPromise = preloadAudioAssets().then(advanceProgress);
 
-    Promise.all([imagePromise, videoPromise, minDelay]).then(() => {
+    // Preload game route and 3D bundle in the background while splash is showing
+    // router.prefetch in the app router returns void, so we just fire-and-forget.
+    try {
+      router.prefetch('/game');
+    } catch {
+      // Ignore prefetch errors – it will still load on first navigation.
+    }
+
+    Promise.all([imagePromise, videoPromise, audioPromise, minDelay]).then(() => {
       if (!cancelled) {
         setBootstrapping(false);
         if (typeof window !== 'undefined') {
@@ -92,6 +121,15 @@ function LandingPageContent() {
       cancelled = true;
     };
   }, []);
+
+  // Rotate loading tips while bootstrapping
+  useEffect(() => {
+    if (!bootstrapping) return;
+    const interval = setInterval(() => {
+      setBootTipIndex((prev) => (prev + 1) % LOADING_TIPS.length);
+    }, 2800);
+    return () => clearInterval(interval);
+  }, [bootstrapping]);
 
   // Ensure game music is stopped on landing page and prevent any game sounds
   // Play menu music if enabled
@@ -148,6 +186,45 @@ function LandingPageContent() {
   };
 
   if (bootstrapping) {
+    const statusLabel =
+      bootProgress < 40
+        ? 'Initializing engine…'
+        : bootProgress < 75
+        ? 'Loading 3D assets & audio…'
+        : 'Finishing up…';
+
+    // Reduced effects / high-contrast: no video, simple static splash
+    if (reducedEffects || highContrastMode) {
+      return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background text-foreground overflow-hidden">
+          <div className="relative w-full h-full flex flex-col items-center justify-center gap-6">
+            <div className="flex flex-col items-center gap-3">
+              <img
+                src="/logo/ReflexIcon.jpg"
+                alt="Reflex This"
+                className="max-w-[220px] w-[45vw] rounded-lg border-4 border-primary bg-black object-contain"
+              />
+              <p className="text-sm sm:text-base font-semibold text-primary">
+                {statusLabel}
+              </p>
+            </div>
+
+            <div className="w-56 sm:w-72 border-2 border-primary bg-black rounded-full overflow-hidden">
+              <div
+                className="h-3 bg-primary transition-all duration-200"
+                style={{ width: `${bootProgress}%` }}
+              />
+            </div>
+
+            <p className="text-[11px] sm:text-xs text-muted-foreground font-mono tracking-wide">
+              {bootProgress}%
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    // Full animated splash
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-background text-foreground overflow-hidden">
         <div className="relative w-full h-full flex items-center justify-center">
@@ -161,15 +238,16 @@ function LandingPageContent() {
           />
           <div className="pointer-events-none absolute inset-0 bg-gradient-radial from-transparent via-transparent to-black/60" />
 
-          {/* Boot progress indicator */}
-          <div className="pointer-events-none absolute bottom-10 w-full flex flex-col items-center gap-3">
+          {/* Boot progress indicator + tips */}
+          <div className="pointer-events-none absolute bottom-10 w-full flex flex-col items-center gap-3 px-4">
             <div className="w-56 sm:w-72 border-2 border-primary/70 bg-black/70 rounded-full overflow-hidden shadow-lg shadow-primary/30">
               <div
                 className="h-3 bg-gradient-to-r from-primary via-secondary to-chart-3 relative transition-all duration-200"
                 style={{ width: `${bootProgress}%` }}
               >
                 {/* Diagonal scanlines inside the bar */}
-                <div className="absolute inset-0 opacity-40"
+                <div
+                  className="absolute inset-0 opacity-40"
                   style={{
                     backgroundImage:
                       'repeating-linear-gradient(135deg, rgba(0,0,0,0.12) 0, rgba(0,0,0,0.12) 4px, transparent 4px, transparent 8px)',
@@ -178,7 +256,10 @@ function LandingPageContent() {
               </div>
             </div>
             <p className="text-[11px] sm:text-xs text-muted-foreground font-mono tracking-wide">
-              LOADING ASSETS… {bootProgress}%
+              {statusLabel} {bootProgress}%
+            </p>
+            <p className="text-[11px] sm:text-xs text-foreground/70 font-mono text-center max-w-md">
+              {LOADING_TIPS[bootTipIndex]}
             </p>
           </div>
         </div>

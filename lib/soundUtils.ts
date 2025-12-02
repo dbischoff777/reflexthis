@@ -57,7 +57,7 @@ function generateBeepSound(
 }
 
 /**
- * Preload sound files for better performance
+ * Preload sound effect files for better performance (fire-and-forget)
  */
 export function preloadSounds(): void {
   if (typeof window === 'undefined') return;
@@ -70,8 +70,6 @@ export function preloadSounds(): void {
       
       // Handle loading errors gracefully (silently - fallback will be used)
       audio.addEventListener('error', () => {
-        // Sound files are optional - fallback sounds will be used automatically
-        // Only log in development mode for debugging
         if (process.env.NODE_ENV === 'development') {
           console.debug(`Sound file not found: ${key} (will use fallback)`);
         }
@@ -79,13 +77,49 @@ export function preloadSounds(): void {
 
       audioCache[key] = audio;
     } catch (error) {
-      // Sound files are optional - silently continue
-      // Fallback sounds will be used automatically when needed
       if (process.env.NODE_ENV === 'development') {
         console.debug(`Could not preload sound ${key} (will use fallback):`, error);
       }
     }
   });
+}
+
+/**
+ * Preload all audio assets (effects + music) and resolve when they're ready (or failed).
+ * Used by the initial loading splash for more accurate progress.
+ */
+export function preloadAudioAssets(): Promise<void> {
+  if (typeof window === 'undefined') return Promise.resolve();
+
+  const audioPaths = [
+    ...Object.values(SOUNDS),
+    MUSIC_PATH,
+    MENU_MUSIC_PATH,
+  ];
+
+  const promises = audioPaths.map((src) => {
+    return new Promise<void>((resolve) => {
+      try {
+        const audio = new Audio(src);
+        audio.preload = 'auto';
+
+        const done = () => {
+          audio.removeEventListener('canplaythrough', done);
+          audio.removeEventListener('error', done);
+          resolve();
+        };
+
+        audio.addEventListener('canplaythrough', done);
+        audio.addEventListener('error', done);
+
+        audio.load();
+      } catch {
+        resolve();
+      }
+    });
+  });
+
+  return Promise.all(promises).then(() => undefined);
 }
 
 // Track if we're on the game page to prevent sounds on landing page
