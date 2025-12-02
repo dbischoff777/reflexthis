@@ -49,6 +49,7 @@ function LandingPageContent() {
   const [bootstrapping, setBootstrapping] = useState(true);
   const [bootProgress, setBootProgress] = useState(0);
   const [bootTipIndex, setBootTipIndex] = useState(0);
+  const [demoReady, setDemoReady] = useState(false);
 
   // Hidden warm-up grid to pre-initialize WebGL and shaders
   const WarmupGrid = () => (
@@ -313,10 +314,10 @@ function LandingPageContent() {
           </p>
         </div>
         
-        {/* Demo Mode - Show when not selecting mode/difficulty */}
+        {/* Demo Mode - only show once the demo canvas has mounted */}
         {!showMode && !showDifficulty && !showStats && (
-          <div className="mb-8 w-full">
-            <DemoMode />
+          <div className={`mb-8 w-full transition-opacity duration-300 ${demoReady ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+            <DemoMode onReady={() => setDemoReady(true)} />
           </div>
         )}
         

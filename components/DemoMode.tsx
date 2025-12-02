@@ -5,17 +5,20 @@ import { GameButtonGridWebGL } from './GameButton3DWebGL';
 
 interface DemoModeProps {
   onStart?: () => void;
+  // Called once the demo canvas has mounted and is safe to show
+  onReady?: () => void;
 }
 
 /**
  * DemoMode component - Shows animated 3D demo of the game on title screen
  */
-export function DemoMode({ onStart }: DemoModeProps) {
+export function DemoMode({ onStart, onReady }: DemoModeProps) {
   const [highlightedButtons, setHighlightedButtons] = useState<number[]>([]);
   const [feedbackButtons, setFeedbackButtons] = useState<Map<number, 'success' | 'error'>>(new Map());
   // State version of highlightStartTime for memo dependency tracking
   const [highlightStartTime, setHighlightStartTime] = useState<number>(Date.now());
   const demoIndexRef = useRef(0);
+  const idleStepsRef = useRef(0);
   
   // Track all timers for proper cleanup
   const timersRef = useRef<Set<NodeJS.Timeout>>(new Set());
@@ -30,6 +33,13 @@ export function DemoMode({ onStart }: DemoModeProps) {
   // Highlight duration for demo (slower than actual game for visibility)
   const DEMO_HIGHLIGHT_DURATION = 800;
 
+  // Inform parent as soon as the demo has mounted, so it can fade in
+  useEffect(() => {
+    if (onReady) {
+      onReady();
+    }
+  }, [onReady]);
+
   useEffect(() => {
     // Helper to create tracked timers
     const createTimer = (callback: () => void, delay: number): NodeJS.Timeout => {
@@ -42,6 +52,16 @@ export function DemoMode({ onStart }: DemoModeProps) {
     };
 
     const cycleDemo = () => {
+      // First few cycles: pure idle frames so the grid can settle visually
+      if (idleStepsRef.current < 2) {
+        idleStepsRef.current += 1;
+        setHighlightedButtons([]);
+        setFeedbackButtons(new Map());
+        // Wait one highlight-duration before attempting real demo content
+        createTimer(cycleDemo, DEMO_HIGHLIGHT_DURATION);
+        return;
+      }
+
       const currentSequence = demoSequence[demoIndexRef.current % demoSequence.length];
       setHighlightedButtons(currentSequence);
       setHighlightStartTime(Date.now());
