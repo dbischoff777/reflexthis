@@ -2,7 +2,7 @@
  * Game mode definitions for ReflexThis
  */
 
-export type GameMode = 'reflex' | 'sequence' | 'survival' | 'nightmare';
+export type GameMode = 'reflex' | 'sequence' | 'survival' | 'nightmare' | 'oddOneOut';
 
 export interface GameModeInfo {
   id: GameMode;
@@ -17,6 +17,12 @@ export const GAME_MODES: Record<GameMode, GameModeInfo> = {
     name: 'Reflex',
     description: 'Press highlighted buttons as fast as possible before they disappear.',
     icon: '⚡',
+  },
+  oddOneOut: {
+    id: 'oddOneOut',
+    name: 'Odd One Out',
+    description: 'Multiple buttons light up – only one is correct. Hit the odd one out fast!',
+    icon: '🎯',
   },
   sequence: {
     id: 'sequence',

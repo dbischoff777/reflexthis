@@ -21,6 +21,7 @@ export function ReadyScreen({ onReady, gameMode }: ReadyScreenProps) {
     if (gameMode === 'sequence') return 'SEQUENCE';
     if (gameMode === 'survival') return 'SURVIVAL';
     if (gameMode === 'nightmare') return 'NIGHTMARE';
+    if (gameMode === 'oddOneOut') return 'ODD ONE OUT';
     return 'GAME';
   };
 
@@ -30,6 +31,7 @@ export function ReadyScreen({ onReady, gameMode }: ReadyScreenProps) {
       case 'sequence': return 'Watch, then repeat the pattern';
       case 'survival': return 'One life - no mistakes!';
       case 'nightmare': return 'Extreme speed challenge';
+      case 'oddOneOut': return 'Find and hit the one target that stands out.';
       default: return 'Test your reflexes!';
     }
   };

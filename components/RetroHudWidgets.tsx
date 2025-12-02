@@ -35,6 +35,7 @@ const modeLabelMap: Record<GameMode, string> = {
   sequence: 'Sequence',
   survival: 'Survival',
   nightmare: 'Nightmare',
+  oddOneOut: 'Odd One Out',
 };
 
 export function RetroHudWidgets({

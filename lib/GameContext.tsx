@@ -152,7 +152,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
         // Load game mode preference
         const savedMode = localStorage.getItem(STORAGE_KEYS.GAME_MODE);
-        if (savedMode && ['reflex', 'sequence', 'survival', 'nightmare'].includes(savedMode)) {
+        if (
+          savedMode &&
+          ['reflex', 'sequence', 'survival', 'nightmare', 'oddOneOut'].includes(savedMode)
+        ) {
           setGameMode(savedMode as GameMode);
         }
 

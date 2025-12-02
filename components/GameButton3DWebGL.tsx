@@ -1172,6 +1172,7 @@ const ElectricArc = memo(function ElectricArc({ startPos, endPos, active, color 
 export interface GameButton3DWebGLProps {
   index: number;
   highlighted: boolean;
+  isOddTarget?: boolean;
   highlightStartTime?: number;
   highlightDuration: number;
   pressFeedback?: 'success' | 'error' | null;
@@ -1252,6 +1253,7 @@ function lerpColor(
 interface ButtonMeshProps {
   buttonIndex: number;
   highlighted: boolean;
+  isOddTarget?: boolean;
   highlightStartTime?: number;
   highlightDuration: number;
   pressFeedback?: 'success' | 'error' | null;
@@ -1268,6 +1270,7 @@ interface ButtonMeshProps {
 const ButtonMesh = memo(function ButtonMesh({
   buttonIndex,
   highlighted,
+  isOddTarget = false,
   highlightStartTime,
   highlightDuration,
   pressFeedback,
@@ -1338,8 +1341,17 @@ const ButtonMesh = memo(function ButtonMesh({
     // Update progress and color refs for child effects
     progressRef.current = progress.current;
     if (highlighted) {
-      const urgencyColor = getUrgencyColor(progress.current);
-      urgencyColorRef.current.setRGB(urgencyColor.r, urgencyColor.g, urgencyColor.b);
+      if (isOddTarget) {
+        // Odd One Out target gets a distinct magenta glow
+        urgencyColorRef.current.setRGB(
+          THEME_COLORS.secondary.r,
+          THEME_COLORS.secondary.g,
+          THEME_COLORS.secondary.b
+        );
+      } else {
+        const urgencyColor = getUrgencyColor(progress.current);
+        urgencyColorRef.current.setRGB(urgencyColor.r, urgencyColor.g, urgencyColor.b);
+      }
     }
     
     // Track highlight state changes for anticipation
@@ -1443,7 +1455,7 @@ const ButtonMesh = memo(function ButtonMesh({
     const baseClearcoat = 0.8;
     
     if (highlighted) {
-      const urgencyColor = getUrgencyColor(progress.current);
+      const baseHighlightColor = isOddTarget ? THEME_COLORS.secondary : getUrgencyColor(progress.current);
       const pulse = Math.sin(pulsePhase.current) * 0.05 + 0.95;
       
       // Modern radial gradient: brighter at center, darker at edges
@@ -1457,9 +1469,9 @@ const ButtonMesh = memo(function ButtonMesh({
       const colorIntensity = THREE.MathUtils.lerp(baseIntensity, centerIntensity, gradientFactor);
       
       material.color.setRGB(
-        urgencyColor.r * colorIntensity, 
-        urgencyColor.g * colorIntensity, 
-        urgencyColor.b * colorIntensity
+        baseHighlightColor.r * colorIntensity,
+        baseHighlightColor.g * colorIntensity,
+        baseHighlightColor.b * colorIntensity
       );
       
       // Enhanced emissive gradient (stronger glow at center)
@@ -1468,9 +1480,9 @@ const ButtonMesh = memo(function ButtonMesh({
       const emissiveIntensity = THREE.MathUtils.lerp(emissiveBase, emissiveCenter, gradientFactor);
       
       material.emissive.setRGB(
-        urgencyColor.r * emissiveIntensity,
-        urgencyColor.g * emissiveIntensity,
-        urgencyColor.b * emissiveIntensity
+        baseHighlightColor.r * emissiveIntensity,
+        baseHighlightColor.g * emissiveIntensity,
+        baseHighlightColor.b * emissiveIntensity
       );
       material.emissiveIntensity = (0.3 + progress.current * 0.5) * (1.0 + gradientFactor * 0.3);
       material.metalness = baseMetalness - progress.current * 0.1;
@@ -2122,6 +2134,7 @@ export const GameButtonGridWebGL = memo(function GameButtonGridWebGL({
               const buttonData = buttons.find(b => b.index === index) || {
                 index,
                 highlighted: false,
+                isOddTarget: false,
                 pressFeedback: null,
               };
               
@@ -2135,6 +2148,7 @@ export const GameButtonGridWebGL = memo(function GameButtonGridWebGL({
                   key={index}
                   buttonIndex={index}
                   highlighted={buttonData.highlighted}
+                  isOddTarget={buttonData.isOddTarget}
                   highlightStartTime={buttonData.highlightStartTime}
                   highlightDuration={highlightDuration}
                   pressFeedback={buttonData.pressFeedback}
@@ -2188,6 +2202,7 @@ export const GameButtonGridWebGL = memo(function GameButtonGridWebGL({
 export const GameButton3DWebGL = memo(function GameButton3DWebGL({
   index,
   highlighted,
+  isOddTarget,
   highlightStartTime,
   highlightDuration,
   pressFeedback,
@@ -2233,6 +2248,7 @@ export const GameButton3DWebGL = memo(function GameButton3DWebGL({
           <ButtonMesh
             buttonIndex={index}
             highlighted={highlighted}
+            isOddTarget={isOddTarget}
             highlightStartTime={highlightStartTime}
             highlightDuration={highlightDuration}
             pressFeedback={pressFeedback}

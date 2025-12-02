@@ -20,7 +20,7 @@ export function ModeSelector({
   onCancel,
   disabled = false,
 }: ModeSelectorProps) {
-  const modes: GameMode[] = ['reflex', 'sequence', 'survival', 'nightmare'];
+  const modes: GameMode[] = ['reflex', 'sequence', 'survival', 'nightmare', 'oddOneOut'];
 
   // Handle ESC key to cancel
   useEffect(() => {
@@ -94,6 +94,7 @@ export function ModeSelector({
                 {mode === 'sequence' && 'Repeat pattern'}
                 {mode === 'survival' && 'One life only'}
                 {mode === 'nightmare' && 'Nightmare mode'}
+                {mode === 'oddOneOut' && 'Find the odd one out'}
               </p>
             </button>
           );

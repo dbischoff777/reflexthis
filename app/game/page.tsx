@@ -83,6 +83,7 @@ export default function GamePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isReady, setIsReady] = useState(false);
   const [buttonPressFeedback, setButtonPressFeedback] = useState<Record<number, 'correct' | 'incorrect' | null>>({});
+  const [oddOneOutTarget, setOddOneOutTarget] = useState<number | null>(null);
   
   // Track previous values for performance feedback
   const previousComboRef = useRef(0);
@@ -175,6 +176,7 @@ export default function GamePage() {
       const id = i + 1;
       const feedback = buttonPressFeedback[id];
       const isHighlighted = highlightedButtons.includes(id);
+      const isOddTarget = gameMode === 'oddOneOut' && oddOneOutTarget === id;
       // Only pass highlightStartTime when we have both a highlighted button AND a valid timestamp
       // This prevents undefined from being used in arithmetic (Date.now() - highlightStartTime)
       const validHighlightTime = isHighlighted && highlightStartTimeState !== null
@@ -183,11 +185,12 @@ export default function GamePage() {
       return {
         index: id,
         highlighted: isHighlighted,
+        isOddTarget,
         highlightStartTime: validHighlightTime,
         pressFeedback: (feedback === 'correct' ? 'success' : feedback === 'incorrect' ? 'error' : null) as 'success' | 'error' | null,
       };
     });
-  }, [highlightedButtons, buttonPressFeedback, highlightStartTimeState]);
+  }, [highlightedButtons, buttonPressFeedback, highlightStartTimeState, gameMode, oddOneOutTarget]);
 
   // Clear highlight timer
   const clearHighlightTimer = useCallback(() => {
@@ -213,12 +216,30 @@ export default function GamePage() {
     clearHighlightTimer();
     isProcessingRef.current = true;
 
-    const buttonCount = getButtonsToHighlightForDifficulty(score, difficulty);
-    const newHighlighted = getRandomButtons(
-      buttonCount,
-      10,
-      lastHighlightedRef.current
-    );
+    let newHighlighted: number[] = [];
+
+    if (gameMode === 'oddOneOut') {
+      // Odd One Out mode: always show a small cluster of buttons and pick a single correct target
+      const baseCount = getButtonsToHighlightForDifficulty(score, difficulty);
+      // Clamp to 3–6 buttons for better visual discrimination
+      const buttonCount = Math.min(6, Math.max(3, baseCount));
+      newHighlighted = getRandomButtons(buttonCount, 10);
+      if (newHighlighted.length > 0) {
+        const targetIndex = Math.floor(Math.random() * newHighlighted.length);
+        setOddOneOutTarget(newHighlighted[targetIndex]);
+      } else {
+        setOddOneOutTarget(null);
+      }
+    } else {
+      const buttonCount = getButtonsToHighlightForDifficulty(score, difficulty);
+      newHighlighted = getRandomButtons(
+        buttonCount,
+        10,
+        lastHighlightedRef.current
+      );
+      setOddOneOutTarget(null);
+    }
+
     lastHighlightedRef.current = newHighlighted;
 
     setHighlightedButtons(newHighlighted);
@@ -241,6 +262,7 @@ export default function GamePage() {
         currentHighlightedRef.current = [];
         highlightStartTimeRef.current = null;
         setHighlightStartTimeState(null);
+        setOddOneOutTarget(null);
         
         // Trigger screen shake for missed buttons (respect comfort settings)
         if (screenShakeEnabled && !reducedEffects) {
@@ -266,9 +288,9 @@ export default function GamePage() {
         }
       }
     }, duration);
-  }, [score, difficulty, lives, isReady, setHighlightedButtons, decrementLives, clearHighlightTimer, soundEnabled]);
+  }, [score, difficulty, lives, isReady, setHighlightedButtons, decrementLives, clearHighlightTimer, soundEnabled, gameMode]);
 
-  // Handle button press (Reflex mode)
+  // Handle button press (Reflex / Survival / Nightmare modes)
   const handleReflexButtonPress = useCallback(
     (buttonId: number) => {
       if (gameOver || isPausedRef.current || !isReady || !highlightedButtons.length || isProcessingRef.current) {
@@ -383,6 +405,117 @@ export default function GamePage() {
     ]
   );
   
+  // Handle button press (Odd One Out mode)
+  const handleOddOneOutButtonPress = useCallback(
+    (buttonId: number) => {
+      if (gameMode !== 'oddOneOut') return;
+      if (gameOver || isPausedRef.current || !isReady || !highlightedButtons.length || isProcessingRef.current) {
+        return;
+      }
+
+      const isHighlighted = highlightedButtons.includes(buttonId);
+      const isCorrect = isHighlighted && oddOneOutTarget !== null && buttonId === oddOneOutTarget;
+
+      if (isCorrect) {
+        // Calculate reaction time from when this cluster appeared
+        const reactionTime = highlightStartTimeRef.current
+          ? Date.now() - highlightStartTimeRef.current
+          : 0;
+
+        const wasNewBest =
+          reactionTimeStats.fastest === null || reactionTime < reactionTimeStats.fastest;
+        setIsNewBestReaction(wasNewBest);
+        setCurrentReactionTime(reactionTime);
+
+        // Correct target pressed
+        setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: 'correct' }));
+        setTimeout(() => {
+          setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: null }));
+        }, 300);
+
+        incrementScore(reactionTime);
+
+        if (screenFlashEnabled) {
+          setScreenFlash('success');
+          setTimeout(() => setScreenFlash(null), reducedEffects ? 120 : 200);
+        }
+
+        setTimeout(() => {
+          setCurrentReactionTime(null);
+          setIsNewBestReaction(false);
+        }, 100);
+
+        // Clear this round and schedule next cluster
+        setHighlightedButtons([]);
+        currentHighlightedRef.current = [];
+        highlightStartTimeRef.current = null;
+        setHighlightStartTimeState(null);
+        setHighlightDuration(0);
+        clearHighlightTimer();
+        setOddOneOutTarget(null);
+
+        nextHighlightTimerRef.current = setTimeout(() => {
+          highlightNewButtons();
+        }, 700);
+      } else {
+        // Any wrong press (non-highlighted or non-target highlight) is a mistake
+        setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: 'incorrect' }));
+        setTimeout(() => {
+          setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: null }));
+        }, 300);
+
+        if (screenShakeEnabled && !reducedEffects) {
+          setScreenShake(true);
+          setTimeout(() => {
+            setScreenShake(false);
+          }, 400);
+        }
+
+        playSound('error', soundEnabled);
+        if (screenFlashEnabled) {
+          setScreenFlash('error');
+          setTimeout(() => setScreenFlash(null), reducedEffects ? 150 : 300);
+        }
+
+        // Clear current cluster and penalize
+        setHighlightedButtons([]);
+        currentHighlightedRef.current = [];
+        highlightStartTimeRef.current = null;
+        setHighlightStartTimeState(null);
+        setHighlightDuration(0);
+        clearHighlightTimer();
+        setOddOneOutTarget(null);
+
+        const livesAfterDecrement = lives - 1;
+        decrementLives();
+
+        if (livesAfterDecrement > 0) {
+          nextHighlightTimerRef.current = setTimeout(() => {
+            highlightNewButtons();
+          }, 1000);
+        }
+      }
+    },
+    [
+      gameMode,
+      gameOver,
+      isReady,
+      highlightedButtons,
+      oddOneOutTarget,
+      reactionTimeStats,
+      incrementScore,
+      setHighlightedButtons,
+      clearHighlightTimer,
+      highlightNewButtons,
+      lives,
+      decrementLives,
+      screenShakeEnabled,
+      reducedEffects,
+      soundEnabled,
+      screenFlashEnabled,
+    ]
+  );
+  
   // Handle ready button click - actually start the game
   const handleReady = useCallback(() => {
     setIsReady(true);
@@ -412,9 +545,9 @@ export default function GamePage() {
     }
   }, [resetGame]);
 
-  // Start reflex/nightmare game when component mounts or game resets (only after ready)
+  // Start reflex/nightmare/oddOneOut game when component mounts or game resets (only after ready)
   useEffect(() => {
-    if ((gameMode === 'reflex' || gameMode === 'nightmare') && !gameOver && isReady && !isPaused) {
+    if ((gameMode === 'reflex' || gameMode === 'nightmare' || gameMode === 'oddOneOut') && !gameOver && isReady && !isPaused) {
       // Small delay to ensure state is ready
       const startTimer = setTimeout(() => {
         highlightNewButtons();
@@ -432,9 +565,19 @@ export default function GamePage() {
     currentHighlightedRef.current = highlightedButtons;
   }, [highlightedButtons]);
 
-  // Restart reflex/survival/nightmare game loop when game resets (only after ready)
+  // Restart reflex/survival/nightmare/oddOneOut game loop when game resets (only after ready)
   useEffect(() => {
-    if ((gameMode === 'reflex' || gameMode === 'survival' || gameMode === 'nightmare') && !gameOver && isReady && !isPaused && highlightedButtons.length === 0 && !isProcessingRef.current) {
+    if (
+      (gameMode === 'reflex' ||
+        gameMode === 'survival' ||
+        gameMode === 'nightmare' ||
+        gameMode === 'oddOneOut') &&
+      !gameOver &&
+      isReady &&
+      !isPaused &&
+      highlightedButtons.length === 0 &&
+      !isProcessingRef.current
+    ) {
       const restartTimer = setTimeout(() => {
         highlightNewButtons();
       }, 500);
@@ -686,7 +829,9 @@ export default function GamePage() {
 
   // Determine which button handler to use based on game mode
   const getButtonHandler = () => {
-    return gameMode === 'sequence' ? handleSequenceButtonPress : handleReflexButtonPress;
+    if (gameMode === 'sequence') return handleSequenceButtonPress;
+    if (gameMode === 'oddOneOut') return handleOddOneOutButtonPress;
+    return handleReflexButtonPress;
   };
   
   // Keyboard controls - enabled when game is active, ready, not paused, and not showing sequence
@@ -930,6 +1075,7 @@ export default function GamePage() {
               {gameMode === 'sequence' && 'Sequence'}
               {gameMode === 'survival' && 'Survival'}
               {gameMode === 'nightmare' && 'Nightmare'}
+              {gameMode === 'oddOneOut' && 'Odd One Out'}
             </span>
             <button
               type="button"
@@ -962,6 +1108,11 @@ export default function GamePage() {
               {gameMode === 'nightmare' && (
                 <p className="text-[12px] sm:text-sm text-foreground/80 break-words">
                   Extreme speed and difficulty – for elite players only. Up to 6 buttons, 150ms minimum reaction time.
+                </p>
+              )}
+              {gameMode === 'oddOneOut' && (
+                <p className="text-[12px] sm:text-sm text-foreground/80 break-words">
+                  Several buttons light up, but only one is the true target. Hit the magenta-highlighted odd one out and avoid the decoys.
                 </p>
               )}
             </div>
