@@ -36,60 +36,105 @@ export function ReadyScreen({ onReady, gameMode }: ReadyScreenProps) {
     }
   };
 
-  const renderTutorialContent = () => (
-    <div className="space-y-6 sm:space-y-8 max-w-3xl mx-auto text-center">
-      {/* Title + Mode */}
-      <div className="space-y-3">
-        <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold text-primary text-glow">
-          {getModeName()}
-        </h1>
-        <p className="text-xl sm:text-2xl text-muted-foreground">
-          {getModeDescription()}
-        </p>
-      </div>
+  const getModeTips = () => {
+    switch (gameMode) {
+      case 'reflex':
+        return [
+          { icon: '⚡', text: 'Hit cyan buttons fast', color: 'border-primary/50' },
+          { icon: '⭐', text: 'Gold = bonus (heals + score)', color: 'border-yellow-500/50' },
+          { icon: '🔥', text: '5 fast hits = score boost', color: 'border-secondary/50' },
+        ];
+      case 'sequence':
+        return [
+          { icon: '👁️', text: 'Watch the pattern carefully', color: 'border-primary/50' },
+          { icon: '🧠', text: 'Repeat in exact order', color: 'border-chart-3/50' },
+          { icon: '⏱️', text: 'No time limit on input', color: 'border-secondary/50' },
+        ];
+      case 'survival':
+        return [
+          { icon: '💀', text: 'One life only', color: 'border-destructive/50' },
+          { icon: '⚡', text: 'Speed increases over time', color: 'border-primary/50' },
+          { icon: '⭐', text: 'Gold bonus = extra score', color: 'border-yellow-500/50' },
+        ];
+      case 'nightmare':
+        return [
+          { icon: '🔥', text: 'Extreme speed & difficulty', color: 'border-destructive/50' },
+          { icon: '⚡', text: 'Up to 6 buttons at once', color: 'border-primary/50' },
+          { icon: '⏱️', text: '150ms minimum reaction', color: 'border-secondary/50' },
+        ];
+      case 'oddOneOut':
+        return [
+          { icon: '🎯', text: 'Find the magenta target', color: 'border-secondary/50' },
+          { icon: '❌', text: 'Cyan buttons are decoys', color: 'border-primary/50' },
+          { icon: '⚡', text: 'Hit fast before timeout', color: 'border-chart-3/50' },
+        ];
+      default:
+        return [
+          { icon: '⚡', text: 'Be fast', color: 'border-primary/50' },
+          { icon: '✓', text: 'Stay accurate', color: 'border-chart-3/50' },
+          { icon: '🔥', text: 'Build combos', color: 'border-secondary/50' },
+        ];
+    }
+  };
 
-      {/* Key points - ultra concise */}
-      <div className="flex flex-wrap justify-center gap-4 sm:gap-5 text-lg sm:text-xl">
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-card/60 border-2 border-primary/50 rounded">
-          <span className="text-primary font-bold">⚡</span>
-          <span>Be fast</span>
+  const renderTutorialContent = () => {
+    const tips = getModeTips();
+    
+    return (
+      <div className="space-y-6 sm:space-y-8 max-w-3xl mx-auto text-center">
+        {/* Title + Mode */}
+        <div className="space-y-3">
+          <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold text-primary text-glow">
+            {getModeName()}
+          </h1>
+          <p className="text-xl sm:text-2xl text-muted-foreground">
+            {getModeDescription()}
+          </p>
         </div>
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-card/60 border-2 border-chart-3/50 rounded">
-          <span className="text-chart-3 font-bold">✓</span>
-          <span>Stay accurate</span>
-        </div>
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-card/60 border-2 border-secondary/50 rounded">
-          <span className="text-secondary font-bold">🔥</span>
-          <span>Build combos</span>
-        </div>
-      </div>
 
-      {/* Keyboard layout - compact */}
-      <div className="inline-block bg-card/40 border-2 border-border rounded-xl px-6 py-5">
-        <div className="flex flex-col items-center gap-2">
-          <div className="flex gap-2">
-            <kbd className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center border border-border bg-background/80 text-base sm:text-lg font-semibold rounded-md">Q</kbd>
-            <kbd className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center border border-border bg-background/80 text-base sm:text-lg font-semibold rounded-md">W</kbd>
-            <kbd className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center border border-border bg-background/80 text-base sm:text-lg font-semibold rounded-md">E</kbd>
-          </div>
-          <div className="flex gap-2">
-            <kbd className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center border border-border bg-background/80 text-base sm:text-lg font-semibold rounded-md">A</kbd>
-            <kbd className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center border border-border bg-background/80 text-base sm:text-lg font-semibold rounded-md">S</kbd>
-            <kbd className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center border border-border bg-background/80 text-base sm:text-lg font-semibold rounded-md">D</kbd>
-            <kbd className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center border border-border bg-background/80 text-base sm:text-lg font-semibold rounded-md">F</kbd>
-          </div>
-          <div className="flex gap-2">
-            <kbd className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center border border-border bg-background/80 text-base sm:text-lg font-semibold rounded-md">Y</kbd>
-            <kbd className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center border border-border bg-background/80 text-base sm:text-lg font-semibold rounded-md">X</kbd>
-            <kbd className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center border border-border bg-background/80 text-base sm:text-lg font-semibold rounded-md">C</kbd>
-          </div>
+        {/* Mode-specific tips - concise and essential */}
+        <div className="flex flex-wrap justify-center gap-3 sm:gap-4 text-base sm:text-lg">
+          {tips.map((tip, idx) => (
+            <div
+              key={idx}
+              className={cn(
+                'flex items-center gap-2 px-3 py-1.5 bg-card/60 border-2 rounded',
+                tip.color
+              )}
+            >
+              <span className="font-bold">{tip.icon}</span>
+              <span>{tip.text}</span>
+            </div>
+          ))}
         </div>
-        <p className="mt-3 text-sm text-muted-foreground">
-          Customize in Settings
-        </p>
+
+        {/* Keyboard layout - compact */}
+        <div className="inline-block bg-card/40 border-2 border-border rounded-xl px-6 py-5">
+          <div className="flex flex-col items-center gap-2">
+            <div className="flex gap-2">
+              <kbd className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center border border-border bg-background/80 text-base sm:text-lg font-semibold rounded-md">Q</kbd>
+              <kbd className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center border border-border bg-background/80 text-base sm:text-lg font-semibold rounded-md">W</kbd>
+              <kbd className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center border border-border bg-background/80 text-base sm:text-lg font-semibold rounded-md">E</kbd>
+            </div>
+            <div className="flex gap-2">
+              <kbd className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center border border-border bg-background/80 text-base sm:text-lg font-semibold rounded-md">A</kbd>
+              <kbd className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center border border-border bg-background/80 text-base sm:text-lg font-semibold rounded-md">S</kbd>
+              <kbd className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center border border-border bg-background/80 text-base sm:text-lg font-semibold rounded-md">D</kbd>
+              <kbd className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center border border-border bg-background/80 text-base sm:text-lg font-semibold rounded-md">F</kbd>
+            </div>
+            <div className="flex gap-2">
+              <kbd className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center border border-border bg-background/80 text-base sm:text-lg font-semibold rounded-md">Y</kbd>
+              <kbd className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center border border-border bg-background/80 text-base sm:text-lg font-semibold rounded-md">X</kbd>
+              <kbd className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center border border-border bg-background/80 text-base sm:text-lg font-semibold rounded-md">C</kbd>
+            </div>
+          </div>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Customize in Settings
+          </p>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
 
   return (

@@ -1173,6 +1173,7 @@ export interface GameButton3DWebGLProps {
   index: number;
   highlighted: boolean;
   isOddTarget?: boolean;
+  isBonus?: boolean;
   highlightStartTime?: number;
   highlightDuration: number;
   pressFeedback?: 'success' | 'error' | null;
@@ -1254,6 +1255,7 @@ interface ButtonMeshProps {
   buttonIndex: number;
   highlighted: boolean;
   isOddTarget?: boolean;
+  isBonus?: boolean;
   highlightStartTime?: number;
   highlightDuration: number;
   pressFeedback?: 'success' | 'error' | null;
@@ -1271,6 +1273,7 @@ const ButtonMesh = memo(function ButtonMesh({
   buttonIndex,
   highlighted,
   isOddTarget = false,
+  isBonus = false,
   highlightStartTime,
   highlightDuration,
   pressFeedback,
@@ -1341,7 +1344,10 @@ const ButtonMesh = memo(function ButtonMesh({
     // Update progress and color refs for child effects
     progressRef.current = progress.current;
     if (highlighted) {
-      if (isOddTarget) {
+      if (isBonus) {
+        // Bonus button: golden accent
+        urgencyColorRef.current.setRGB(1.0, 0.84, 0.2);
+      } else if (isOddTarget) {
         // Odd One Out target gets a distinct magenta glow
         urgencyColorRef.current.setRGB(
           THEME_COLORS.secondary.r,
@@ -1455,7 +1461,11 @@ const ButtonMesh = memo(function ButtonMesh({
     const baseClearcoat = 0.8;
     
     if (highlighted) {
-      const baseHighlightColor = isOddTarget ? THEME_COLORS.secondary : getUrgencyColor(progress.current);
+      const baseHighlightColor = isBonus
+        ? { r: 1.0, g: 0.84, b: 0.2 } // gold
+        : isOddTarget
+        ? THEME_COLORS.secondary
+        : getUrgencyColor(progress.current);
       const pulse = Math.sin(pulsePhase.current) * 0.05 + 0.95;
       
       // Modern radial gradient: brighter at center, darker at edges
@@ -1952,6 +1962,7 @@ interface GameButtonGridWebGLProps {
   buttons: Array<{
     index: number;
     highlighted: boolean;
+    isBonus?: boolean;
     highlightStartTime?: number;
     pressFeedback?: 'success' | 'error' | null;
   }>;
@@ -2134,6 +2145,7 @@ export const GameButtonGridWebGL = memo(function GameButtonGridWebGL({
               const buttonData = buttons.find(b => b.index === index) || {
                 index,
                 highlighted: false,
+                isBonus: false,
                 isOddTarget: false,
                 pressFeedback: null,
               };
@@ -2148,6 +2160,7 @@ export const GameButtonGridWebGL = memo(function GameButtonGridWebGL({
                   key={index}
                   buttonIndex={index}
                   highlighted={buttonData.highlighted}
+                  isBonus={buttonData.isBonus}
                   isOddTarget={buttonData.isOddTarget}
                   highlightStartTime={buttonData.highlightStartTime}
                   highlightDuration={highlightDuration}
@@ -2203,6 +2216,7 @@ export const GameButton3DWebGL = memo(function GameButton3DWebGL({
   index,
   highlighted,
   isOddTarget,
+  isBonus,
   highlightStartTime,
   highlightDuration,
   pressFeedback,
@@ -2249,6 +2263,7 @@ export const GameButton3DWebGL = memo(function GameButton3DWebGL({
             buttonIndex={index}
             highlighted={highlighted}
             isOddTarget={isOddTarget}
+            isBonus={isBonus}
             highlightStartTime={highlightStartTime}
             highlightDuration={highlightDuration}
             pressFeedback={pressFeedback}

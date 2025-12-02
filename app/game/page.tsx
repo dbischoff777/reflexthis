@@ -94,6 +94,12 @@ export default function GamePage() {
   // Track combo milestones for celebration effects (5, 10, 20, 30, 50)
   const [comboMilestone, setComboMilestone] = useState<number | null>(null);
   const lastMilestoneRef = useRef<number>(0);
+  // Bonus target & micro-objectives
+  const [bonusButtonId, setBonusButtonId] = useState<number | null>(null);
+  const [bonusActive, setBonusActive] = useState(false);
+  const [bonusHighlightDuration, setBonusHighlightDuration] = useState<number | null>(null);
+  const [fastStreakCount, setFastStreakCount] = useState(0);
+  const [fastStreakActive, setFastStreakActive] = useState(false);
   
   // Detect combo milestones
   useEffect(() => {
@@ -185,12 +191,13 @@ export default function GamePage() {
       return {
         index: id,
         highlighted: isHighlighted,
+        isBonus: bonusActive && bonusButtonId === id,
         isOddTarget,
         highlightStartTime: validHighlightTime,
         pressFeedback: (feedback === 'correct' ? 'success' : feedback === 'incorrect' ? 'error' : null) as 'success' | 'error' | null,
       };
     });
-  }, [highlightedButtons, buttonPressFeedback, highlightStartTimeState, gameMode, oddOneOutTarget]);
+  }, [highlightedButtons, buttonPressFeedback, highlightStartTimeState, gameMode, oddOneOutTarget, bonusActive, bonusButtonId]);
 
   // Clear highlight timer
   const clearHighlightTimer = useCallback(() => {
@@ -238,6 +245,26 @@ export default function GamePage() {
         lastHighlightedRef.current
       );
       setOddOneOutTarget(null);
+
+      // Occasionally spawn a bonus button in reflex / survival / nightmare
+      if ((gameMode === 'reflex' || gameMode === 'survival' || gameMode === 'nightmare') && Math.random() < 0.18) {
+        const available = Array.from({ length: 10 }, (_, i) => i + 1).filter(
+          (id) => !newHighlighted.includes(id)
+        );
+        if (available.length > 0) {
+          const idx = Math.floor(Math.random() * available.length);
+          const bonusId = available[idx];
+          newHighlighted = [...newHighlighted, bonusId];
+          setBonusButtonId(bonusId);
+          setBonusActive(true);
+        } else {
+          setBonusButtonId(null);
+          setBonusActive(false);
+        }
+      } else {
+        setBonusButtonId(null);
+        setBonusActive(false);
+      }
     }
 
     lastHighlightedRef.current = newHighlighted;
@@ -255,6 +282,7 @@ export default function GamePage() {
     // Set timer to clear highlight and penalize if not pressed in time
     const duration = getHighlightDurationForDifficulty(score, difficulty);
     setHighlightDuration(duration);
+    setBonusHighlightDuration(bonusActive ? Math.max(200, duration * 0.6) : null);
     timerRef.current = setTimeout(() => {
       // Check if buttons are still highlighted (not pressed)
       if (currentHighlightedRef.current.length > 0) {
@@ -297,6 +325,8 @@ export default function GamePage() {
         return;
       }
 
+      const isBonusHit = bonusActive && bonusButtonId === buttonId;
+
       if (highlightedButtons.includes(buttonId)) {
         // Calculate reaction time
         const reactionTime = highlightStartTimeRef.current
@@ -314,7 +344,12 @@ export default function GamePage() {
           setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: null }));
         }, 300);
 
-        incrementScore(reactionTime);
+        // Increment score, with a small bonus multiplier when a fast-streak objective is active
+        if (fastStreakActive) {
+          incrementScore(Math.max(1, Math.floor(reactionTime * 0.8)));
+        } else {
+          incrementScore(reactionTime);
+        }
         // Success flash (respect comfort settings)
         if (screenFlashEnabled) {
           setScreenFlash('success');
@@ -329,6 +364,44 @@ export default function GamePage() {
           setCurrentReactionTime(null);
           setIsNewBestReaction(false);
         }, 100);
+
+        // Micro-objective: track fast streaks (e.g. < 250ms) only in reflex/survival/nightmare
+        if (
+          (gameMode === 'reflex' || gameMode === 'survival' || gameMode === 'nightmare') &&
+          reactionTime > 0 &&
+          reactionTime <= 250
+        ) {
+          setFastStreakCount((prev) => {
+            const next = prev + 1;
+            if (!fastStreakActive && next >= 5) {
+              setFastStreakActive(true);
+              // Temporary objective buff ends automatically after a short delay
+              setTimeout(() => setFastStreakActive(false), 8000);
+            }
+            return next;
+          });
+        } else {
+          setFastStreakCount(0);
+        }
+
+        // Bonus button: heal (except survival) and extra score
+        if (isBonusHit) {
+          setBonusActive(false);
+          setBonusButtonId(null);
+          setBonusHighlightDuration(null);
+          // Heal 1 life up to maxLives (skip in survival mode - only 1 life)
+          if (gameMode !== 'survival') {
+            setLives(Math.min(maxLives, lives + 1));
+          }
+          // Extra celebratory flash
+          if (screenFlashEnabled) {
+            setScreenFlash('combo-5');
+            setTimeout(
+              () => setScreenFlash(null),
+              reducedEffects ? 150 : 260
+            );
+          }
+        }
 
         // Remove this button from highlighted buttons
         const updatedHighlighted = highlightedButtons.filter(
