@@ -24,9 +24,19 @@ function LandingPageContent() {
   const [bootstrapping, setBootstrapping] = useState(true);
   const [bootProgress, setBootProgress] = useState(0);
 
-  // Initial boot splash: preload critical assets & hold landing until ready
+  // Initial boot splash: preload critical assets & hold landing until ready.
+  // Only runs on first app start in this browser tab; subsequent navigations skip the splash.
   useEffect(() => {
     let cancelled = false;
+
+    // If we've already shown the splash once in this tab, skip bootstrapping entirely
+    if (typeof window !== 'undefined' && window.sessionStorage.getItem('reflex_boot_done') === '1') {
+      setBootstrapping(false);
+      return () => {
+        cancelled = true;
+      };
+    }
+
     let completedSteps = 0;
     const totalSteps = 3; // icon, animation, minimum delay
 
@@ -72,6 +82,9 @@ function LandingPageContent() {
     Promise.all([imagePromise, videoPromise, minDelay]).then(() => {
       if (!cancelled) {
         setBootstrapping(false);
+        if (typeof window !== 'undefined') {
+          window.sessionStorage.setItem('reflex_boot_done', '1');
+        }
       }
     });
 

@@ -141,7 +141,7 @@ export function GameOverModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 crt-scanlines">
       <div
         className={cn(
-          'relative w-full max-w-md border-4 p-6 sm:p-8',
+          'relative w-full max-w-2xl border-4 p-6 sm:p-8',
           'bg-card border-primary pixel-border',
           'animate-[fadeIn_0.3s_ease-out,scaleIn_0.3s_ease-out]'
         )}
@@ -161,91 +161,94 @@ export function GameOverModal({
           </p>
         </div>
 
-        {/* Score Display */}
-        <div className="text-center py-6 mb-6 border-y border-border">
-          <p className="text-sm text-muted-foreground mb-2">Final Score</p>
-          <p 
-            className={cn(
-              'text-5xl sm:text-6xl font-bold text-primary text-glow mb-4 transition-all duration-75',
-              isCounting && 'scale-110'
-            )}
-          >
-            {displayedScore.toLocaleString()}
-          </p>
-
-          {/* High Score Indicator */}
-          {isNewHighScore && (
-            <div
+        {/* Main content: score + details side-by-side on wide screens */}
+        <div className="mb-6 grid gap-6 md:grid-cols-[minmax(0,1.1fr)_minmax(0,1.4fr)] items-start">
+          {/* Score Display */}
+          <div className="text-center py-6 border-y border-border md:border md:rounded-lg md:bg-card/80 md:px-4">
+            <p className="text-sm text-muted-foreground mb-2">Final Score</p>
+            <p
               className={cn(
-                'mt-4 p-3 bg-primary/30 border-4 border-primary pixel-border',
-                'animate-[pulse_1s_ease-in-out_infinite]'
+                'text-5xl sm:text-6xl font-bold text-primary text-glow mb-4 transition-all duration-75',
+                isCounting && 'scale-110'
               )}
             >
-              <p className="text-primary font-bold text-lg text-glow">
-                🏆 New High Score! 🏆
-              </p>
-            </div>
-          )}
+              {displayedScore.toLocaleString()}
+            </p>
 
-          {!isNewHighScore && highScore > 0 && (
-            <div className="mt-4">
-              <p className="text-xs text-muted-foreground">High Score</p>
-              <p className="text-xl font-semibold text-primary">{highScore}</p>
-            </div>
-          )}
-
-          {metaSummary.rankName && (
-            <div className="mt-4 text-xs text-foreground/80">
-              <p className="font-semibold text-primary">
-                Current Rank: {metaSummary.rankName}
-              </p>
-              {metaSummary.nextRank && (
-                <p className="mt-0.5 text-[11px] text-foreground/70">
-                  Keep pushing to reach <span className="font-semibold">{metaSummary.nextRank}</span>.
+            {/* High Score Indicator */}
+            {isNewHighScore && (
+              <div
+                className={cn(
+                  'mt-4 p-3 bg-primary/30 border-4 border-primary pixel-border',
+                  'animate-[pulse_1s_ease-in-out_infinite]'
+                )}
+              >
+                <p className="text-primary font-bold text-lg text-glow">
+                  🏆 New High Score! 🏆
                 </p>
-              )}
-            </div>
-          )}
-        </div>
+              </div>
+            )}
 
-        {/* Stats */}
-        {(bestCombo > 0 || reactionTimeStats.allTimes.length > 0) && (
-          <div className="mb-6 space-y-4">
-            <div className="p-4 bg-card border-4 border-border pixel-border">
-              <h3 className="text-sm font-semibold text-primary mb-3">Game Statistics</h3>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                {bestCombo > 0 && (
-                  <div>
-                    <p className="text-muted-foreground mb-1">Best Combo</p>
-                    <p className="text-lg font-bold text-accent">{bestCombo}x</p>
-                  </div>
-                )}
-                {reactionTimeStats.average !== null && (
-                  <div>
-                    <p className="text-muted-foreground mb-1">Avg Reaction</p>
-                    <p className="text-lg font-bold text-primary">
-                      {Math.round(reactionTimeStats.average)}ms
-                    </p>
-                  </div>
-                )}
-                {reactionTimeStats.fastest !== null && (
-                  <div>
-                    <p className="text-muted-foreground mb-1">Fastest</p>
-                    <p className="text-lg font-bold text-green-400">
-                      {Math.round(reactionTimeStats.fastest)}ms
-                    </p>
-                  </div>
-                )}
-                {reactionTimeStats.allTimes.length > 0 && (
-                  <div>
-                    <p className="text-muted-foreground mb-1">Total Presses</p>
-                    <p className="text-lg font-bold text-primary">
-                      {reactionTimeStats.allTimes.length}
-                    </p>
-                  </div>
+            {!isNewHighScore && highScore > 0 && (
+              <div className="mt-4">
+                <p className="text-xs text-muted-foreground">High Score</p>
+                <p className="text-xl font-semibold text-primary">{highScore}</p>
+              </div>
+            )}
+
+            {metaSummary.rankName && (
+              <div className="mt-4 text-xs text-foreground/80">
+                <p className="font-semibold text-primary">
+                  Current Rank: {metaSummary.rankName}
+                </p>
+                {metaSummary.nextRank && (
+                  <p className="mt-0.5 text-[11px] text-foreground/70">
+                    Keep pushing to reach <span className="font-semibold">{metaSummary.nextRank}</span>.
+                  </p>
                 )}
               </div>
-            </div>
+            )}
+          </div>
+
+          {/* Right column: stats, coaching tip, achievements */}
+          <div className="space-y-4">
+            {(bestCombo > 0 || reactionTimeStats.allTimes.length > 0) && (
+              <div className="p-4 bg-card border-4 border-border pixel-border">
+                <h3 className="text-sm font-semibold text-primary mb-3">Game Statistics</h3>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  {bestCombo > 0 && (
+                    <div>
+                      <p className="text-muted-foreground mb-1">Best Combo</p>
+                      <p className="text-lg font-bold text-accent">{bestCombo}x</p>
+                    </div>
+                  )}
+                  {reactionTimeStats.average !== null && (
+                    <div>
+                      <p className="text-muted-foreground mb-1">Avg Reaction</p>
+                      <p className="text-lg font-bold text-primary">
+                        {Math.round(reactionTimeStats.average)}ms
+                      </p>
+                    </div>
+                  )}
+                  {reactionTimeStats.fastest !== null && (
+                    <div>
+                      <p className="text-muted-foreground mb-1">Fastest</p>
+                      <p className="text-lg font-bold text-green-400">
+                        {Math.round(reactionTimeStats.fastest)}ms
+                      </p>
+                    </div>
+                  )}
+                  {reactionTimeStats.allTimes.length > 0 && (
+                    <div>
+                      <p className="text-muted-foreground mb-1">Total Presses</p>
+                      <p className="text-lg font-bold text-primary">
+                        {reactionTimeStats.allTimes.length}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {coachingTip && (
               <div className="p-4 bg-card/80 border-2 border-primary pixel-border">
@@ -274,7 +277,7 @@ export function GameOverModal({
               </div>
             )}
           </div>
-        )}
+        </div>
 
         {/* Actions */}
         <div className="flex flex-col gap-3">
