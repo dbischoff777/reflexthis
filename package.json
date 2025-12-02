@@ -3,7 +3,7 @@
   "version": "0.2.8",
   "private": true,
   "main": "electron/main.js",
-  "scripts": {  
+  "scripts": {
     "dev": "next dev",
     "prebuild": "node scripts/build-info.js",
     "build": "next build",
@@ -29,7 +29,7 @@
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "tailwind-merge": "^3.4.0",
-    "task-master-ai": "^0.33.0",
+    "task-master-ai": "^0.17.1",
     "three": "^0.181.2"
   },
   "devDependencies": {
@@ -40,7 +40,7 @@
     "@types/three": "^0.181.0",
     "baseline-browser-mapping": "^2.8.32",
     "concurrently": "^9.1.2",
-    "electron": "^33.2.1",
+    "electron": "^39.2.4",
     "electron-builder": "^25.1.8",
     "eslint": "^9",
     "eslint-config-next": "16.0.3",
@@ -83,7 +83,7 @@
           ]
         }
       ],
-      "icon": "public/favicon.ico"
+      "icon": "public/logo/ReflexIcon.jpg"
     },
     "mac": {
       "target": [
@@ -95,7 +95,7 @@
           ]
         }
       ],
-      "icon": "public/favicon.ico",
+      "icon": "public/logo/ReflexIcon.jpg",
       "category": "public.app-category.games"
     },
     "linux": {
@@ -113,7 +113,7 @@
           ]
         }
       ],
-      "icon": "public/favicon.ico",
+      "icon": "public/logo/ReflexIcon.jpg",
       "category": "Game"
     },
     "nsis": {

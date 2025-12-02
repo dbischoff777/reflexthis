@@ -162,15 +162,23 @@ function LandingPageContent() {
           <div className="pointer-events-none absolute inset-0 bg-gradient-radial from-transparent via-transparent to-black/60" />
 
           {/* Boot progress indicator */}
-          <div className="pointer-events-none absolute bottom-10 w-full flex flex-col items-center gap-2">
-            <div className="w-48 sm:w-64 border-2 border-primary bg-black/60 rounded-full overflow-hidden">
+          <div className="pointer-events-none absolute bottom-10 w-full flex flex-col items-center gap-3">
+            <div className="w-56 sm:w-72 border-2 border-primary/70 bg-black/70 rounded-full overflow-hidden shadow-lg shadow-primary/30">
               <div
-                className="h-2 bg-primary transition-all duration-200"
+                className="h-3 bg-gradient-to-r from-primary via-secondary to-chart-3 relative transition-all duration-200"
                 style={{ width: `${bootProgress}%` }}
-              />
+              >
+                {/* Diagonal scanlines inside the bar */}
+                <div className="absolute inset-0 opacity-40"
+                  style={{
+                    backgroundImage:
+                      'repeating-linear-gradient(135deg, rgba(0,0,0,0.12) 0, rgba(0,0,0,0.12) 4px, transparent 4px, transparent 8px)',
+                  }}
+                />
+              </div>
             </div>
-            <p className="text-xs sm:text-sm text-muted-foreground font-mono">
-              {bootProgress}%
+            <p className="text-[11px] sm:text-xs text-muted-foreground font-mono tracking-wide">
+              LOADING ASSETS… {bootProgress}%
             </p>
           </div>
         </div>

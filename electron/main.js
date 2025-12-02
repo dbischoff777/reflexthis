@@ -49,7 +49,7 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js'),
       devTools: isDev, // Only enable DevTools in development mode
     },
-    icon: path.join(__dirname, '../public/favicon.ico'),
+    icon: path.join(__dirname, '../public/logo/ReflexIcon.jpg'),
     show: false, // Don't show until ready
     titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
     autoHideMenuBar: true, // Hide menu bar (File, View, etc.)
