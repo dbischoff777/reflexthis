@@ -47,14 +47,18 @@ export function ModeSelector({
           <button
             onClick={onCancel}
             draggable={false}
-            className="text-xs text-muted-foreground hover:text-foreground border-2 border-border bg-card px-2 py-1 pixel-border transition-all duration-100 hover:border-primary"
+            style={{
+              background: 'linear-gradient(135deg, #1e3a5f 0%, #000000 100%)',
+              borderColor: '#1e3a5f',
+            }}
+            className="text-xs text-foreground/70 hover:text-foreground border-2 px-2 py-1 pixel-border transition-all duration-200 hover:opacity-90 focus:outline-none focus:ring-1 focus:ring-primary"
             aria-label={t(language, 'difficulty.cancel')}
           >
             {t(language, 'difficulty.esc')}
           </button>
         )}
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {modes.map((mode) => {
           const modeInfo = GAME_MODES[mode];
           const isSelected = selected === mode;
@@ -66,45 +70,40 @@ export function ModeSelector({
               disabled={disabled}
               draggable={false}
               className={cn(
-                'p-4 border-4 transition-all duration-150 text-left pixel-border relative',
+                'p-6 sm:p-8 border-4 transition-all duration-150 text-center pixel-border relative',
                 'focus:outline-none focus:ring-2 focus:ring-primary',
+                'bg-gradient-to-br from-purple-300 via-purple-200 to-blue-300',
+                'border-white/80 shadow-lg',
+                'h-[180px] sm:h-[200px] w-full',
+                'flex flex-col items-center justify-center',
                 isSelected
-                  ? 'border-primary bg-linear-to-r from-primary/40 via-primary/60 to-secondary/40 ring-2 ring-primary ring-offset-2 ring-offset-background shadow-lg shadow-primary/30'
-                  : 'border-border bg-card hover:border-primary/40 hover:bg-primary/5',
+                  ? 'ring-4 ring-primary ring-offset-2 ring-offset-background shadow-2xl shadow-primary/50'
+                  : 'hover:shadow-xl',
                 disabled && 'opacity-50 cursor-not-allowed',
                 // Center nightmare mode on large screens when it's alone in the row
                 mode === 'nightmare' && 'lg:col-start-2'
               )}
+              style={{
+                background: isSelected
+                  ? 'linear-gradient(135deg, #C084FC 0%, #A78BFA 50%, #93C5FD 100%)'
+                  : 'linear-gradient(135deg, #D8B4FE 0%, #C4B5FD 50%, #A5B4FC 100%)',
+              }}
             >
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl">{modeInfo.icon}</span>
-                  <span
-                    className={cn(
-                      'font-bold text-lg',
-                      isSelected ? 'text-primary' : 'text-foreground'
-                    )}
-                  >
-                    {mode === 'reflex' && t(language, 'mode.reflex.name')}
-                    {mode === 'sequence' && t(language, 'mode.sequence.name')}
-                    {mode === 'survival' && t(language, 'mode.survival.name')}
-                    {mode === 'nightmare' && t(language, 'mode.nightmare.name')}
-                    {mode === 'oddOneOut' && t(language, 'mode.odd.name')}
-                  </span>
-                </div>
+              <div className="flex flex-col items-center justify-center gap-3">
+                <span className="text-5xl sm:text-6xl">{modeInfo.icon}</span>
+                <span className="font-bold text-xl sm:text-2xl text-white drop-shadow-lg">
+                  {mode === 'reflex' && t(language, 'mode.reflex.name')}
+                  {mode === 'sequence' && t(language, 'mode.sequence.name')}
+                  {mode === 'survival' && t(language, 'mode.survival.name')}
+                  {mode === 'nightmare' && t(language, 'mode.nightmare.name')}
+                  {mode === 'oddOneOut' && t(language, 'mode.odd.name')}
+                </span>
                 {isSelected && (
-                  <span className="text-xl text-primary font-bold" aria-label="Selected">
+                  <span className="text-3xl text-white font-bold drop-shadow-lg" aria-label="Selected">
                     ✓
                   </span>
                 )}
               </div>
-              <p className="text-sm text-muted-foreground leading-tight text-center">
-                {mode === 'reflex' && t(language, 'mode.reflex.short')}
-                {mode === 'sequence' && t(language, 'mode.sequence.short')}
-                {mode === 'survival' && t(language, 'mode.survival.short')}
-                {mode === 'nightmare' && t(language, 'mode.nightmare.short')}
-                {mode === 'oddOneOut' && t(language, 'mode.odd.short')}
-              </p>
             </button>
           );
         })}

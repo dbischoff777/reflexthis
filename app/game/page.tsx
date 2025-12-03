@@ -748,15 +748,16 @@ export default function GamePage() {
       }, displayDuration);
     };
     
-    // Start showing sequence after a short delay
+    // Start showing sequence after a reduced delay
     setTimeout(() => {
       showNextButton(0);
-    }, 500);
+    }, 200);
   }, [score, difficulty, gameOver, isReady, soundEnabled, clearHighlightTimer]);
   
   // Handle button press in sequence mode
   const handleSequenceButtonPress = useCallback(
     (buttonId: number) => {
+      // Only allow input after sequence is complete (isWaitingForInput is true)
       if (gameOver || isPausedRef.current || !isReady || !isWaitingForInput || isShowingSequence || isProcessingRef.current) {
         return;
       }
@@ -782,10 +783,10 @@ export default function GamePage() {
           previousComboRef.current = combo;
           previousScoreRef.current = score;
           
-        if (screenFlashEnabled) {
-          setScreenFlash('success');
-          setTimeout(() => setScreenFlash(null), reducedEffects ? 120 : 200);
-        }
+          if (screenFlashEnabled) {
+            setScreenFlash('success');
+            setTimeout(() => setScreenFlash(null), reducedEffects ? 120 : 200);
+          }
           
           // Generate next sequence
           setTimeout(() => {
@@ -798,19 +799,19 @@ export default function GamePage() {
             setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: null }));
           }, 300);
 
-        // Trigger screen shake (respect comfort settings)
-        if (screenShakeEnabled && !reducedEffects) {
-          setScreenShake(true);
-          setTimeout(() => {
-            setScreenShake(false);
-          }, 400);
-        }
+          // Trigger screen shake (respect comfort settings)
+          if (screenShakeEnabled && !reducedEffects) {
+            setScreenShake(true);
+            setTimeout(() => {
+              setScreenShake(false);
+            }, 400);
+          }
 
-        playSound('error', soundEnabled);
-        if (screenFlashEnabled) {
-          setScreenFlash('error');
-          setTimeout(() => setScreenFlash(null), reducedEffects ? 150 : 300);
-        }
+          playSound('error', soundEnabled);
+          if (screenFlashEnabled) {
+            setScreenFlash('error');
+            setTimeout(() => setScreenFlash(null), reducedEffects ? 150 : 300);
+          }
           setPlayerSequence([]);
           decrementLives();
           
@@ -868,7 +869,6 @@ export default function GamePage() {
     },
     [
       gameOver,
-      isReady,
       isReady,
       isWaitingForInput,
       isShowingSequence,

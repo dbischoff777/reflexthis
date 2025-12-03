@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { BuildInfo } from '@/components/BuildInfo';
@@ -21,6 +21,87 @@ const WARMUP_BUTTONS = Array.from({ length: 10 }, (_, i) => ({
   index: i + 1,
   highlighted: false,
 }));
+
+/**
+ * BackgroundVideo component - Smooth looping background video with crossfade
+ */
+function BackgroundVideo() {
+  const [activeVideo, setActiveVideo] = useState(0);
+  const video1Ref = useRef<HTMLVideoElement>(null);
+  const video2Ref = useRef<HTMLVideoElement>(null);
+  const fadeTriggeredRef = useRef(false);
+
+  useEffect(() => {
+    const video1 = video1Ref.current;
+    const video2 = video2Ref.current;
+    if (!video1 || !video2) return;
+
+    const checkAndFade = () => {
+      const currentVideo = activeVideo === 0 ? video1 : video2;
+      const nextVideo = activeVideo === 0 ? video2 : video1;
+      
+      if (!currentVideo || !nextVideo) return;
+      
+      // Start crossfade when we're 0.8 seconds from the end
+      if (currentVideo.duration && currentVideo.currentTime >= currentVideo.duration - 0.8 && !fadeTriggeredRef.current) {
+        fadeTriggeredRef.current = true;
+        
+        // Prepare next video
+        nextVideo.currentTime = 0;
+        nextVideo.play().catch(() => {});
+        
+        // Start crossfade transition
+        setTimeout(() => {
+          if (currentVideo && nextVideo) {
+            currentVideo.style.opacity = '0';
+            nextVideo.style.opacity = '1';
+            setActiveVideo(activeVideo === 0 ? 1 : 0);
+            
+            // Reset trigger when next video starts
+            setTimeout(() => {
+              fadeTriggeredRef.current = false;
+            }, 1000);
+          }
+        }, 300);
+      }
+    };
+
+    const interval = setInterval(checkAndFade, 100); // Check every 100ms
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [activeVideo]);
+
+  return (
+    <div className="fixed inset-0 w-full h-full z-0">
+      <video
+        ref={video1Ref}
+        className="fixed inset-0 w-full h-full object-cover transition-opacity duration-[1200ms] ease-in-out"
+        style={{ opacity: activeVideo === 0 ? 1 : 0 }}
+        autoPlay
+        loop
+        muted
+        playsInline
+        aria-hidden="true"
+      >
+        <source src="/animation/menu-background-animated.mp4" type="video/mp4" />
+      </video>
+      <video
+        ref={video2Ref}
+        className="fixed inset-0 w-full h-full object-cover transition-opacity duration-[1200ms] ease-in-out"
+        style={{ opacity: activeVideo === 1 ? 1 : 0 }}
+        autoPlay
+        loop
+        muted
+        playsInline
+        aria-hidden="true"
+      >
+        <source src="/animation/menu-background-animated.mp4" type="video/mp4" />
+      </video>
+    </div>
+  );
+}
 
 function LandingPageContent() {
   const router = useRouter();
@@ -305,6 +386,11 @@ function LandingPageContent() {
 
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center bg-background text-foreground p-4 overflow-hidden">
+      {/* Full-screen background video with smooth looping */}
+      {!reducedEffects && <BackgroundVideo />}
+      {/* Dark overlay for better text readability */}
+      <div className={`fixed inset-0 z-[1] ${reducedEffects ? 'bg-black/60' : 'bg-black/40'}`} aria-hidden="true" />
+      
       <main className="relative z-10 flex flex-col items-center justify-center flex-1 w-full max-w-4xl text-center">
         {/* Hero Section */}
         <div className="mb-6 sm:mb-8 space-y-4 sm:space-y-6">
@@ -374,10 +460,10 @@ function LandingPageContent() {
                   // Start game - navigate directly, loading screen will show on game page
                   // Don't prevent default, let Next.js handle navigation
                 } else if (showMode) {
-                  // ModeSelector is displayed - user must select a mode first
-                  // Don't allow navigation until a mode is selected via ModeSelector
+                  // ModeSelector is displayed - clicking "Select Difficulty" opens DifficultySelector
                   e.preventDefault();
-                  // The ModeSelector's onSelect callback will handle navigation
+                  setShowMode(false);
+                  setShowDifficulty(true);
                 } else if (!showMode && !showDifficulty) {
                   e.preventDefault();
                   setShowMode(true);
@@ -399,7 +485,17 @@ function LandingPageContent() {
               setShowSettings(false);
             }}
             draggable={false}
-            className="inline-flex items-center justify-center min-h-[56px] px-6 py-3 text-base sm:text-lg font-semibold border-4 border-border bg-card text-foreground hover:border-primary hover:bg-primary/20 transition-all duration-100 focus:outline-none focus:ring-2 focus:ring-primary pixel-border"
+            style={showMode ? {
+              background: 'linear-gradient(135deg, #1e3a5f 0%, #000000 100%)',
+              borderColor: '#1e3a5f',
+            } : {
+              borderColor: '#3E7CAC',
+              backgroundColor: '#003A63',
+            }}
+            className={showMode 
+              ? "inline-flex items-center justify-center h-8 px-3 text-xs sm:text-sm font-semibold border-2 text-foreground/70 hover:text-foreground hover:opacity-90 transition-all duration-100 focus:outline-none focus:ring-1 focus:ring-primary pixel-border"
+              : "inline-flex items-center justify-center min-h-[56px] px-6 py-3 text-base sm:text-lg font-semibold border-4 text-foreground hover:opacity-90 transition-all duration-100 focus:outline-none focus:ring-2 focus:ring-primary pixel-border"
+            }
           >
             {showStats ? t(language, 'landing.hideStats') : t(language, 'landing.viewStats')}
           </button>
@@ -412,7 +508,17 @@ function LandingPageContent() {
               setShowMode(false);
             }}
             draggable={false}
-            className="inline-flex items-center justify-center min-h-[56px] px-6 py-3 text-base sm:text-lg font-semibold border-4 border-border bg-card text-foreground hover:border-primary hover:bg-primary/20 transition-all duration-100 focus:outline-none focus:ring-2 focus:ring-primary pixel-border"
+            style={showMode ? {
+              background: 'linear-gradient(135deg, #1e3a5f 0%, #000000 100%)',
+              borderColor: '#1e3a5f',
+            } : {
+              borderColor: '#3E7CAC',
+              backgroundColor: '#003A63',
+            }}
+            className={showMode 
+              ? "inline-flex items-center justify-center h-8 px-3 text-xs sm:text-sm font-semibold border-2 text-foreground/70 hover:text-foreground hover:opacity-90 transition-all duration-100 focus:outline-none focus:ring-1 focus:ring-primary pixel-border"
+              : "inline-flex items-center justify-center min-h-[56px] px-6 py-3 text-base sm:text-lg font-semibold border-4 text-foreground hover:opacity-90 transition-all duration-100 focus:outline-none focus:ring-2 focus:ring-primary pixel-border"
+            }
           >
             {t(language, 'landing.settings')}
           </button>
@@ -420,7 +526,17 @@ function LandingPageContent() {
           <button
             onClick={() => setShowExitConfirm(true)}
             draggable={false}
-            className="inline-flex items-center justify-center min-h-[56px] px-6 py-3 text-base sm:text-lg font-semibold border-4 border-secondary bg-card text-foreground hover:border-secondary hover:bg-secondary/20 transition-all duration-100 focus:outline-none focus:ring-2 focus:ring-secondary pixel-border"
+            style={showMode ? {
+              background: 'linear-gradient(135deg, #1e3a5f 0%, #000000 100%)',
+              borderColor: '#1e3a5f',
+            } : {
+              borderColor: '#3E7CAC',
+              backgroundColor: '#003A63',
+            }}
+            className={showMode 
+              ? "inline-flex items-center justify-center h-8 px-3 text-xs sm:text-sm font-semibold border-2 text-foreground/70 hover:text-foreground hover:opacity-90 transition-all duration-100 focus:outline-none focus:ring-1 focus:ring-primary pixel-border"
+              : "inline-flex items-center justify-center min-h-[56px] px-6 py-3 text-base sm:text-lg font-semibold border-4 text-foreground hover:opacity-90 transition-all duration-100 focus:outline-none focus:ring-2 focus:ring-primary pixel-border"
+            }
           >
             {t(language, 'landing.exitGame')}
           </button>
@@ -469,7 +585,11 @@ function LandingPageContent() {
       <button
         onClick={toggleMusic}
         draggable={false}
-        className="fixed top-4 right-4 z-50 inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 border-4 border-primary bg-card text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary pixel-border"
+        style={{
+          background: 'linear-gradient(135deg, #1e3a5f 0%, #000000 100%)',
+          borderColor: '#1e3a5f',
+        }}
+        className="fixed top-4 right-4 z-50 inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 border-2 text-foreground/70 hover:text-foreground hover:opacity-90 transition-all duration-200 focus:outline-none focus:ring-1 focus:ring-primary pixel-border"
         aria-label={musicEnabled ? 'Mute music' : 'Unmute music'}
       >
         {musicEnabled ? (
