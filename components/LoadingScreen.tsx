@@ -1,7 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { useGameState } from '@/lib/GameContext';
+import { t } from '@/lib/i18n';
 
 interface LoadingScreenProps {
   message?: string;
@@ -12,8 +14,21 @@ interface LoadingScreenProps {
  * LoadingScreen component - Retro Sinclair-style loading animation
  */
 export function LoadingScreen({ message = 'LOADING...', onComplete }: LoadingScreenProps) {
+  const { language } = useGameState();
   const [progress, setProgress] = useState(0);
   const [dots, setDots] = useState('');
+  
+  const statusMessages = useMemo(
+    () => [
+      t(language, 'ready.status.1'),
+      t(language, 'ready.status.2'),
+      t(language, 'ready.status.3'),
+      t(language, 'ready.status.4'),
+      t(language, 'ready.status.5'),
+    ],
+    [language]
+  );
+  const [statusIndex, setStatusIndex] = useState(0);
 
   useEffect(() => {
     // Animate progress
@@ -44,6 +59,15 @@ export function LoadingScreen({ message = 'LOADING...', onComplete }: LoadingScr
     };
   }, [onComplete]);
 
+  // Cycle through status messages
+  useEffect(() => {
+    if (statusMessages.length === 0) return;
+    const interval = setInterval(() => {
+      setStatusIndex((prev) => (prev + 1) % statusMessages.length);
+    }, 1500);
+    return () => clearInterval(interval);
+  }, [statusMessages.length]);
+
   return (
     <div className="fixed inset-0 z-50 bg-background flex items-center justify-center crt-scanlines">
       <div className="text-center space-y-6">
@@ -73,6 +97,18 @@ export function LoadingScreen({ message = 'LOADING...', onComplete }: LoadingScr
           <p className="text-sm text-muted-foreground font-mono">
             {progress}%
           </p>
+        </div>
+        
+        {/* Immersive system status line */}
+        <div className="pt-4 border-t border-border/40 max-w-xl mx-auto">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 text-xs sm:text-sm text-muted-foreground">
+            <span className="tracking-[0.25em] uppercase text-[10px] text-foreground/70">
+              {t(language, 'ready.status.label')}
+            </span>
+            <span className="font-mono text-primary/90 animate-pulse whitespace-pre-wrap">
+              {statusMessages[statusIndex]}
+            </span>
+          </div>
         </div>
         
         {/* Animated border effect */}

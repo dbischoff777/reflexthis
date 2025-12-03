@@ -93,7 +93,7 @@ const en: TranslationDict = {
   // Difficulty Selector
   'difficulty.select.title': 'Select Difficulty',
   'difficulty.cancel': 'Cancel (ESC)',
-  'difficulty.esc': 'ESC',
+  'difficulty.esc': 'X',
   'difficulty.base': 'Base:',
   'difficulty.min': 'Min:',
   'difficulty.maxButtons': 'Max Buttons:',
@@ -181,6 +181,12 @@ const en: TranslationDict = {
   'ready.customize': 'Customize in Settings',
   'ready.sequence.watch': 'Watch the sequence...',
   'ready.sequence.repeat': 'Repeat:',
+  'ready.status.label': 'SYSTEM STATUS',
+  'ready.status.1': 'Spinning up neural reflex engine...',
+  'ready.status.2': 'Warming up synapses...',
+  'ready.status.3': 'Calibrating reaction matrix...',
+  'ready.status.4': 'Charging combo capacitors...',
+  'ready.status.5': 'Stabilizing game timeline...',
 
   // Settings Modal (detailed)
   'settings.audio.title': 'AUDIO',
@@ -351,7 +357,7 @@ const de: TranslationDict = {
   // Difficulty Selector
   'difficulty.select.title': 'Schwierigkeit wählen',
   'difficulty.cancel': 'Abbrechen (ESC)',
-  'difficulty.esc': 'ESC',
+  'difficulty.esc': 'X',
   'difficulty.base': 'Basis:',
   'difficulty.min': 'Min:',
   'difficulty.maxButtons': 'Max Buttons:',
@@ -439,6 +445,12 @@ const de: TranslationDict = {
   'ready.customize': 'In Einstellungen anpassen',
   'ready.sequence.watch': 'Beobachte die Sequenz...',
   'ready.sequence.repeat': 'Wiederholen:',
+  'ready.status.label': 'SYSTEMSTATUS',
+  'ready.status.1': 'Starte neuronale Reflex-Engine...',
+  'ready.status.2': 'Wärme Synapsen auf...',
+  'ready.status.3': 'Kalibriere Reaktionsmatrix...',
+  'ready.status.4': 'Lade Kombokondensatoren...',
+  'ready.status.5': 'Stabilisiere Spielzeitlinie...',
 
   // Settings Modal (detailed)
   'settings.audio.title': 'AUDIO',
@@ -500,7 +512,7 @@ const de: TranslationDict = {
   'stats.recommendation.comboFocus': 'Halte deine Kombo am Leben; jeder zusätzliche Treffer steigert deine Punkte deutlich.',
 
   // Ready Screen Tutorial Tips
-  'ready.tip.reflex.1': 'Triff cyan Buttons schnell',
+  'ready.tip.reflex.1': 'Triff die leuchtenden Buttons schnell',
   'ready.tip.reflex.2': 'Gold = Bonus (heilt + Punkte)',
   'ready.tip.reflex.3': '5 schnelle Treffer = Punkte-Boost',
   'ready.tip.sequence.1': 'Beobachte das Muster genau',
@@ -512,8 +524,8 @@ const de: TranslationDict = {
   'ready.tip.nightmare.1': 'Extreme Geschwindigkeit & Schwierigkeit',
   'ready.tip.nightmare.2': 'Bis zu 6 Buttons gleichzeitig',
   'ready.tip.nightmare.3': '150ms Mindestreaktionszeit',
-  'ready.tip.odd.1': 'Finde das magenta Ziel',
-  'ready.tip.odd.2': 'Cyan Buttons sind Täuschungen',
+  'ready.tip.odd.1': 'Finde das magentafarbene Ziel',
+  'ready.tip.odd.2': 'Hellblaue Buttons sind nur Ablenkung',
   'ready.tip.odd.3': 'Triff schnell vor Ablauf',
   'ready.tip.default.1': 'Sei schnell',
   'ready.tip.default.2': 'Bleib präzise',

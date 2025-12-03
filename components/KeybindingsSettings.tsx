@@ -217,7 +217,7 @@ export function KeybindingsSettings({ onClose, embedded = false }: KeybindingsSe
 
   if (embedded) {
     return (
-      <div className="bg-card border-4 border-primary pixel-border p-4 sm:p-6 md:p-8 w-full max-w-2xl mx-auto max-h-[80vh] overflow-y-auto">
+      <div className="bg-card/80 p-4 sm:p-6 md:p-8 w-full max-w-2xl mx-auto max-h-[80vh] overflow-y-auto">
         {content}
       </div>
     );

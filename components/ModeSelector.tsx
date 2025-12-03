@@ -48,9 +48,9 @@ export function ModeSelector({
             onClick={onCancel}
             draggable={false}
             className="text-xs text-muted-foreground hover:text-foreground border-2 border-border bg-card px-2 py-1 pixel-border transition-all duration-100 hover:border-primary"
-            aria-label="Cancel (ESC)"
+            aria-label={t(language, 'difficulty.cancel')}
           >
-            ESC
+            {t(language, 'difficulty.esc')}
           </button>
         )}
       </div>

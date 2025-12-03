@@ -115,15 +115,6 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
         {/* Tab content */}
         {activeTab === 'audio' && (
           <section className="space-y-4">
-            <div>
-              <h3 className="text-xl font-bold text-primary mb-2 pixel-border inline-block px-3 py-1">
-                {t(language, 'settings.audio.title')}
-              </h3>
-              <p className="text-xs text-foreground/70">
-                {t(language, 'settings.audio.description')}
-              </p>
-            </div>
-
             <div className="flex flex-col gap-3">
               <button
                 onClick={toggleSound}
@@ -184,32 +175,13 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
 
         {activeTab === 'controls' && (
           <section className="space-y-4">
-            <div>
-              <h3 className="text-xl font-bold text-primary mb-2 pixel-border inline-block px-3 py-1">
-                {t(language, 'settings.controls.title')}
-              </h3>
-              <p className="text-xs text-foreground/70">
-                {t(language, 'settings.controls.description')}
-              </p>
-            </div>
-
-            <div className="border-2 border-border bg-card/80 pixel-border p-3 sm:p-4">
-              <KeybindingsSettings onClose={onClose} embedded />
-            </div>
+            {/* Directly render keybinding settings without extra inner borders */}
+            <KeybindingsSettings onClose={onClose} embedded />
           </section>
         )}
 
         {activeTab === 'comfort' && (
           <section className="space-y-4">
-            <div>
-              <h3 className="text-xl font-bold text-primary mb-2 pixel-border inline-block px-3 py-1">
-                {t(language, 'settings.comfort.title')}
-              </h3>
-              <p className="text-xs text-foreground/70">
-                {t(language, 'settings.comfort.description')}
-              </p>
-            </div>
-
             <div className="flex flex-col gap-3 text-xs sm:text-sm">
               <label className="flex items-start gap-2 cursor-pointer border border-border bg-card/80 rounded px-3 py-2">
                 <input
