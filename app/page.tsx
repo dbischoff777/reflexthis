@@ -472,7 +472,7 @@ function LandingPageContent() {
               className="group relative inline-flex items-center justify-center min-h-[56px] px-8 py-4 text-lg sm:text-xl font-bold border-4 border-primary bg-primary text-primary-foreground transition-all duration-100 hover:border-secondary hover:bg-secondary active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary pixel-border"
             >
               <span className="relative z-10">
-                {showDifficulty ? t(language, 'landing.startGame') : showMode ? t(language, 'landing.selectDifficulty') : t(language, 'landing.startGame')}
+                {showDifficulty ? t(language, 'landing.startGame') : showMode ? t(language, 'landing.selectDifficulty') : t(language, 'landing.selectMode')}
               </span>
             </Link>
           )}

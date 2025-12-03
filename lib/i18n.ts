@@ -22,6 +22,9 @@ const en: TranslationDict = {
   'ready.odd.desc': 'Find and hit the one target that stands out.',
   'ready.default.desc': 'Test your reflexes.',
 
+  // Landing Page
+  'landing.selectMode': 'Select Game Mode',
+  
   // Mode selector
   'mode.select.title': 'Select Game Mode',
   'mode.reflex.name': 'Reflex',
@@ -421,6 +424,7 @@ const de: TranslationDict = {
   'landing.title': 'REFLEX THIS',
   'landing.subtitle': 'Teste deine Reaktionsfähigkeit!',
   'landing.startGame': 'Spiel starten',
+  'landing.selectMode': 'Spielmodus wählen',
   'landing.selectDifficulty': 'Schwierigkeit wählen',
   'landing.viewStats': 'Statistiken anzeigen',
   'landing.hideStats': 'Statistiken ausblenden',
