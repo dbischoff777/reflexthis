@@ -3,6 +3,8 @@
 import { ChangeEvent, useState } from 'react';
 import { KeybindingsSettings } from '@/components/KeybindingsSettings';
 import { useGameState } from '@/lib/GameContext';
+import { t } from '@/lib/i18n';
+import { SUPPORTED_LANGUAGES, type Language } from '@/lib/i18n';
 
 interface SettingsModalProps {
   onClose: () => void;
@@ -14,6 +16,8 @@ interface SettingsModalProps {
 export function SettingsModal({ onClose }: SettingsModalProps) {
   const [activeTab, setActiveTab] = useState<'audio' | 'controls' | 'comfort'>('audio');
   const {
+    language,
+    setLanguage,
     soundEnabled,
     musicEnabled,
     soundVolume,
@@ -42,13 +46,20 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
     setMusicVolume(value);
   };
 
+  const handleLanguageChange = (e: ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value as Language;
+    if (SUPPORTED_LANGUAGES.includes(value)) {
+      setLanguage(value);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 pixel-border">
       <div className="bg-card border-4 border-primary pixel-border p-4 sm:p-6 md:p-8 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-2xl sm:text-3xl font-bold text-primary mb-1 sm:mb-0 pixel-border px-4 py-2 inline-block">
-            SETTINGS
+            {t(language, 'settings.title')}
           </h2>
           <div className="flex flex-wrap gap-2 sm:gap-3 items-center">
             {/* Simple tab switcher */}
@@ -63,7 +74,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
                 }
                 onClick={() => setActiveTab('audio')}
               >
-                Audio
+                {t(language, 'settings.tab.audio')}
               </button>
               <button
                 type="button"
@@ -75,7 +86,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
                 }
                 onClick={() => setActiveTab('controls')}
               >
-                Controls
+                {t(language, 'settings.tab.controls')}
               </button>
               <button
                 type="button"
@@ -87,7 +98,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
                 }
                 onClick={() => setActiveTab('comfort')}
               >
-                Comfort
+                {t(language, 'settings.tab.comfort')}
               </button>
             </div>
 
@@ -96,7 +107,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
               draggable={false}
               className="px-4 py-2 border-4 border-primary bg-primary text-primary-foreground pixel-border font-bold hover:bg-primary/80 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary text-xs sm:text-sm"
             >
-              CLOSE
+              {t(language, 'settings.close')}
             </button>
           </div>
         </div>
@@ -106,10 +117,10 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
           <section className="space-y-4">
             <div>
               <h3 className="text-xl font-bold text-primary mb-2 pixel-border inline-block px-3 py-1">
-                AUDIO
+                {t(language, 'settings.audio.title')}
               </h3>
               <p className="text-xs text-foreground/70">
-                Quick control over sound effects and background music.
+                {t(language, 'settings.audio.description')}
               </p>
             </div>
 
@@ -120,12 +131,12 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
                 className="w-full px-4 py-3 border-4 pixel-border font-bold text-sm sm:text-base transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary
                   bg-card border-primary text-primary hover:bg-primary hover:text-primary-foreground"
               >
-                SOUND: {soundEnabled ? 'ON' : 'OFF'}
+                {t(language, 'settings.audio.sound')} {soundEnabled ? t(language, 'settings.audio.soundOn') : t(language, 'settings.audio.soundOff')}
               </button>
 
               <div className="space-y-1">
                 <div className="flex justify-between text-[11px] text-foreground/70">
-                  <span>Sound volume</span>
+                  <span>{t(language, 'settings.audio.soundVolume')}</span>
                   <span>{Math.round(soundVolume * 100)}%</span>
                 </div>
                 <input
@@ -145,12 +156,12 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
                 className="w-full px-4 py-3 border-4 pixel-border font-bold text-sm sm:text-base transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary
                   bg-card border-primary text-primary hover:bg-primary hover:text-primary-foreground"
               >
-                MUSIC: {musicEnabled ? 'ON' : 'OFF'}
+                {t(language, 'settings.audio.music')} {musicEnabled ? t(language, 'settings.audio.musicOn') : t(language, 'settings.audio.musicOff')}
               </button>
 
               <div className="space-y-1">
                 <div className="flex justify-between text-[11px] text-foreground/70">
-                  <span>Music volume</span>
+                  <span>{t(language, 'settings.audio.musicVolume')}</span>
                   <span>{Math.round(musicVolume * 100)}%</span>
                 </div>
                 <input
@@ -165,7 +176,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
               </div>
 
               <p className="text-xs text-foreground/60 mt-1">
-                Affects both menu and in-game music. Game music pauses automatically when the game is paused.
+                {t(language, 'settings.audio.musicNote')}
               </p>
             </div>
           </section>
@@ -175,10 +186,10 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
           <section className="space-y-4">
             <div>
               <h3 className="text-xl font-bold text-primary mb-2 pixel-border inline-block px-3 py-1">
-                CONTROLS
+                {t(language, 'settings.controls.title')}
               </h3>
               <p className="text-xs text-foreground/70">
-                Change which keys you use to hit the grid.
+                {t(language, 'settings.controls.description')}
               </p>
             </div>
 
@@ -192,10 +203,10 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
           <section className="space-y-4">
             <div>
               <h3 className="text-xl font-bold text-primary mb-2 pixel-border inline-block px-3 py-1">
-                COMFORT & ACCESSIBILITY
+                {t(language, 'settings.comfort.title')}
               </h3>
               <p className="text-xs text-foreground/70">
-                Tone down motion and flashes if things feel too intense.
+                {t(language, 'settings.comfort.description')}
               </p>
             </div>
 
@@ -208,9 +219,9 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
                   onChange={(e) => setScreenShakeEnabled(e.target.checked)}
                 />
                 <span>
-                  <span className="font-semibold">Screen shake</span>
+                  <span className="font-semibold">{t(language, 'settings.comfort.screenShake')}</span>
                   <span className="block text-foreground/70">
-                    Disable camera movement if it feels uncomfortable.
+                    {t(language, 'settings.comfort.screenShake.desc')}
                   </span>
                 </span>
               </label>
@@ -223,9 +234,9 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
                   onChange={(e) => setScreenFlashEnabled(e.target.checked)}
                 />
                 <span>
-                  <span className="font-semibold">Screen flash</span>
+                  <span className="font-semibold">{t(language, 'settings.comfort.screenFlash')}</span>
                   <span className="block text-foreground/70">
-                    Turn full-screen flashes for hits and errors on or off.
+                    {t(language, 'settings.comfort.screenFlash.desc')}
                   </span>
                 </span>
               </label>
@@ -238,9 +249,9 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
                   onChange={(e) => setReducedEffects(e.target.checked)}
                 />
                 <span>
-                  <span className="font-semibold">Reduced effects</span>
+                  <span className="font-semibold">{t(language, 'settings.comfort.reducedEffects')}</span>
                   <span className="block text-foreground/70">
-                    Use shorter flashes and less motion for a calmer experience.
+                    {t(language, 'settings.comfort.reducedEffects.desc')}
                   </span>
                 </span>
               </label>
@@ -253,12 +264,29 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
                   onChange={(e) => setHighContrastMode(e.target.checked)}
                 />
                 <span>
-                  <span className="font-semibold">High-contrast flashes</span>
+                  <span className="font-semibold">{t(language, 'settings.comfort.highContrast')}</span>
                   <span className="block text-foreground/70">
-                    Make success and error flashes more pronounced for visibility.
+                    {t(language, 'settings.comfort.highContrast.desc')}
                   </span>
                 </span>
               </label>
+
+              <div className="border border-border bg-card/80 rounded px-3 py-2 flex items-center justify-between">
+                <div>
+                  <div className="font-semibold">Language / Sprache</div>
+                  <div className="text-foreground/70">
+                    Switch between English and German.
+                  </div>
+                </div>
+                <select
+                  className="ml-3 px-2 py-1 border border-border bg-background text-xs sm:text-sm"
+                  value={language}
+                  onChange={handleLanguageChange}
+                >
+                  <option value="en">English</option>
+                  <option value="de">Deutsch</option>
+                </select>
+              </div>
             </div>
           </section>
         )}

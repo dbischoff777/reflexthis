@@ -3,6 +3,8 @@
 import { useEffect } from 'react';
 import { GameMode, GAME_MODES } from '@/lib/gameModes';
 import { cn } from '@/lib/utils';
+import { useGameState } from '@/lib/GameContext';
+import { t } from '@/lib/i18n';
 
 interface ModeSelectorProps {
   selected: GameMode;
@@ -20,6 +22,7 @@ export function ModeSelector({
   onCancel,
   disabled = false,
 }: ModeSelectorProps) {
+  const { language } = useGameState();
   const modes: GameMode[] = ['reflex', 'sequence', 'survival', 'nightmare', 'oddOneOut'];
 
   // Handle ESC key to cancel
@@ -37,7 +40,9 @@ export function ModeSelector({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-lg font-semibold text-primary">Select Game Mode</h3>
+        <h3 className="text-lg font-semibold text-primary">
+          {t(language, 'mode.select.title')}
+        </h3>
         {onCancel && (
           <button
             onClick={onCancel}
@@ -80,7 +85,11 @@ export function ModeSelector({
                       isSelected ? 'text-primary' : 'text-foreground'
                     )}
                   >
-                    {modeInfo.name}
+                    {mode === 'reflex' && t(language, 'mode.reflex.name')}
+                    {mode === 'sequence' && t(language, 'mode.sequence.name')}
+                    {mode === 'survival' && t(language, 'mode.survival.name')}
+                    {mode === 'nightmare' && t(language, 'mode.nightmare.name')}
+                    {mode === 'oddOneOut' && t(language, 'mode.odd.name')}
                   </span>
                 </div>
                 {isSelected && (
@@ -90,11 +99,11 @@ export function ModeSelector({
                 )}
               </div>
               <p className="text-sm text-muted-foreground leading-tight text-center">
-                {mode === 'reflex' && 'Hit fast'}
-                {mode === 'sequence' && 'Repeat pattern'}
-                {mode === 'survival' && 'One life only'}
-                {mode === 'nightmare' && 'Nightmare mode'}
-                {mode === 'oddOneOut' && 'Find the odd one out'}
+                {mode === 'reflex' && t(language, 'mode.reflex.short')}
+                {mode === 'sequence' && t(language, 'mode.sequence.short')}
+                {mode === 'survival' && t(language, 'mode.survival.short')}
+                {mode === 'nightmare' && t(language, 'mode.nightmare.short')}
+                {mode === 'oddOneOut' && t(language, 'mode.odd.short')}
               </p>
             </button>
           );

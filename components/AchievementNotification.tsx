@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { getAchievementById } from '@/lib/achievements';
 import { cn } from '@/lib/utils';
+import { t } from '@/lib/i18n';
+import { useGameState } from '@/lib/GameContext';
 
 interface AchievementNotificationProps {
   achievementIds: string[];
@@ -19,6 +21,7 @@ const RARITY_COLORS = {
  * Achievement notification component that displays unlocked achievements
  */
 export function AchievementNotification({ achievementIds }: AchievementNotificationProps) {
+  const { language } = useGameState();
   const [visibleAchievements, setVisibleAchievements] = useState<string[]>([]);
 
   useEffect(() => {
@@ -64,22 +67,34 @@ export function AchievementNotification({ achievementIds }: AchievementNotificat
               <div className="text-3xl flex-shrink-0">{achievement.icon}</div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="font-bold text-primary text-sm">Achievement Unlocked!</span>
-                  <span className={cn(
-                    'text-xs px-1.5 py-0.5 border pixel-border',
-                    achievement.rarity === 'legendary' && 'bg-chart-3/20 border-chart-3 text-chart-3',
-                    achievement.rarity === 'epic' && 'bg-secondary/20 border-secondary text-secondary',
-                    achievement.rarity === 'rare' && 'bg-primary/20 border-primary text-primary',
-                    achievement.rarity === 'common' && 'bg-muted border-border text-muted-foreground'
-                  )}>
-                    {achievement.rarity.toUpperCase()}
+                  <span className="font-bold text-primary text-sm">
+                    {t(language, 'stats.achievements.unlocked')}
+                  </span>
+                  <span
+                    className={cn(
+                      'text-xs px-1.5 py-0.5 border pixel-border',
+                      achievement.rarity === 'legendary' && 'bg-chart-3/20 border-chart-3 text-chart-3',
+                      achievement.rarity === 'epic' && 'bg-secondary/20 border-secondary text-secondary',
+                      achievement.rarity === 'rare' && 'bg-primary/20 border-primary text-primary',
+                      achievement.rarity === 'common' && 'bg-muted border-border text-muted-foreground'
+                    )}
+                  >
+                    {t(language, `rarity.${achievement.rarity}`).toUpperCase()}
                   </span>
                 </div>
                 <p className="font-semibold text-foreground text-sm mb-1 break-words">
-                  {achievement.title}
+                  {(() => {
+                    const key = `achievement.${achievement.id}.title`;
+                    const translated = t(language, key);
+                    return translated === key ? achievement.title : translated;
+                  })()}
                 </p>
                 <p className="text-xs text-muted-foreground break-words">
-                  {achievement.description}
+                  {(() => {
+                    const key = `achievement.${achievement.id}.description`;
+                    const translated = t(language, key);
+                    return translated === key ? achievement.description : translated;
+                  })()}
                 </p>
               </div>
             </div>

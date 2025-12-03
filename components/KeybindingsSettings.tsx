@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getKeybindings, saveKeybindings, resetKeybindings, getKeyDisplayName, isKeyBound, NUMPAD_KEYBINDINGS, type Keybindings } from '@/lib/keybindings';
 import { cn } from '@/lib/utils';
+import { t } from '@/lib/i18n';
+import { useGameState } from '@/lib/GameContext';
 
 interface KeybindingsSettingsProps {
   onClose: () => void;
@@ -13,6 +15,7 @@ interface KeybindingsSettingsProps {
  * KeybindingsSettings component - Allows players to view and customize keybindings
  */
 export function KeybindingsSettings({ onClose, embedded = false }: KeybindingsSettingsProps) {
+  const { language } = useGameState();
   const [currentKeybindings, setCurrentKeybindings] = useState<Keybindings>(getKeybindings());
   const [editingButtonId, setEditingButtonId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -42,7 +45,7 @@ export function KeybindingsSettings({ onClose, embedded = false }: KeybindingsSe
 
       // Check if key is already bound
       if (isKeyBound(key, editingButtonId, currentKeybindings)) {
-        setError(`Key "${getKeyDisplayName(key)}" is already bound to another button`);
+        setError(t(language, 'keybindings.alreadyBound').replace('{key}', getKeyDisplayName(key)));
         setTimeout(() => setError(null), 2000);
         return;
       }
@@ -104,19 +107,19 @@ export function KeybindingsSettings({ onClose, embedded = false }: KeybindingsSe
         {embedded ? (
           <>
             <h3 className="text-lg sm:text-xl font-bold text-primary mb-1">
-              Keybindings
+              {t(language, 'keybindings.title')}
             </h3>
             <p className="text-xs text-foreground/70">
-              Click a button to change its key. Press ESC to cancel editing.
+              {t(language, 'keybindings.instruction.short')}
             </p>
           </>
         ) : (
           <>
             <h2 className="text-2xl sm:text-3xl font-bold text-primary mb-2 pixel-border px-4 py-2 inline-block">
-              KEYBINDINGS
+              {t(language, 'keybindings.title.upper')}
             </h2>
             <p className="text-sm text-foreground/70 mt-2">
-              Click a button to change its keybinding. Press ESC to cancel editing or close.
+              {t(language, 'keybindings.instruction')}
             </p>
           </>
         )}
@@ -139,7 +142,7 @@ export function KeybindingsSettings({ onClose, embedded = false }: KeybindingsSe
                   className="flex flex-col items-center gap-2"
                 >
                   <div className="text-xs sm:text-sm text-foreground/60 font-bold">
-                    BUTTON {buttonId}
+                    {t(language, 'keybindings.button')} {buttonId}
                   </div>
                   <button
                     onClick={() => handleStartEdit(buttonId)}
@@ -153,14 +156,14 @@ export function KeybindingsSettings({ onClose, embedded = false }: KeybindingsSe
                         : 'bg-card border-primary text-primary hover:bg-primary hover:text-primary-foreground',
                       'focus:outline-none focus:ring-2 focus:ring-primary'
                     )}
-                    aria-label={`Button ${buttonId} - ${
+                    aria-label={`${t(language, 'keybindings.button')} ${buttonId} - ${
                       editingButtonId === buttonId
-                        ? 'Press a key to bind'
-                        : `Currently bound to ${getKeyDisplayName(currentKeybindings[buttonId])}`
+                        ? t(language, 'keybindings.aria.edit')
+                        : t(language, 'keybindings.aria.current').replace('{key}', getKeyDisplayName(currentKeybindings[buttonId]))
                     }`}
                   >
                     {editingButtonId === buttonId ? (
-                      <span className="text-xs">PRESS KEY</span>
+                      <span className="text-xs">{t(language, 'keybindings.pressKey')}</span>
                     ) : (
                       getKeyDisplayName(currentKeybindings[buttonId])
                     )}
@@ -179,14 +182,14 @@ export function KeybindingsSettings({ onClose, embedded = false }: KeybindingsSe
           draggable={false}
           className="px-6 py-3 border-4 border-accent bg-accent/20 text-accent pixel-border font-bold hover:bg-accent hover:text-accent-foreground transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-accent"
         >
-          RESET TO DEFAULTS
+          {t(language, 'keybindings.reset')}
         </button>
         <button
           onClick={handleApplyNumpadPreset}
           draggable={false}
           className="px-6 py-3 border-4 border-primary/60 bg-card text-primary pixel-border font-bold hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary"
         >
-          NUMPAD PRESET
+          {t(language, 'keybindings.numpad')}
         </button>
         {!embedded && (
           <button
@@ -194,7 +197,7 @@ export function KeybindingsSettings({ onClose, embedded = false }: KeybindingsSe
             draggable={false}
             className="px-6 py-3 border-4 border-primary bg-primary text-primary-foreground pixel-border font-bold hover:bg-primary/80 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary"
           >
-            CLOSE
+            {t(language, 'keybindings.close')}
           </button>
         )}
       </div>
@@ -202,10 +205,10 @@ export function KeybindingsSettings({ onClose, embedded = false }: KeybindingsSe
       {!embedded && (
         <div className="mt-6 p-3 bg-card/50 border-2 border-border pixel-border">
           <p className="text-xs text-foreground/60">
-            <strong>Default Layout:</strong> Q W E (top row), A S D F (middle row), Y X C (bottom row)
+            <strong>{t(language, 'keybindings.defaultLayout')}</strong> Q W E (top row), A S D F (middle row), Y X C (bottom row)
           </p>
           <p className="text-xs text-foreground/60 mt-1">
-            You can customize these to match your keyboard layout or preference.
+            {t(language, 'keybindings.customize')}
           </p>
         </div>
       )}

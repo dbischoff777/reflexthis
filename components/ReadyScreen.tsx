@@ -1,6 +1,8 @@
 'use client';
 
 import { cn } from '@/lib/utils';
+import { useGameState } from '@/lib/GameContext';
+import { t } from '@/lib/i18n';
 
 interface ReadyScreenProps {
   onReady: () => void;
@@ -12,27 +14,28 @@ interface ReadyScreenProps {
  * - Always shows tutorial content (controls + how to play well)
  */
 export function ReadyScreen({ onReady, gameMode }: ReadyScreenProps) {
+  const { language } = useGameState();
   const handleStart = () => {
     onReady();
   };
 
   const getModeName = () => {
-    if (gameMode === 'reflex') return 'REFLEX';
-    if (gameMode === 'sequence') return 'SEQUENCE';
-    if (gameMode === 'survival') return 'SURVIVAL';
-    if (gameMode === 'nightmare') return 'NIGHTMARE';
-    if (gameMode === 'oddOneOut') return 'ODD ONE OUT';
+    if (gameMode === 'reflex') return t(language, 'mode.reflex.name').toUpperCase();
+    if (gameMode === 'sequence') return t(language, 'mode.sequence.name').toUpperCase();
+    if (gameMode === 'survival') return t(language, 'mode.survival.name').toUpperCase();
+    if (gameMode === 'nightmare') return t(language, 'mode.nightmare.name').toUpperCase();
+    if (gameMode === 'oddOneOut') return t(language, 'mode.odd.name').toUpperCase();
     return 'GAME';
   };
 
   const getModeDescription = () => {
     switch (gameMode) {
-      case 'reflex': return 'Hit glowing buttons fast!';
-      case 'sequence': return 'Watch, then repeat the pattern';
-      case 'survival': return 'One life - no mistakes!';
-      case 'nightmare': return 'Extreme speed challenge';
-      case 'oddOneOut': return 'Find and hit the one target that stands out.';
-      default: return 'Test your reflexes!';
+      case 'reflex': return t(language, 'ready.reflex.desc');
+      case 'sequence': return t(language, 'ready.sequence.desc');
+      case 'survival': return t(language, 'ready.survival.desc');
+      case 'nightmare': return t(language, 'ready.nightmare.desc');
+      case 'oddOneOut': return t(language, 'ready.odd.desc');
+      default: return t(language, 'ready.default.desc');
     }
   };
 
@@ -40,39 +43,39 @@ export function ReadyScreen({ onReady, gameMode }: ReadyScreenProps) {
     switch (gameMode) {
       case 'reflex':
         return [
-          { icon: '⚡', text: 'Hit cyan buttons fast', color: 'border-primary/50' },
-          { icon: '⭐', text: 'Gold = bonus (heals + score)', color: 'border-yellow-500/50' },
-          { icon: '🔥', text: '5 fast hits = score boost', color: 'border-secondary/50' },
+          { icon: '⚡', text: t(language, 'ready.tip.reflex.1'), color: 'border-primary/50' },
+          { icon: '⭐', text: t(language, 'ready.tip.reflex.2'), color: 'border-yellow-500/50' },
+          { icon: '🔥', text: t(language, 'ready.tip.reflex.3'), color: 'border-secondary/50' },
         ];
       case 'sequence':
         return [
-          { icon: '👁️', text: 'Watch the pattern carefully', color: 'border-primary/50' },
-          { icon: '🧠', text: 'Repeat in exact order', color: 'border-chart-3/50' },
-          { icon: '⏱️', text: 'No time limit on input', color: 'border-secondary/50' },
+          { icon: '👁️', text: t(language, 'ready.tip.sequence.1'), color: 'border-primary/50' },
+          { icon: '🧠', text: t(language, 'ready.tip.sequence.2'), color: 'border-chart-3/50' },
+          { icon: '⏱️', text: t(language, 'ready.tip.sequence.3'), color: 'border-secondary/50' },
         ];
       case 'survival':
         return [
-          { icon: '💀', text: 'One life only', color: 'border-destructive/50' },
-          { icon: '⚡', text: 'Speed increases over time', color: 'border-primary/50' },
-          { icon: '⭐', text: 'Gold bonus = extra score', color: 'border-yellow-500/50' },
+          { icon: '💀', text: t(language, 'ready.tip.survival.1'), color: 'border-destructive/50' },
+          { icon: '⚡', text: t(language, 'ready.tip.survival.2'), color: 'border-primary/50' },
+          { icon: '⭐', text: t(language, 'ready.tip.survival.3'), color: 'border-yellow-500/50' },
         ];
       case 'nightmare':
         return [
-          { icon: '🔥', text: 'Extreme speed & difficulty', color: 'border-destructive/50' },
-          { icon: '⚡', text: 'Up to 6 buttons at once', color: 'border-primary/50' },
-          { icon: '⏱️', text: '150ms minimum reaction', color: 'border-secondary/50' },
+          { icon: '🔥', text: t(language, 'ready.tip.nightmare.1'), color: 'border-destructive/50' },
+          { icon: '⚡', text: t(language, 'ready.tip.nightmare.2'), color: 'border-primary/50' },
+          { icon: '⏱️', text: t(language, 'ready.tip.nightmare.3'), color: 'border-secondary/50' },
         ];
       case 'oddOneOut':
         return [
-          { icon: '🎯', text: 'Find the magenta target', color: 'border-secondary/50' },
-          { icon: '❌', text: 'Cyan buttons are decoys', color: 'border-primary/50' },
-          { icon: '⚡', text: 'Hit fast before timeout', color: 'border-chart-3/50' },
+          { icon: '🎯', text: t(language, 'ready.tip.odd.1'), color: 'border-secondary/50' },
+          { icon: '❌', text: t(language, 'ready.tip.odd.2'), color: 'border-primary/50' },
+          { icon: '⚡', text: t(language, 'ready.tip.odd.3'), color: 'border-chart-3/50' },
         ];
       default:
         return [
-          { icon: '⚡', text: 'Be fast', color: 'border-primary/50' },
-          { icon: '✓', text: 'Stay accurate', color: 'border-chart-3/50' },
-          { icon: '🔥', text: 'Build combos', color: 'border-secondary/50' },
+          { icon: '⚡', text: t(language, 'ready.tip.default.1'), color: 'border-primary/50' },
+          { icon: '✓', text: t(language, 'ready.tip.default.2'), color: 'border-chart-3/50' },
+          { icon: '🔥', text: t(language, 'ready.tip.default.3'), color: 'border-secondary/50' },
         ];
     }
   };
@@ -129,7 +132,7 @@ export function ReadyScreen({ onReady, gameMode }: ReadyScreenProps) {
             </div>
           </div>
           <p className="mt-3 text-sm text-muted-foreground">
-            Customize in Settings
+            {t(language, 'ready.customize')}
           </p>
         </div>
       </div>
@@ -157,7 +160,7 @@ export function ReadyScreen({ onReady, gameMode }: ReadyScreenProps) {
                 'animate-pulse'
               )}
             >
-              START GAME
+              {t(language, 'ready.start')}
             </button>
           </div>
         </div>

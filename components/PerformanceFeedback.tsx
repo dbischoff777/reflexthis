@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { cn } from '@/lib/utils';
+import { t, type Language } from '@/lib/i18n';
+import { useGameState } from '@/lib/GameContext';
 
 export type FeedbackType = 
   | 'reaction-fast'
@@ -37,80 +39,86 @@ interface PerformanceFeedbackProps {
 /**
  * PerformanceFeedback component - Shows popup feedback messages based on player performance
  */
-// Message pools for variety
-const REACTION_VERY_FAST_MESSAGES = [
-  'LIGHTNING FAST!',
-  'INCREDIBLE!',
-  'BLAZING SPEED!',
-  'UNSTOPPABLE!',
-  'LEGENDARY!',
-];
+// Message pools for variety - functions that return translated messages
+function getReactionVeryFastMessages(language: Language): string[] {
+  return [
+    t(language, 'feedback.lightning'),
+    t(language, 'feedback.incredible'),
+    t(language, 'feedback.blazing'),
+    t(language, 'feedback.unstoppable'),
+    t(language, 'feedback.legendary'),
+  ];
+}
 
-const REACTION_FAST_MESSAGES = [
-  'GREAT SPEED!',
-  'NICE!',
-  'WELL DONE!',
-  'EXCELLENT!',
-  'AWESOME!',
-  'FAST REFLEX!',
-];
+function getReactionFastMessages(language: Language): string[] {
+  return [
+    t(language, 'feedback.greatSpeed'),
+    t(language, 'feedback.nice'),
+    t(language, 'feedback.wellDone'),
+    t(language, 'feedback.excellent'),
+    t(language, 'feedback.awesome'),
+    t(language, 'feedback.fastReflex'),
+  ];
+}
 
-const REACTION_SLOW_MESSAGES = [
-  'KEEP GOING!',
-  'YOU GOT THIS!',
-  'STAY FOCUSED!',
-  'DON\'T GIVE UP!',
-  'KEEP TRYING!',
-  'ALMOST THERE!',
-];
+function getReactionSlowMessages(language: Language): string[] {
+  return [
+    t(language, 'feedback.keepGoing'),
+    t(language, 'feedback.youGotThis'),
+    t(language, 'feedback.stayFocused'),
+    t(language, 'feedback.dontGiveUp'),
+    t(language, 'feedback.keepTrying'),
+    t(language, 'feedback.almostThere'),
+  ];
+}
 
-const COMBO_5_MESSAGES = [
-  '5X COMBO!',
-  'COMBO START!',
-  'ON A ROLL!',
-];
+function getCombo5Messages(language: Language): string[] {
+  return [
+    t(language, 'feedback.combo5'),
+    t(language, 'feedback.comboStart'),
+    t(language, 'feedback.onRoll'),
+  ];
+}
 
-const COMBO_10_MESSAGES = [
-  '10X COMBO!',
-  'DOUBLE DIGITS!',
-  'HEATING UP!',
-];
+function getCombo10Messages(language: Language): string[] {
+  return [
+    t(language, 'feedback.combo10'),
+    t(language, 'feedback.doubleDigits'),
+    t(language, 'feedback.heatingUp'),
+  ];
+}
 
-const COMBO_20_MESSAGES = [
-  '20X COMBO!',
-  'ON FIRE!',
-  'UNSTOPPABLE!',
-];
+function getCombo20Messages(language: Language): string[] {
+  return [
+    t(language, 'feedback.combo20'),
+    t(language, 'feedback.onFire'),
+    t(language, 'feedback.unstoppable'),
+  ];
+}
 
-const COMBO_30_MESSAGES = [
-  '30X COMBO!',
-  'INCREDIBLE!',
-  'LEGENDARY!',
-];
+function getCombo30Messages(language: Language): string[] {
+  return [
+    t(language, 'feedback.combo30'),
+    t(language, 'feedback.incredible'),
+    t(language, 'feedback.legendary'),
+  ];
+}
 
-const COMBO_50_MESSAGES = [
-  '50X COMBO!',
-  'MASTER LEVEL!',
-  'PERFECTION!',
-];
+function getCombo50Messages(language: Language): string[] {
+  return [
+    t(language, 'feedback.combo50'),
+    t(language, 'feedback.masterLevel'),
+    t(language, 'feedback.perfection'),
+  ];
+}
 
-const COMBO_HIGH_MESSAGES = [
-  'AMAZING COMBO!',
-  'INCREDIBLE STREAK!',
-  'LEGENDARY RUN!',
-];
-
-const NEW_BEST_MESSAGES = [
-  'NEW RECORD!',
-  'PERSONAL BEST!',
-  'NEW HIGH SCORE!',
-];
-
-const PERFECT_MESSAGES = [
-  'PERFECT!',
-  'FLAWLESS!',
-  'BULLSEYE!',
-];
+function getComboHighMessages(language: Language): string[] {
+  return [
+    t(language, 'feedback.amazingCombo'),
+    t(language, 'feedback.incredibleStreak'),
+    t(language, 'feedback.legendaryRun'),
+  ];
+}
 
 function getRandomMessage(messages: string[]): string {
   return messages[Math.floor(Math.random() * messages.length)];
@@ -124,6 +132,7 @@ export function PerformanceFeedback({
   previousScore,
   isNewBestReaction,
 }: PerformanceFeedbackProps) {
+  const { language } = useGameState();
   const [currentMessage, setCurrentMessage] = useState<FeedbackMessage | null>(null);
   const messageIdCounter = useRef(0);
   const lastProcessedComboRef = useRef(previousCombo);
@@ -149,7 +158,7 @@ export function PerformanceFeedback({
           newMessage = {
             id: `msg-${messageIdCounter.current++}`,
             type: 'reaction-very-fast',
-            message: getRandomMessage(REACTION_VERY_FAST_MESSAGES),
+            message: getRandomMessage(getReactionVeryFastMessages(language)),
             color: '#00ff00',
             timestamp: Date.now(),
           };
@@ -158,7 +167,7 @@ export function PerformanceFeedback({
           newMessage = {
             id: `msg-${messageIdCounter.current++}`,
             type: 'reaction-fast',
-            message: getRandomMessage(REACTION_FAST_MESSAGES),
+            message: getRandomMessage(getReactionFastMessages(language)),
             color: '#00ff9f',
             timestamp: Date.now(),
           };
@@ -176,7 +185,7 @@ export function PerformanceFeedback({
           newMessage = {
             id: `msg-${messageIdCounter.current++}`,
             type: 'reaction-slow',
-            message: getRandomMessage(REACTION_SLOW_MESSAGES),
+            message: getRandomMessage(getReactionSlowMessages(language)),
             color: '#ffff66',
             timestamp: Date.now(),
           };
@@ -194,7 +203,7 @@ export function PerformanceFeedback({
         comboMessage = {
           id: `msg-${messageIdCounter.current++}`,
           type: 'combo-5',
-          message: getRandomMessage(COMBO_5_MESSAGES),
+          message: getRandomMessage(getCombo5Messages(language)),
           color: '#00f0ff',
           timestamp: Date.now(),
         };
@@ -203,7 +212,7 @@ export function PerformanceFeedback({
         comboMessage = {
           id: `msg-${messageIdCounter.current++}`,
           type: 'combo-10',
-          message: getRandomMessage(COMBO_10_MESSAGES),
+          message: getRandomMessage(getCombo10Messages(language)),
           color: '#00ffff',
           timestamp: Date.now(),
         };
@@ -212,7 +221,7 @@ export function PerformanceFeedback({
         comboMessage = {
           id: `msg-${messageIdCounter.current++}`,
           type: 'combo-20',
-          message: getRandomMessage(COMBO_20_MESSAGES),
+          message: getRandomMessage(getCombo20Messages(language)),
           color: '#ff00ff',
           timestamp: Date.now(),
         };
@@ -221,7 +230,7 @@ export function PerformanceFeedback({
         comboMessage = {
           id: `msg-${messageIdCounter.current++}`,
           type: 'combo-30',
-          message: getRandomMessage(COMBO_30_MESSAGES),
+          message: getRandomMessage(getCombo30Messages(language)),
           color: '#ff00ff',
           timestamp: Date.now(),
         };
@@ -230,7 +239,7 @@ export function PerformanceFeedback({
         comboMessage = {
           id: `msg-${messageIdCounter.current++}`,
           type: 'combo-50',
-          message: getRandomMessage(COMBO_50_MESSAGES),
+          message: getRandomMessage(getCombo50Messages(language)),
           color: '#ff00ff',
           timestamp: Date.now(),
         };
@@ -239,7 +248,7 @@ export function PerformanceFeedback({
         comboMessage = {
           id: `msg-${messageIdCounter.current++}`,
           type: 'combo-10',
-          message: getRandomMessage(COMBO_HIGH_MESSAGES),
+          message: getRandomMessage(getComboHighMessages(language)),
           color: '#ff00ff',
           timestamp: Date.now(),
         };

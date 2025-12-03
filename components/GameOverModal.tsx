@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { t } from '@/lib/i18n';
+import { useGameState } from '@/lib/GameContext';
 
 import { ReactionTimeStats } from '@/lib/GameContext';
 import {
@@ -68,6 +70,7 @@ export function GameOverModal({
   reactionTimeStats,
   onRestart,
 }: GameOverModalProps) {
+  const { language } = useGameState();
   const [displayedScore, setDisplayedScore] = useState(0);
   const [isCounting, setIsCounting] = useState(true);
   const coachingTip = getCoachingTip(score, bestCombo, reactionTimeStats);
@@ -154,10 +157,10 @@ export function GameOverModal({
               isNewHighScore && 'animate-glitch'
             )}
           >
-            Game Over
+            {t(language, 'gameover.title')}
           </h2>
           <p className="text-muted-foreground text-sm sm:text-base">
-            Your reflexes have been tested!
+            {t(language, 'gameover.subtitle')}
           </p>
         </div>
 
@@ -165,7 +168,7 @@ export function GameOverModal({
         <div className="mb-6 grid gap-6 md:grid-cols-[minmax(0,1.1fr)_minmax(0,1.4fr)] items-start">
           {/* Score Display */}
           <div className="text-center py-6 border-y border-border md:border md:rounded-lg md:bg-card/80 md:px-4">
-            <p className="text-sm text-muted-foreground mb-2">Final Score</p>
+            <p className="text-sm text-muted-foreground mb-2">{t(language, 'gameover.finalScore')}</p>
             <p
               className={cn(
                 'text-5xl sm:text-6xl font-bold text-primary text-glow mb-4 transition-all duration-75',
@@ -184,14 +187,14 @@ export function GameOverModal({
                 )}
               >
                 <p className="text-primary font-bold text-lg text-glow">
-                  🏆 New High Score! 🏆
+                  {t(language, 'gameover.newHighScore')}
                 </p>
               </div>
             )}
 
             {!isNewHighScore && highScore > 0 && (
               <div className="mt-4">
-                <p className="text-xs text-muted-foreground">High Score</p>
+                <p className="text-xs text-muted-foreground">{t(language, 'gameover.highScore')}</p>
                 <p className="text-xl font-semibold text-primary">{highScore}</p>
               </div>
             )}
@@ -199,11 +202,11 @@ export function GameOverModal({
             {metaSummary.rankName && (
               <div className="mt-4 text-xs text-foreground/80">
                 <p className="font-semibold text-primary">
-                  Current Rank: {metaSummary.rankName}
+                  {t(language, 'gameover.currentRank')} {metaSummary.rankName}
                 </p>
                 {metaSummary.nextRank && (
                   <p className="mt-0.5 text-[11px] text-foreground/70">
-                    Keep pushing to reach <span className="font-semibold">{metaSummary.nextRank}</span>.
+                    {t(language, 'gameover.nextRank')} <span className="font-semibold">{metaSummary.nextRank}</span>.
                   </p>
                 )}
               </div>
@@ -214,17 +217,17 @@ export function GameOverModal({
           <div className="space-y-4">
             {(bestCombo > 0 || reactionTimeStats.allTimes.length > 0) && (
               <div className="p-4 bg-card border-4 border-border pixel-border">
-                <h3 className="text-sm font-semibold text-primary mb-3">Game Statistics</h3>
+                <h3 className="text-sm font-semibold text-primary mb-3">{t(language, 'gameover.stats.title')}</h3>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   {bestCombo > 0 && (
                     <div>
-                      <p className="text-muted-foreground mb-1">Best Combo</p>
+                      <p className="text-muted-foreground mb-1">{t(language, 'gameover.stats.bestCombo')}</p>
                       <p className="text-lg font-bold text-accent">{bestCombo}x</p>
                     </div>
                   )}
                   {reactionTimeStats.average !== null && (
                     <div>
-                      <p className="text-muted-foreground mb-1">Avg Reaction</p>
+                      <p className="text-muted-foreground mb-1">{t(language, 'gameover.stats.avgReaction')}</p>
                       <p className="text-lg font-bold text-primary">
                         {Math.round(reactionTimeStats.average)}ms
                       </p>
@@ -232,7 +235,7 @@ export function GameOverModal({
                   )}
                   {reactionTimeStats.fastest !== null && (
                     <div>
-                      <p className="text-muted-foreground mb-1">Fastest</p>
+                      <p className="text-muted-foreground mb-1">{t(language, 'gameover.stats.fastest')}</p>
                       <p className="text-lg font-bold text-green-400">
                         {Math.round(reactionTimeStats.fastest)}ms
                       </p>
@@ -240,7 +243,7 @@ export function GameOverModal({
                   )}
                   {reactionTimeStats.allTimes.length > 0 && (
                     <div>
-                      <p className="text-muted-foreground mb-1">Total Presses</p>
+                      <p className="text-muted-foreground mb-1">{t(language, 'gameover.stats.totalPresses')}</p>
                       <p className="text-lg font-bold text-primary">
                         {reactionTimeStats.allTimes.length}
                       </p>
@@ -253,7 +256,7 @@ export function GameOverModal({
             {coachingTip && (
               <div className="p-4 bg-card/80 border-2 border-primary pixel-border">
                 <h3 className="text-xs font-semibold text-primary mb-2 uppercase tracking-wide">
-                  Coach&apos;s Tip
+                  {t(language, 'gameover.coach.title')}
                 </h3>
                 <p className="text-xs text-foreground/80">{coachingTip}</p>
               </div>
@@ -262,15 +265,27 @@ export function GameOverModal({
             {newAchievements.length > 0 && (
               <div className="p-4 bg-chart-3/10 border-2 border-chart-3 pixel-border">
                 <h3 className="text-xs font-semibold text-chart-3 mb-2 uppercase tracking-wide">
-                  New Achievements
+                  {t(language, 'gameover.achievements.title')}
                 </h3>
                 <ul className="space-y-1 text-xs text-foreground/90">
                   {newAchievements.map((a) => (
                     <li key={a.id}>
                       <span className="font-semibold text-chart-3">
-                        {a.title}
+                        {(() => {
+                          const key = `achievement.${a.id}.title`;
+                          const translated = t(language, key);
+                          return translated === key ? a.title : translated;
+                        })()}
                       </span>
-                      <span className="text-foreground/70"> – {a.description}</span>
+                      <span className="text-foreground/70">
+                        {' '}
+                        –{' '}
+                        {(() => {
+                          const key = `achievement.${a.id}.description`;
+                          const translated = t(language, key);
+                          return translated === key ? a.description : translated;
+                        })()}
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -292,7 +307,7 @@ export function GameOverModal({
               'focus:outline-none focus:ring-2 focus:ring-primary pixel-border'
             )}
           >
-            Play Again
+            {t(language, 'gameover.playAgain')}
           </button>
 
           <Link
@@ -305,7 +320,7 @@ export function GameOverModal({
               'focus:outline-none focus:ring-2 focus:ring-primary pixel-border'
             )}
           >
-            Back to Home
+            {t(language, 'gameover.backHome')}
           </Link>
         </div>
       </div>

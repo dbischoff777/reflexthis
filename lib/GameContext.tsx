@@ -6,6 +6,7 @@ import { getComboMultiplier } from '@/lib/gameUtils';
 import { DifficultyPreset, DIFFICULTY_PRESETS } from '@/lib/difficulty';
 import { saveGameSession, calculateSessionStatistics, SessionStatistics, getGameSessions } from '@/lib/sessionStats';
 import { GameMode } from '@/lib/gameModes';
+import type { Language } from '@/lib/i18n';
 import { checkAndUnlockAchievements } from '@/lib/achievements';
 
 export interface ReactionTimeStats {
@@ -38,6 +39,7 @@ export interface GameState {
   reducedEffects: boolean;
   highContrastMode: boolean;
   newlyUnlockedAchievements: string[];
+  language: Language;
   toggleSound: () => void;
   toggleMusic: () => void;
   setSoundVolume: (volume: number) => void;
@@ -46,6 +48,7 @@ export interface GameState {
   setScreenFlashEnabled: (enabled: boolean) => void;
   setReducedEffects: (enabled: boolean) => void;
   setHighContrastMode: (enabled: boolean) => void;
+  setLanguage: (language: Language) => void;
   pauseGame: () => void;
   resumeGame: () => void;
   setDifficulty: (difficulty: DifficultyPreset) => void;
@@ -74,6 +77,7 @@ const STORAGE_KEYS = {
   SCREEN_FLASH_ENABLED: 'reflexthis_screenFlashEnabled',
   REDUCED_EFFECTS: 'reflexthis_reducedEffects',
   HIGH_CONTRAST_MODE: 'reflexthis_highContrastMode',
+  LANGUAGE: 'reflexthis_language',
 } as const;
 
 export function GameProvider({ children }: { children: ReactNode }) {
@@ -100,6 +104,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [reducedEffects, setReducedEffectsState] = useState(false);
   const [highContrastMode, setHighContrastModeState] = useState(false);
   const [newlyUnlockedAchievements, setNewlyUnlockedAchievements] = useState<string[]>([]);
+  const [language, setLanguageState] = useState<Language>('en');
 
   const gameStartTimeRef = useRef<number | null>(null);
   const achievementClearTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -202,6 +207,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
         const savedHighContrast = localStorage.getItem(STORAGE_KEYS.HIGH_CONTRAST_MODE);
         if (savedHighContrast !== null) {
           setHighContrastModeState(savedHighContrast === 'true');
+        }
+
+        const savedLanguage = localStorage.getItem(STORAGE_KEYS.LANGUAGE) as Language | null;
+        if (savedLanguage && (savedLanguage === 'en' || savedLanguage === 'de')) {
+          setLanguageState(savedLanguage);
         }
 
         // Preload sounds for better performance
@@ -366,6 +376,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setHighContrastModeState(enabled);
     if (typeof window !== 'undefined') {
       localStorage.setItem(STORAGE_KEYS.HIGH_CONTRAST_MODE, String(enabled));
+    }
+  }, []);
+
+  const setLanguage = useCallback((newLanguage: Language) => {
+    setLanguageState(newLanguage);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEYS.LANGUAGE, newLanguage);
     }
   }, []);
 
@@ -617,6 +634,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         screenFlashEnabled,
         reducedEffects,
         highContrastMode,
+        language,
         toggleSound,
         toggleMusic,
         setSoundVolume,
@@ -625,6 +643,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         setScreenFlashEnabled,
         setReducedEffects,
         setHighContrastMode,
+        setLanguage,
         pauseGame,
         resumeGame,
         setDifficulty: handleSetDifficulty,

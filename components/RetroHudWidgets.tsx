@@ -4,6 +4,8 @@ import type { CSSProperties } from 'react';
 import type { DifficultyPreset } from '@/lib/difficulty';
 import type { GameMode } from '@/lib/gameModes';
 import type { ReactionTimeStats } from '@/lib/GameContext';
+import { useGameState } from '@/lib/GameContext';
+import { t } from '@/lib/i18n';
 
 type RetroHudWidgetsProps = {
   score: number;
@@ -54,6 +56,7 @@ export function RetroHudWidgets({
   onQuit,
   onOpenSettings,
 }: RetroHudWidgetsProps) {
+  const { language } = useGameState();
   const comboIntensity = Math.min(combo / 15, 1);
   const livesRatio = maxLives > 0 ? Math.max(0, Math.min(1, lives / maxLives)) : 1;
   const accent = difficultyAccentMap[difficulty] ?? '#ffff00';
@@ -71,15 +74,15 @@ export function RetroHudWidgets({
     <div className="retro-hud flex flex-nowrap gap-1.5 sm:gap-2 md:gap-3 overflow-x-auto scrollbar-hide mx-auto">
       <div className="flex flex-nowrap gap-1.5 sm:gap-2 md:gap-3 flex-shrink-0">
         <div className="hud-module min-w-[8rem] sm:min-w-[9rem] md:min-w-[11rem] flex-shrink-0">
-          <span className="hud-label">PXI SCORE</span>
+          <span className="hud-label">{t(language, 'hud.score.title')}</span>
           <div className="hud-readout">
             <span className="hud-readout-primary">{formattedScore}</span>
-            <span className="hud-readout-sub">HI {formattedHighScore}</span>
+            <span className="hud-readout-sub">{t(language, 'hud.highScore')} {formattedHighScore}</span>
           </div>
         </div>
 
         <div className="hud-module min-w-[7rem] sm:min-w-[8rem] flex-shrink-0">
-          <span className="hud-label">MODE STATUS</span>
+          <span className="hud-label">{t(language, 'hud.mode.title')}</span>
           <div className="hud-led" style={{ color: ledColor } as CSSProperties}>
             <span
               style={
@@ -89,16 +92,22 @@ export function RetroHudWidgets({
                 } as CSSProperties
               }
             />
-            {modeLabelMap[gameMode]}
+            {gameMode === 'reflex' && t(language, 'mode.reflex.name')}
+            {gameMode === 'sequence' && t(language, 'mode.sequence.name')}
+            {gameMode === 'survival' && t(language, 'mode.survival.name')}
+            {gameMode === 'nightmare' && t(language, 'mode.nightmare.name')}
+            {gameMode === 'oddOneOut' && t(language, 'mode.odd.name')}
           </div>
           <div className="hud-difficulty">
-            <span className="hud-label text-[0.55rem]">DIFF</span>
+            <span className="hud-label text-[0.55rem]">
+              {t(language, 'hud.diff.label')}
+            </span>
             <span className="hud-difficulty-chip">{difficulty.toUpperCase()}</span>
           </div>
         </div>
 
         <div className="hud-module min-w-[7rem] sm:min-w-[8rem] flex-shrink-0">
-          <span className="hud-label">COMBO DRIVE</span>
+          <span className="hud-label">{t(language, 'hud.combo.title')}</span>
           <div
             className="hud-gear"
             style={
@@ -109,13 +118,13 @@ export function RetroHudWidgets({
             }
           />
           <span className="text-xs uppercase tracking-wide">
-            Tier {tierValue} / Combo {combo}
+            {t(language, 'hud.combo.tier')} {tierValue} / {t(language, 'hud.combo.combo')} {combo}
           </span>
         </div>
       </div>
 
       <div className="hud-module min-w-[8rem] sm:min-w-[9rem] md:min-w-[12rem] flex-shrink-0">
-        <span className="hud-label">VITALS</span>
+        <span className="hud-label">{t(language, 'hud.vitals.title')}</span>
         <div className="hud-meter">
           <div
             className="hud-meter-fill"
@@ -128,31 +137,37 @@ export function RetroHudWidgets({
           />
         </div>
         <div className="flex justify-between text-[0.65rem] uppercase tracking-wide mt-1">
-          <span>{lives} / {maxLives || 1} lives</span>
-          <span>HP {(livesRatio * 100).toFixed(0)}%</span>
+          <span>{lives} / {maxLives || 1} {t(language, 'hud.lives')}</span>
+          <span>{t(language, 'hud.hp')} {(livesRatio * 100).toFixed(0)}%</span>
         </div>
       </div>
 
       <div className="hud-module min-w-[9rem] sm:min-w-[11rem] md:min-w-[14rem] flex-shrink-0">
-        <span className="hud-label">REACTION SCAN</span>
+        <span className="hud-label">{t(language, 'hud.reaction.title')}</span>
         <div className="hud-reaction-grid">
           <div>
-            <span className="hud-reaction-label">NOW</span>
+            <span className="hud-reaction-label">
+              {t(language, 'hud.reaction.now')}
+            </span>
             <span className="hud-reaction-value">{getReactionLabel(reactionStats.current)}</span>
           </div>
           <div>
-            <span className="hud-reaction-label">AVG</span>
+            <span className="hud-reaction-label">
+              {t(language, 'hud.reaction.avg')}
+            </span>
             <span className="hud-reaction-value">{getReactionLabel(reactionStats.average)}</span>
           </div>
           <div>
-            <span className="hud-reaction-label">FAST</span>
+            <span className="hud-reaction-label">
+              {t(language, 'hud.reaction.fast')}
+            </span>
             <span className="hud-reaction-value">{getReactionLabel(reactionStats.fastest)}</span>
           </div>
         </div>
       </div>
 
       <div className="hud-module min-w-[8rem] sm:min-w-[10rem] md:min-w-[13rem] flex-shrink-0">
-        <span className="hud-label">CONTROL BUS</span>
+        <span className="hud-label">{t(language, 'hud.controls.title')}</span>
         <div className="hud-control-grid">
           <button
             className="hud-control-button"
@@ -196,7 +211,7 @@ export function RetroHudWidgets({
             aria-label="Quit game"
           >
             <span className="hud-control-indicator" data-active="true" />
-            <span>EXIT</span>
+            <span>{t(language, 'hud.controls.exit')}</span>
           </button>
         </div>
       </div>

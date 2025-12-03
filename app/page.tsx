@@ -15,13 +15,7 @@ import { DifficultyPreset } from '@/lib/difficulty';
 import { GameMode } from '@/lib/gameModes';
 import { GameProvider, useGameState } from '@/lib/GameContext';
 import { stopBackgroundMusic, setGamePageActive, playMenuMusic, stopMenuMusic, preloadAudioAssets } from '@/lib/soundUtils';
-
-const LOADING_TIPS = [
-  'Tip: Turn on Reduced Effects if motion feels too intense.',
-  'Tip: Keep combos alive to massively boost your score.',
-  'Tip: In Reflex mode, don’t spam – hit only highlighted buttons.',
-  'Tip: Adjust keybindings in Settings to match your keyboard layout.',
-];
+import { t } from '@/lib/i18n';
 
 const WARMUP_BUTTONS = Array.from({ length: 10 }, (_, i) => ({
   index: i + 1,
@@ -31,6 +25,7 @@ const WARMUP_BUTTONS = Array.from({ length: 10 }, (_, i) => ({
 function LandingPageContent() {
   const router = useRouter();
   const {
+    language,
     difficulty,
     setDifficulty,
     gameMode,
@@ -41,6 +36,13 @@ function LandingPageContent() {
     reducedEffects,
     highContrastMode,
   } = useGameState();
+
+  const LOADING_TIPS = [
+    t(language, 'landing.tip.effects'),
+    t(language, 'landing.tip.combo'),
+    t(language, 'landing.tip.reflex'),
+    t(language, 'landing.tip.keybindings'),
+  ];
   const [showMode, setShowMode] = useState(false);
   const [showDifficulty, setShowDifficulty] = useState(false);
   const [showStats, setShowStats] = useState(false);
@@ -218,10 +220,10 @@ function LandingPageContent() {
   if (bootstrapping) {
     const statusLabel =
       bootProgress < 40
-        ? 'Initializing engine…'
+        ? t(language, 'loading.engine')
         : bootProgress < 75
-        ? 'Loading 3D assets & audio…'
-        : 'Finishing up…';
+        ? t(language, 'loading.assets')
+        : t(language, 'loading.finishing');
 
     // Reduced effects / high-contrast: no video, simple static splash
     if (reducedEffects || highContrastMode) {
@@ -307,10 +309,10 @@ function LandingPageContent() {
         {/* Hero Section */}
         <div className="mb-6 sm:mb-8 space-y-4 sm:space-y-6">
           <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-primary text-glow mb-2 sm:mb-4 tracking-tight px-4 sm:px-6 py-2 sm:py-3 inline-block border-3 sm:border-4 border-primary rounded-lg">
-            REFLEX THIS
+            {t(language, 'landing.title')}
           </h1>
           <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-            Test your reflexes!
+            {t(language, 'landing.subtitle')}
           </p>
         </div>
         
@@ -384,7 +386,7 @@ function LandingPageContent() {
               className="group relative inline-flex items-center justify-center min-h-[56px] px-8 py-4 text-lg sm:text-xl font-bold border-4 border-primary bg-primary text-primary-foreground transition-all duration-100 hover:border-secondary hover:bg-secondary active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary pixel-border"
             >
               <span className="relative z-10">
-                {showDifficulty ? 'Start Game' : showMode ? 'Select Difficulty' : 'Start Game'}
+                {showDifficulty ? t(language, 'landing.startGame') : showMode ? t(language, 'landing.selectDifficulty') : t(language, 'landing.startGame')}
               </span>
             </Link>
           )}
@@ -399,7 +401,7 @@ function LandingPageContent() {
             draggable={false}
             className="inline-flex items-center justify-center min-h-[56px] px-6 py-3 text-base sm:text-lg font-semibold border-4 border-border bg-card text-foreground hover:border-primary hover:bg-primary/20 transition-all duration-100 focus:outline-none focus:ring-2 focus:ring-primary pixel-border"
           >
-            {showStats ? 'Hide Stats' : 'View Statistics'}
+            {showStats ? t(language, 'landing.hideStats') : t(language, 'landing.viewStats')}
           </button>
 
           <button
@@ -412,7 +414,7 @@ function LandingPageContent() {
             draggable={false}
             className="inline-flex items-center justify-center min-h-[56px] px-6 py-3 text-base sm:text-lg font-semibold border-4 border-border bg-card text-foreground hover:border-primary hover:bg-primary/20 transition-all duration-100 focus:outline-none focus:ring-2 focus:ring-primary pixel-border"
           >
-            Settings
+            {t(language, 'landing.settings')}
           </button>
 
           <button
@@ -420,7 +422,7 @@ function LandingPageContent() {
             draggable={false}
             className="inline-flex items-center justify-center min-h-[56px] px-6 py-3 text-base sm:text-lg font-semibold border-4 border-secondary bg-card text-foreground hover:border-secondary hover:bg-secondary/20 transition-all duration-100 focus:outline-none focus:ring-2 focus:ring-secondary pixel-border"
           >
-            Exit Game
+            {t(language, 'landing.exitGame')}
           </button>
         </div>
       </main>
@@ -440,23 +442,23 @@ function LandingPageContent() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
           <div className="bg-card border-4 border-secondary pixel-border p-4 sm:p-6 md:p-8 max-w-sm w-full mx-4 text-center">
             <h2 className="text-2xl sm:text-3xl font-bold text-secondary mb-4 pixel-border px-4 py-2 inline-block break-words">
-              EXIT GAME?
+              {t(language, 'landing.exitConfirm.title')}
             </h2>
             <p className="text-sm text-foreground/80 mb-6 break-words">
-              Are you sure you want to exit the game?
+              {t(language, 'landing.exitConfirm.message')}
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <button
                 onClick={() => setShowExitConfirm(false)}
                 className="px-6 py-3 border-4 border-border bg-card text-foreground pixel-border font-bold hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary"
               >
-                CANCEL
+                {t(language, 'landing.exitConfirm.cancel')}
               </button>
               <button
                 onClick={handleExit}
                 className="px-6 py-3 border-4 border-secondary bg-secondary text-secondary-foreground pixel-border font-bold hover:bg-secondary/80 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-secondary"
               >
-                EXIT
+                {t(language, 'landing.exitConfirm.exit')}
               </button>
             </div>
           </div>

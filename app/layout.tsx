@@ -1,24 +1,40 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Rajdhani } from "next/font/google";
+import localFont from "next/font/local";
+import { GeistSans } from "geist/font/sans";
+import { GeistMono } from "geist/font/mono";
 import "./globals.css";
 import { ErrorBoundaryWrapper } from "@/components/ErrorBoundaryWrapper";
 import { CRTOverlay } from "@/components/CRTOverlay";
 import { InteractionPrevention } from "@/components/InteractionPrevention";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+const geistSans = GeistSans;
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const geistMono = GeistMono;
 
-const rajdhani = Rajdhani({
+const rajdhani = localFont({
   variable: "--font-rajdhani",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  src: [
+    {
+      path: "../public/fonts/rajdhani/Rajdhani-Regular.ttf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/rajdhani/Rajdhani-Medium.ttf",
+      weight: "500",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/rajdhani/Rajdhani-SemiBold.ttf",
+      weight: "600",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/rajdhani/Rajdhani-Bold.ttf",
+      weight: "700",
+      style: "normal",
+    },
+  ],
 });
 
 export const metadata: Metadata = {

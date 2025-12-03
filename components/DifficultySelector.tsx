@@ -3,6 +3,8 @@
 import { useEffect } from 'react';
 import { DifficultyPreset, DIFFICULTY_PRESETS } from '@/lib/difficulty';
 import { cn } from '@/lib/utils';
+import { t } from '@/lib/i18n';
+import { useGameState } from '@/lib/GameContext';
 
 interface DifficultySelectorProps {
   selected: DifficultyPreset;
@@ -22,6 +24,7 @@ export function DifficultySelector({
   disabled = false,
   gameMode,
 }: DifficultySelectorProps) {
+  const { language } = useGameState();
   // For nightmare mode, only show nightmare difficulty
   const difficulties: DifficultyPreset[] = gameMode === 'nightmare' 
     ? ['nightmare'] 
@@ -42,15 +45,15 @@ export function DifficultySelector({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-lg font-semibold text-primary">Select Difficulty</h3>
+        <h3 className="text-lg font-semibold text-primary">{t(language, 'difficulty.select.title')}</h3>
         {onCancel && (
           <button
             onClick={onCancel}
             draggable={false}
             className="text-xs text-muted-foreground hover:text-foreground border-2 border-border bg-card px-2 py-1 pixel-border transition-all duration-100 hover:border-primary"
-            aria-label="Cancel (ESC)"
+            aria-label={t(language, 'difficulty.cancel')}
           >
-            ESC
+            {t(language, 'difficulty.esc')}
           </button>
         )}
       </div>
@@ -78,7 +81,13 @@ export function DifficultySelector({
                 <span className={cn(
                   'font-bold text-lg',
                   isSelected ? 'text-primary' : 'text-foreground'
-                )}>{config.name}</span>
+                )}>
+                  {preset === 'easy' && t(language, 'difficulty.name.easy')}
+                  {preset === 'medium' && t(language, 'difficulty.name.medium')}
+                  {preset === 'hard' && t(language, 'difficulty.name.hard')}
+                  {preset === 'custom' && t(language, 'difficulty.name.custom')}
+                  {preset === 'nightmare' && t(language, 'difficulty.name.nightmare')}
+                </span>
                 {isSelected && (
                   <span className="text-xl text-primary font-bold" aria-label="Selected">
                     ✓
@@ -89,9 +98,9 @@ export function DifficultySelector({
                 {config.description}
               </p>
               <div className="mt-2 text-sm text-muted-foreground">
-                <div>Base: {config.baseDuration}ms</div>
-                <div>Min: {config.minDuration}ms</div>
-                <div>Max Buttons: {config.maxButtons}</div>
+                <div>{t(language, 'difficulty.base')} {config.baseDuration}ms</div>
+                <div>{t(language, 'difficulty.min')} {config.minDuration}ms</div>
+                <div>{t(language, 'difficulty.maxButtons')} {config.maxButtons}</div>
               </div>
             </button>
           );

@@ -29,6 +29,7 @@ import SettingsModal from '@/components/SettingsModal';
 import { PerformanceFeedback } from '@/components/PerformanceFeedback';
 import { AchievementNotification } from '@/components/AchievementNotification';
 import { getKeybindings, getKeyDisplayName, DEFAULT_KEYBINDINGS } from '@/lib/keybindings';
+import { t } from '@/lib/i18n';
 
 export default function GamePage() {
   const router = useRouter();
@@ -62,6 +63,7 @@ export default function GamePage() {
     incrementScore,
     decrementLives,
     newlyUnlockedAchievements,
+    language,
   } = useGameState();
   
   const maxLives = gameMode === 'survival' ? 1 : 5;
@@ -1049,7 +1051,7 @@ export default function GamePage() {
       <OrientationHandler />
       {isLoading ? (
         <LoadingScreen
-          message="INITIALIZING"
+          message={t(language, 'loading.initializing')}
           onComplete={() => setIsLoading(false)}
         />
       ) : (
@@ -1131,11 +1133,11 @@ export default function GamePage() {
             <div className="bg-card border-4 border-primary pixel-border px-4 py-2">
               {isShowingSequence ? (
                 <div className="text-xs sm:text-sm font-bold text-primary">
-                  Watch the sequence...
+                  {t(language, 'ready.sequence.watch')}
                 </div>
               ) : isWaitingForInput ? (
                 <div className="text-xs sm:text-sm font-bold text-secondary">
-                  Repeat: {playerSequence.length}/{sequence.length}
+                  {t(language, 'ready.sequence.repeat')} {playerSequence.length}/{sequence.length}
                 </div>
               ) : null}
             </div>
@@ -1164,28 +1166,28 @@ export default function GamePage() {
           {showModeHelp && (
             <div className="mt-1 bg-card/95 border-2 border-primary pixel-border px-3 py-2 max-w-xs shadow-lg">
               {gameMode === 'reflex' && (
-                <p className="text-[12px] sm:text-sm text-foreground/80 break-words">
-                  Hit highlighted buttons quickly and avoid mistakes to keep your combo and score growing.
+                <p className="text-[12px] sm:text-sm text-foreground/80 wrap-break-word">
+                  {t(language, 'help.reflex')}
                 </p>
               )}
               {gameMode === 'sequence' && (
-                <p className="text-[12px] sm:text-sm text-foreground/80 break-words">
-                  Watch the pattern, then press the same buttons in order without errors.
+                <p className="text-[12px] sm:text-sm text-foreground/80 wrap-break-word">
+                  {t(language, 'help.sequence')}
                 </p>
               )}
               {gameMode === 'survival' && (
-                <p className="text-[12px] sm:text-sm text-foreground/80 break-words">
-                  One life only – every mistake ends the run, and difficulty rises fast.
+                <p className="text-[12px] sm:text-sm text-foreground/80 wrap-break-word">
+                  {t(language, 'help.survival')}
                 </p>
               )}
               {gameMode === 'nightmare' && (
-                <p className="text-[12px] sm:text-sm text-foreground/80 break-words">
-                  Extreme speed and difficulty – for elite players only. Up to 6 buttons, 150ms minimum reaction time.
+                <p className="text-[12px] sm:text-sm text-foreground/80 wrap-break-word">
+                  {t(language, 'help.nightmare')}
                 </p>
               )}
               {gameMode === 'oddOneOut' && (
-                <p className="text-[12px] sm:text-sm text-foreground/80 break-words">
-                  Several buttons light up, but only one is the true target. Hit the magenta-highlighted odd one out and avoid the decoys.
+                <p className="text-[12px] sm:text-sm text-foreground/80 wrap-break-word">
+                  {t(language, 'help.odd')}
                 </p>
               )}
             </div>
