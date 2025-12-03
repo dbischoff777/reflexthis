@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { useGameState } from '@/lib/GameContext';
 import { t } from '@/lib/i18n';
@@ -12,12 +13,13 @@ interface ReadyScreenProps {
 /**
  * ReadyScreen component
  * - Always shows tutorial content (controls + how to play well)
+ * - Auto-starts the game after 3 seconds
  */
 export function ReadyScreen({ onReady, gameMode }: ReadyScreenProps) {
   const { language } = useGameState();
-  const handleStart = () => {
-    onReady();
-  };
+  
+  // Game starts immediately when loading screen reaches 100%
+  // This component is shown briefly for visual feedback only
 
   const getModeName = () => {
     if (gameMode === 'reflex') return t(language, 'mode.reflex.name').toUpperCase();
@@ -145,24 +147,6 @@ export function ReadyScreen({ onReady, gameMode }: ReadyScreenProps) {
       <div className="relative w-full h-full flex items-center justify-center px-4 sm:px-8 py-4 sm:py-8 overflow-hidden">
         <div className="relative z-10 w-full max-w-3xl">
           {renderTutorialContent()}
-
-          <div className="mt-8 sm:mt-10 flex justify-center">
-            <button
-              onClick={handleStart}
-              draggable={false}
-              className={cn(
-                'px-12 py-4 sm:px-20 sm:py-5 text-2xl sm:text-3xl font-bold tracking-wide',
-                'border-4 border-primary bg-primary text-primary-foreground',
-                'hover:border-secondary hover:bg-secondary',
-                'transition-all duration-150 active:scale-95',
-                'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background',
-                'rounded-lg shadow-lg shadow-primary/30',
-                'animate-pulse'
-              )}
-            >
-              {t(language, 'ready.start')}
-            </button>
-          </div>
         </div>
 
         {/* Subtle animated border */}

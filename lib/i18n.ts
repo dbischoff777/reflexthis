@@ -169,6 +169,13 @@ const en: TranslationDict = {
   'landing.exitConfirm.message': 'Are you sure you want to exit the game?',
   'landing.exitConfirm.cancel': 'CANCEL',
   'landing.exitConfirm.exit': 'EXIT',
+  
+  // Pause Modal
+  'pause.title': 'GAME PAUSED',
+  'pause.message': 'Press ESC or CONTINUE to resume, or EXIT to return to the main menu.',
+  'pause.continue': 'CONTINUE',
+  'pause.exit': 'EXIT',
+  
   'landing.tip.effects': 'Tip: Turn on Reduced Effects if motion feels too intense.',
   'landing.tip.combo': 'Tip: Keep combos alive to massively boost your score.',
   'landing.tip.reflex': "Tip: In Reflex mode, don't spam – hit only highlighted buttons.",
@@ -434,6 +441,13 @@ const de: TranslationDict = {
   'landing.exitConfirm.message': 'Bist du sicher, dass du das Spiel beenden möchtest?',
   'landing.exitConfirm.cancel': 'ABBRECHEN',
   'landing.exitConfirm.exit': 'BEENDEN',
+  
+  // Pause Modal
+  'pause.title': 'SPIEL PAUSIERT',
+  'pause.message': 'Drücke ESC oder FORTSETZEN zum Fortsetzen, oder BEENDEN, um zum Hauptmenü zurückzukehren.',
+  'pause.continue': 'FORTSETZEN',
+  'pause.exit': 'BEENDEN',
+  
   'landing.tip.effects': 'Tipp: Aktiviere "Reduzierte Effekte", wenn die Bewegung zu intensiv ist.',
   'landing.tip.combo': 'Tipp: Halte Kombos am Laufen, um deine Punktzahl massiv zu steigern.',
   'landing.tip.reflex': 'Tipp: Im Reflex-Modus nicht spammen – nur hervorgehobene Buttons treffen.',

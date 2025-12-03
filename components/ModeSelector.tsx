@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { GameMode, GAME_MODES } from '@/lib/gameModes';
 import { cn } from '@/lib/utils';
 import { useGameState } from '@/lib/GameContext';
@@ -24,6 +24,59 @@ export function ModeSelector({
 }: ModeSelectorProps) {
   const { language } = useGameState();
   const modes: GameMode[] = ['reflex', 'sequence', 'survival', 'nightmare', 'oddOneOut'];
+  const [hoveredMode, setHoveredMode] = useState<GameMode | null>(null);
+
+  const getModeDescription = (mode: GameMode) => {
+    switch (mode) {
+      case 'reflex': return t(language, 'ready.reflex.desc');
+      case 'sequence': return t(language, 'ready.sequence.desc');
+      case 'survival': return t(language, 'ready.survival.desc');
+      case 'nightmare': return t(language, 'ready.nightmare.desc');
+      case 'oddOneOut': return t(language, 'ready.odd.desc');
+      default: return t(language, 'ready.default.desc');
+    }
+  };
+
+  const getModeTips = (mode: GameMode) => {
+    switch (mode) {
+      case 'reflex':
+        return [
+          { icon: '⚡', text: t(language, 'ready.tip.reflex.1') },
+          { icon: '⭐', text: t(language, 'ready.tip.reflex.2') },
+          { icon: '🔥', text: t(language, 'ready.tip.reflex.3') },
+        ];
+      case 'sequence':
+        return [
+          { icon: '👁️', text: t(language, 'ready.tip.sequence.1') },
+          { icon: '🧠', text: t(language, 'ready.tip.sequence.2') },
+          { icon: '⏱️', text: t(language, 'ready.tip.sequence.3') },
+        ];
+      case 'survival':
+        return [
+          { icon: '💀', text: t(language, 'ready.tip.survival.1') },
+          { icon: '⚡', text: t(language, 'ready.tip.survival.2') },
+          { icon: '⭐', text: t(language, 'ready.tip.survival.3') },
+        ];
+      case 'nightmare':
+        return [
+          { icon: '🔥', text: t(language, 'ready.tip.nightmare.1') },
+          { icon: '⚡', text: t(language, 'ready.tip.nightmare.2') },
+          { icon: '⏱️', text: t(language, 'ready.tip.nightmare.3') },
+        ];
+      case 'oddOneOut':
+        return [
+          { icon: '🎯', text: t(language, 'ready.tip.odd.1') },
+          { icon: '❌', text: t(language, 'ready.tip.odd.2') },
+          { icon: '⚡', text: t(language, 'ready.tip.odd.3') },
+        ];
+      default:
+        return [
+          { icon: '⚡', text: t(language, 'ready.tip.default.1') },
+          { icon: '✓', text: t(language, 'ready.tip.default.2') },
+          { icon: '🔥', text: t(language, 'ready.tip.default.3') },
+        ];
+    }
+  };
 
   // Handle ESC key to cancel
   useEffect(() => {
@@ -62,49 +115,82 @@ export function ModeSelector({
         {modes.map((mode) => {
           const modeInfo = GAME_MODES[mode];
           const isSelected = selected === mode;
+          const isHovered = hoveredMode === mode;
+          const tips = getModeTips(mode);
+          const description = getModeDescription(mode);
 
           return (
-            <button
+            <div
               key={mode}
-              onClick={() => !disabled && onSelect(mode)}
-              disabled={disabled}
-              draggable={false}
-              className={cn(
-                'p-6 sm:p-8 border-4 transition-all duration-150 text-center pixel-border relative',
-                'focus:outline-none focus:ring-2 focus:ring-primary',
-                'bg-gradient-to-br from-purple-300 via-purple-200 to-blue-300',
-                'border-white/80 shadow-lg',
-                'h-[180px] sm:h-[200px] w-full',
-                'flex flex-col items-center justify-center',
-                isSelected
-                  ? 'ring-4 ring-primary ring-offset-2 ring-offset-background shadow-2xl shadow-primary/50'
-                  : 'hover:shadow-xl',
-                disabled && 'opacity-50 cursor-not-allowed',
-                // Center nightmare mode on large screens when it's alone in the row
-                mode === 'nightmare' && 'lg:col-start-2'
-              )}
-              style={{
-                background: isSelected
-                  ? 'linear-gradient(135deg, #C084FC 0%, #A78BFA 50%, #93C5FD 100%)'
-                  : 'linear-gradient(135deg, #D8B4FE 0%, #C4B5FD 50%, #A5B4FC 100%)',
-              }}
+              className="relative"
+              onMouseEnter={() => setHoveredMode(mode)}
+              onMouseLeave={() => setHoveredMode(null)}
             >
-              <div className="flex flex-col items-center justify-center gap-3">
-                <span className="text-5xl sm:text-6xl">{modeInfo.icon}</span>
-                <span className="font-bold text-xl sm:text-2xl text-white drop-shadow-lg">
-                  {mode === 'reflex' && t(language, 'mode.reflex.name')}
-                  {mode === 'sequence' && t(language, 'mode.sequence.name')}
-                  {mode === 'survival' && t(language, 'mode.survival.name')}
-                  {mode === 'nightmare' && t(language, 'mode.nightmare.name')}
-                  {mode === 'oddOneOut' && t(language, 'mode.odd.name')}
-                </span>
-                {isSelected && (
-                  <span className="text-3xl text-white font-bold drop-shadow-lg" aria-label="Selected">
-                    ✓
-                  </span>
+              <button
+                onClick={() => !disabled && onSelect(mode)}
+                disabled={disabled}
+                draggable={false}
+                className={cn(
+                  'p-6 sm:p-8 border-4 transition-all duration-150 text-center pixel-border relative',
+                  'focus:outline-none focus:ring-2 focus:ring-primary',
+                  'bg-gradient-to-br from-purple-300 via-purple-200 to-blue-300',
+                  'border-white/80 shadow-lg',
+                  'h-[180px] sm:h-[200px] w-full',
+                  'flex flex-col items-center justify-center',
+                  isSelected
+                    ? 'ring-4 ring-primary ring-offset-2 ring-offset-background shadow-2xl shadow-primary/50'
+                    : 'hover:shadow-xl',
+                  disabled && 'opacity-50 cursor-not-allowed',
+                  // Center nightmare mode on large screens when it's alone in the row
+                  mode === 'nightmare' && 'lg:col-start-2'
                 )}
-              </div>
-            </button>
+                style={{
+                  background: isSelected
+                    ? 'linear-gradient(135deg, #C084FC 0%, #A78BFA 50%, #93C5FD 100%)'
+                    : 'linear-gradient(135deg, #D8B4FE 0%, #C4B5FD 50%, #A5B4FC 100%)',
+                }}
+              >
+                <div className="flex flex-col items-center justify-center gap-3">
+                  <span className="text-5xl sm:text-6xl">{modeInfo.icon}</span>
+                  <span className="font-bold text-xl sm:text-2xl text-white drop-shadow-lg">
+                    {mode === 'reflex' && t(language, 'mode.reflex.name')}
+                    {mode === 'sequence' && t(language, 'mode.sequence.name')}
+                    {mode === 'survival' && t(language, 'mode.survival.name')}
+                    {mode === 'nightmare' && t(language, 'mode.nightmare.name')}
+                    {mode === 'oddOneOut' && t(language, 'mode.odd.name')}
+                  </span>
+                  {isSelected && (
+                    <span className="text-3xl text-white font-bold drop-shadow-lg" aria-label="Selected">
+                      ✓
+                    </span>
+                  )}
+                </div>
+              </button>
+              
+              {/* Tooltip */}
+              {isHovered && (
+                <div className={cn(
+                  'absolute z-50 w-64 sm:w-72 p-4 bg-card border-4 border-primary pixel-border',
+                  'shadow-2xl text-left',
+                  // Position tooltip above on mobile, to the right on desktop
+                  'bottom-full left-1/2 -translate-x-1/2 mb-2',
+                  'sm:bottom-auto sm:left-full sm:top-0 sm:translate-x-2 sm:translate-y-0',
+                  'animate-in fade-in slide-in-from-bottom-2 duration-200'
+                )}>
+                  <div className="space-y-3">
+                    <p className="text-sm font-semibold text-primary">{description}</p>
+                    <div className="space-y-1.5">
+                      {tips.map((tip, idx) => (
+                        <div key={idx} className="flex items-start gap-2 text-xs text-foreground/90">
+                          <span className="font-bold text-base leading-none">{tip.icon}</span>
+                          <span>{tip.text}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           );
         })}
       </div>

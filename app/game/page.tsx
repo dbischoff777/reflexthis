@@ -1052,7 +1052,11 @@ export default function GamePage() {
       {isLoading ? (
         <LoadingScreen
           message={t(language, 'loading.initializing')}
-          onComplete={() => setIsLoading(false)}
+          onComplete={() => {
+            setIsLoading(false);
+            // Start game immediately when loading completes
+            handleReady();
+          }}
         />
       ) : (
       <div className={cn(
@@ -1256,10 +1260,10 @@ export default function GamePage() {
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/80">
           <div className="bg-card border-4 border-primary pixel-border p-4 sm:p-6 md:p-8 max-w-sm w-full mx-4 text-center">
             <h2 className="text-2xl sm:text-3xl font-bold text-primary mb-4 pixel-border px-4 py-2 inline-block">
-              GAME PAUSED
+              {t(language, 'pause.title')}
             </h2>
             <p className="text-sm text-foreground/80 mb-6">
-              Press ESC or CONTINUE to resume, or EXIT to return to the main menu.
+              {t(language, 'pause.message')}
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <button
@@ -1274,7 +1278,7 @@ export default function GamePage() {
                 }}
                 className="px-6 py-3 border-4 border-primary bg-primary text-primary-foreground pixel-border font-bold hover:bg-primary/80 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary"
               >
-                CONTINUE
+                {t(language, 'pause.continue')}
               </button>
               <button
                 onClick={() => {
@@ -1284,7 +1288,7 @@ export default function GamePage() {
                 }}
                 className="px-6 py-3 border-4 border-secondary bg-secondary text-secondary-foreground pixel-border font-bold hover:bg-secondary/80 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-secondary"
               >
-                EXIT
+                {t(language, 'pause.exit')}
               </button>
             </div>
           </div>
