@@ -1665,9 +1665,10 @@ const ButtonMesh = memo(function ButtonMesh({
       const centerColor = { r: 0.1, g: 0.4, b: 0.85 }; // Bright cyan-blue center (idle)
       
       if (hovered) {
-        // Hover: warm yellow/orange gradient clearly distinct from cyan highlight state
-        const hoverEdge = { r: 0.8, g: 0.55, b: 0.1 };   // Golden edge
-        const hoverCenter = { r: 1.0, g: 0.85, b: 0.2 }; // Bright yellow center
+        // Hover state: subtle dark-blue shift + soft rim glow
+        // Goal: clearly show cursor hover without looking like a game highlight
+        const hoverEdge = { r: 0.02, g: 0.03, b: 0.22 };  // Slightly lighter than idle edge
+        const hoverCenter = { r: 0.05, g: 0.16, b: 0.50 }; // Muted deep blue – NOT cyan
         
         // Multi-stage gradient interpolation
         let hoverColor;
@@ -1700,13 +1701,13 @@ const ButtonMesh = memo(function ButtonMesh({
         const emissiveBase = 0.3;
         const emissiveCenter = 0.7;
         const emissiveIntensity = THREE.MathUtils.lerp(emissiveBase, emissiveCenter, gradientFactor) * emissivePulse;
-        // Warm emissive glow to match yellow hover
+        // Very subtle neutral-blue emissive glow so it doesn't compete with highlight effects
         material.emissive.setRGB(
-          0.5 + emissiveIntensity * 0.3,  // R
-          0.4 + emissiveIntensity * 0.4,  // G
-          0.0 + emissiveIntensity * 0.1   // B
+          0.04 + emissiveIntensity * 0.10, // R
+          0.08 + emissiveIntensity * 0.18, // G
+          0.16 + emissiveIntensity * 0.22  // B
         );
-        material.emissiveIntensity = 0.7 + Math.sin(time * 5) * 0.2;
+        material.emissiveIntensity = 0.3 + Math.sin(time * 4) * 0.08;
         material.metalness = 0.75;
         material.roughness = 0.2;
         material.clearcoat = 1.0;
