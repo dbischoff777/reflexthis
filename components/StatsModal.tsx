@@ -44,21 +44,45 @@ export function StatsModal({ show, stats, onClose }: StatsModalProps) {
         <ModalTransition show={show} duration={250}>
           <div 
             className={cn(
-              'bg-card border-4 border-primary pixel-border',
+              'border-4 pixel-border',
               'max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col',
-              'shadow-[0_0_20px_rgba(0,255,255,0.3)]'
+              'shadow-[0_0_20px_rgba(62,124,172,0.4)]'
             )}
+            style={{
+              borderColor: '#3E7CAC',
+              backgroundColor: '#003A63',
+            }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header with close button */}
-            <div className="shrink-0 bg-card border-b-4 border-primary pixel-border p-4 flex items-center justify-between">
-              <h2 className="text-2xl sm:text-3xl font-bold text-primary pixel-border px-4 py-2 inline-block">
+            <div 
+              className="shrink-0 border-b-4 pixel-border p-4 flex items-center justify-between"
+              style={{
+                borderColor: '#3E7CAC',
+                backgroundColor: '#003A63',
+              }}
+            >
+              <h2 
+                className="text-2xl sm:text-3xl font-bold text-foreground pixel-border px-4 py-2 inline-block"
+                style={{ borderColor: '#3E7CAC' }}
+              >
                 {t(language, 'stats.title')}
               </h2>
               <button
                 onClick={onClose}
                 draggable={false}
-                className="px-4 py-2 border-4 border-primary bg-primary text-primary-foreground pixel-border font-bold hover:bg-primary/80 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary text-xs sm:text-sm"
+                className="px-4 py-2 border-4 pixel-border font-bold transition-all duration-200 focus:outline-none focus:ring-2 text-xs sm:text-sm"
+                style={{
+                  borderColor: '#3E7CAC',
+                  backgroundColor: '#3E7CAC',
+                  color: '#ffffff',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(62, 124, 172, 0.8)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#3E7CAC';
+                }}
                 aria-label={t(language, 'settings.close')}
               >
                 {t(language, 'settings.close')}
@@ -66,7 +90,7 @@ export function StatsModal({ show, stats, onClose }: StatsModalProps) {
             </div>
 
             {/* Stats Content - Remove title since modal header has it */}
-            <div className="p-4 sm:p-6 min-h-0 overflow-y-auto overflow-x-hidden">
+            <div className="p-4 sm:p-6 min-h-0 overflow-y-auto w-full">
               <SessionStatsDisplay stats={stats} hideTitle />
             </div>
           </div>

@@ -176,14 +176,20 @@ export function DifficultySelector({
               
               {/* Tooltip */}
               {isHovered && (
-                <div className={cn(
-                  'absolute z-50 w-64 sm:w-72 p-4 bg-card border-4 border-primary pixel-border',
-                  'shadow-2xl text-left',
-                  // Position tooltip above on mobile, to the right on desktop
-                  'bottom-full left-1/2 -translate-x-1/2 mb-2',
-                  'sm:bottom-auto sm:left-full sm:top-0 sm:translate-x-2 sm:translate-y-0',
-                  'animate-in fade-in slide-in-from-bottom-2 duration-200'
-                )}>
+                <div 
+                  className={cn(
+                    'absolute z-50 w-64 sm:w-72 p-4 border-4 pixel-border',
+                    'shadow-[0_0_20px_rgba(62,124,172,0.4)] text-left',
+                    // Position tooltip above on mobile, to the right on desktop
+                    'bottom-full left-1/2 -translate-x-1/2 mb-2',
+                    'sm:bottom-auto sm:left-full sm:top-0 sm:translate-x-2 sm:translate-y-0',
+                    'animate-in fade-in slide-in-from-bottom-2 duration-200'
+                  )}
+                  style={{
+                    borderColor: '#3E7CAC',
+                    backgroundColor: '#003A63',
+                  }}
+                >
                   <div className="space-y-3">
                     <p className="text-sm font-semibold text-primary">{description}</p>
                     <div className="space-y-1.5">

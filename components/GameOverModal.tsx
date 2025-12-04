@@ -145,9 +145,14 @@ export function GameOverModal({
       <div
         className={cn(
           'relative w-full max-w-2xl border-4 p-6 sm:p-8',
-          'bg-card border-primary pixel-border',
+          'pixel-border',
+          'shadow-[0_0_20px_rgba(62,124,172,0.4)]',
           'animate-[fadeIn_0.3s_ease-out,scaleIn_0.3s_ease-out]'
         )}
+        style={{
+          borderColor: '#3E7CAC',
+          backgroundColor: '#003A63',
+        }}
       >
         {/* Header */}
         <div className="text-center mb-6">
@@ -236,7 +241,7 @@ export function GameOverModal({
                   {reactionTimeStats.fastest !== null && (
                     <div>
                       <p className="text-muted-foreground mb-1">{t(language, 'gameover.stats.fastest')}</p>
-                      <p className="text-lg font-bold text-green-400">
+                      <p className="text-lg font-bold text-chart-3">
                         {Math.round(reactionTimeStats.fastest)}ms
                       </p>
                     </div>

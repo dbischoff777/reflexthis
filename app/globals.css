@@ -367,6 +367,8 @@
   
   .screen-flash {
     animation: screen-flash 0.3s ease-out;
+    will-change: opacity;
+    transform: translateZ(0); /* Force GPU acceleration */
   }
   
   @keyframes countdown-pulse {
@@ -1355,45 +1357,48 @@
   }
   
   /* Screen shake animations - constrained to prevent scrollbars */
+  /* GPU-accelerated animations use transform instead of position */
   @keyframes screen-shake-light {
     0%, 100% {
-      transform: translate(0, 0);
+      transform: translate3d(0, 0, 0);
     }
     10%, 30%, 50%, 70%, 90% {
-      transform: translate(-2px, -1px);
+      transform: translate3d(-2px, -1px, 0);
     }
     20%, 40%, 60%, 80% {
-      transform: translate(2px, 1px);
+      transform: translate3d(2px, 1px, 0);
     }
   }
   
   @keyframes screen-shake-medium {
     0%, 100% {
-      transform: translate(0, 0);
+      transform: translate3d(0, 0, 0);
     }
     10%, 30%, 50%, 70%, 90% {
-      transform: translate(-4px, -2px) rotate(-0.5deg);
+      transform: translate3d(-4px, -2px, 0) rotate(-0.5deg);
     }
     20%, 40%, 60%, 80% {
-      transform: translate(4px, 2px) rotate(0.5deg);
+      transform: translate3d(4px, 2px, 0) rotate(0.5deg);
     }
   }
   
   @keyframes screen-shake-heavy {
     0%, 100% {
-      transform: translate(0, 0) rotate(0deg);
+      transform: translate3d(0, 0, 0) rotate(0deg);
     }
     10%, 30%, 50%, 70%, 90% {
-      transform: translate(-6px, -3px) rotate(-1deg);
+      transform: translate3d(-6px, -3px, 0) rotate(-1deg);
     }
     20%, 40%, 60%, 80% {
-      transform: translate(6px, 3px) rotate(1deg);
+      transform: translate3d(6px, 3px, 0) rotate(1deg);
     }
   }
   
   .screen-shake-light,
   .screen-shake-medium,
   .screen-shake-heavy {
+    will-change: transform;
+    transform: translateZ(0); /* Force GPU acceleration */
     overflow: hidden !important;
     position: relative;
     will-change: transform;
@@ -1419,26 +1424,26 @@
   /* Performance feedback popup animations */
   @keyframes feedback-popup {
     0% {
-      transform: scale(0.5) translateY(20px);
+      transform: translate3d(0, 20px, 0) scale(0.5);
       opacity: 0;
     }
     50% {
-      transform: scale(1.1) translateY(-10px);
+      transform: translate3d(0, -10px, 0) scale(1.1);
       opacity: 1;
     }
     100% {
-      transform: scale(1) translateY(0);
+      transform: translate3d(0, 0, 0) scale(1);
       opacity: 1;
     }
   }
   
   @keyframes feedback-exit {
     0% {
-      transform: scale(1) translateY(0);
+      transform: translate3d(0, 0, 0) scale(1);
       opacity: 1;
     }
     100% {
-      transform: scale(0.8) translateY(-30px);
+      transform: translate3d(0, -30px, 0) scale(0.8);
       opacity: 0;
     }
   }

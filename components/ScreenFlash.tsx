@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, memo } from 'react';
 import { cn } from '@/lib/utils';
 
 interface ScreenFlashProps {
@@ -11,19 +11,20 @@ interface ScreenFlashProps {
 
 /**
  * ScreenFlash component - Provides full-screen flash feedback
+ * Optimized with CSS animations for better performance
  */
-export function ScreenFlash({ type, duration = 300, highContrast = false }: ScreenFlashProps) {
-  const [show, setShow] = useState(false);
+export const ScreenFlash = memo(function ScreenFlash({ type, duration = 300, highContrast = false }: ScreenFlashProps) {
+  const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    setShow(true);
+    setIsVisible(true);
     const timer = setTimeout(() => {
-      setShow(false);
+      setIsVisible(false);
     }, duration);
     return () => clearTimeout(timer);
   }, [type, duration]);
 
-  if (!show) return null;
+  if (!isVisible) return null;
 
   // Combo milestone colors
   const getComboColor = (comboType: string) => {
@@ -74,12 +75,14 @@ export function ScreenFlash({ type, duration = 300, highContrast = false }: Scre
         'border-8 pixel-border',
         baseClass,
         bgClass,
-        'screen-flash'
+        'screen-flash',
+        'will-change-opacity'
       )}
       style={{
         imageRendering: 'pixelated',
+        transform: 'translateZ(0)', // Force GPU acceleration
       }}
     />
   );
-}
+});
 

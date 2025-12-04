@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useGameState } from '@/lib/GameContext';
 import { GameButtonGridWebGL } from '@/components/GameButton3DWebGL';
-import { GameOverModal } from '@/components/GameOverModal';
 import { OrientationHandler } from '@/components/OrientationHandler';
 import { ScreenFlash } from '@/components/ScreenFlash';
 import { getRandomButtons } from '@/lib/gameUtils';
@@ -25,11 +24,16 @@ import { LoadingScreen } from '@/components/LoadingScreen';
 import { ReadyScreen } from '@/components/ReadyScreen';
 import { RetroHudWidgets } from '@/components/RetroHudWidgets';
 // DynamicAmbience removed - effects now handled by 3D BackgroundGrid in GameButton3DWebGL
-import SettingsModal from '@/components/SettingsModal';
 import { PerformanceFeedback } from '@/components/PerformanceFeedback';
 import { AchievementNotification } from '@/components/AchievementNotification';
 import { getKeybindings, getKeyDisplayName, DEFAULT_KEYBINDINGS } from '@/lib/keybindings';
 import { t } from '@/lib/i18n';
+import { lazy, Suspense } from 'react';
+import { useTimer } from '@/hooks/useTimer';
+
+// Lazy load heavy modal components
+const GameOverModal = lazy(() => import('@/components/GameOverModal').then(m => ({ default: m.GameOverModal })));
+const SettingsModal = lazy(() => import('@/components/SettingsModal'));
 
 export default function GamePage() {
   const router = useRouter();
@@ -70,6 +74,7 @@ export default function GamePage() {
   // Clamp to avoid negative display values
   const effectiveLives = Math.max(0, Math.min(lives, maxLives));
 
+  const { setTimer, clearTimer, clearAll: clearAllTimers } = useTimer();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const nextHighlightTimerRef = useRef<NodeJS.Timeout | null>(null);
   const lastHighlightedRef = useRef<number[]>([]);
@@ -123,21 +128,21 @@ export default function GamePage() {
           setScreenFlash(flashType);
           // Longer duration for higher milestones
           const flashDuration = milestone >= 30 ? 400 : milestone >= 20 ? 350 : milestone >= 10 ? 300 : 250;
-          flashTimer = setTimeout(() => {
+          flashTimer = setTimer(() => {
             setScreenFlash(null);
           }, reducedEffects ? flashDuration * 0.5 : flashDuration);
         }
         
         // Clear milestone after animation duration
-        const milestoneTimer = setTimeout(() => {
+        const milestoneTimer = setTimer(() => {
           setComboMilestone(null);
         }, 1000);
         
         // Cleanup both timers
         return () => {
-          clearTimeout(milestoneTimer);
+          clearTimer(milestoneTimer);
           if (flashTimer) {
-            clearTimeout(flashTimer);
+            clearTimer(flashTimer);
           }
         };
       }
@@ -203,14 +208,14 @@ export default function GamePage() {
   // Clear highlight timer
   const clearHighlightTimer = useCallback(() => {
     if (timerRef.current) {
-      clearTimeout(timerRef.current);
+      clearTimer(timerRef.current);
       timerRef.current = null;
     }
     if (nextHighlightTimerRef.current) {
-      clearTimeout(nextHighlightTimerRef.current);
+      clearTimer(nextHighlightTimerRef.current);
       nextHighlightTimerRef.current = null;
     }
-  }, []);
+  }, [clearTimer]);
 
   // Keep a ref of the paused state for use in callbacks/timers
   useEffect(() => {
@@ -284,7 +289,7 @@ export default function GamePage() {
     const duration = getHighlightDurationForDifficulty(score, difficulty);
     setHighlightDuration(duration);
     setBonusHighlightDuration(bonusActive ? Math.max(200, duration * 0.6) : null);
-    timerRef.current = setTimeout(() => {
+    timerRef.current = setTimer(() => {
       // Check if buttons are still highlighted (not pressed)
       if (currentHighlightedRef.current.length > 0) {
         setHighlightedButtons([]);
@@ -296,14 +301,14 @@ export default function GamePage() {
         // Trigger screen shake for missed buttons (respect comfort settings)
         if (screenShakeEnabled && !reducedEffects) {
           setScreenShake(true);
-          setTimeout(() => {
+          setTimer(() => {
             setScreenShake(false);
           }, 400);
         }
         
         if (screenFlashEnabled) {
           setScreenFlash('error');
-          setTimeout(() => setScreenFlash(null), reducedEffects ? 150 : 300);
+          setTimer(() => setScreenFlash(null), reducedEffects ? 150 : 300);
         }
         // Calculate new lives before calling decrementLives (which updates state async)
         const livesAfterDecrement = lives - 1;
@@ -311,7 +316,7 @@ export default function GamePage() {
       
         // Schedule next highlight if player will still have lives after this decrement
         if (livesAfterDecrement > 0) {
-        nextHighlightTimerRef.current = setTimeout(() => {
+        nextHighlightTimerRef.current = setTimer(() => {
           highlightNewButtonsInternal();
         }, 1000);
         }
@@ -344,7 +349,7 @@ export default function GamePage() {
         startTransition(() => {
           setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: 'correct' }));
         });
-        setTimeout(() => {
+        setTimer(() => {
           startTransition(() => {
             setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: null }));
           });
@@ -359,14 +364,14 @@ export default function GamePage() {
         // Success flash (respect comfort settings)
         if (screenFlashEnabled) {
           setScreenFlash('success');
-          setTimeout(
+          setTimer(
             () => setScreenFlash(null),
             reducedEffects ? 120 : 200
           );
         }
         
         // Reset reaction time after a short delay to allow feedback to process
-        setTimeout(() => {
+        setTimer(() => {
           setCurrentReactionTime(null);
           setIsNewBestReaction(false);
         }, 100);
@@ -382,7 +387,7 @@ export default function GamePage() {
             if (!fastStreakActive && next >= 5) {
               setFastStreakActive(true);
               // Temporary objective buff ends automatically after a short delay
-              setTimeout(() => setFastStreakActive(false), 8000);
+              setTimer(() => setFastStreakActive(false), 8000);
             }
             return next;
           });
@@ -402,7 +407,7 @@ export default function GamePage() {
           // Extra celebratory flash
           if (screenFlashEnabled) {
             setScreenFlash('combo-5');
-            setTimeout(
+            setTimer(
               () => setScreenFlash(null),
               reducedEffects ? 150 : 260
             );
@@ -422,7 +427,7 @@ export default function GamePage() {
           setHighlightStartTimeState(null);
           setHighlightDuration(0);
           clearHighlightTimer();
-          nextHighlightTimerRef.current = setTimeout(() => {
+          nextHighlightTimerRef.current = setTimer(() => {
             highlightNewButtons();
           }, 500);
         }
@@ -431,7 +436,7 @@ export default function GamePage() {
         startTransition(() => {
           setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: 'incorrect' }));
         });
-        setTimeout(() => {
+        setTimer(() => {
           startTransition(() => {
             setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: null }));
           });
@@ -440,7 +445,7 @@ export default function GamePage() {
         // Trigger screen shake (respect comfort settings)
         if (screenShakeEnabled && !reducedEffects) {
           setScreenShake(true);
-          setTimeout(() => {
+          setTimer(() => {
             setScreenShake(false);
           }, 400);
         }
@@ -448,7 +453,7 @@ export default function GamePage() {
         playSound('error', soundEnabled);
         if (screenFlashEnabled) {
           setScreenFlash('error');
-          setTimeout(() => setScreenFlash(null), reducedEffects ? 150 : 300);
+          setTimer(() => setScreenFlash(null), reducedEffects ? 150 : 300);
         }
         
         // Clear highlighted buttons (match behavior when timer expires)
@@ -465,7 +470,7 @@ export default function GamePage() {
         
         // Schedule next highlight if player will still have lives after this decrement
         if (livesAfterDecrement > 0) {
-          nextHighlightTimerRef.current = setTimeout(() => {
+          nextHighlightTimerRef.current = setTimer(() => {
             highlightNewButtons();
           }, 1000);
         }
@@ -485,6 +490,7 @@ export default function GamePage() {
       screenShakeEnabled,
       screenFlashEnabled,
       reducedEffects,
+      setTimer,
     ]
   );
   
@@ -512,7 +518,7 @@ export default function GamePage() {
 
         // Correct target pressed
         setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: 'correct' }));
-        setTimeout(() => {
+        setTimer(() => {
           setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: null }));
         }, 300);
 
@@ -520,10 +526,10 @@ export default function GamePage() {
 
         if (screenFlashEnabled) {
           setScreenFlash('success');
-          setTimeout(() => setScreenFlash(null), reducedEffects ? 120 : 200);
+          setTimer(() => setScreenFlash(null), reducedEffects ? 120 : 200);
         }
 
-        setTimeout(() => {
+        setTimer(() => {
           setCurrentReactionTime(null);
           setIsNewBestReaction(false);
         }, 100);
@@ -537,19 +543,19 @@ export default function GamePage() {
         clearHighlightTimer();
         setOddOneOutTarget(null);
 
-        nextHighlightTimerRef.current = setTimeout(() => {
+        nextHighlightTimerRef.current = setTimer(() => {
           highlightNewButtons();
         }, 700);
       } else {
         // Any wrong press (non-highlighted or non-target highlight) is a mistake
         setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: 'incorrect' }));
-        setTimeout(() => {
+        setTimer(() => {
           setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: null }));
         }, 300);
 
         if (screenShakeEnabled && !reducedEffects) {
           setScreenShake(true);
-          setTimeout(() => {
+          setTimer(() => {
             setScreenShake(false);
           }, 400);
         }
@@ -557,7 +563,7 @@ export default function GamePage() {
         playSound('error', soundEnabled);
         if (screenFlashEnabled) {
           setScreenFlash('error');
-          setTimeout(() => setScreenFlash(null), reducedEffects ? 150 : 300);
+          setTimer(() => setScreenFlash(null), reducedEffects ? 150 : 300);
         }
 
         // Clear current cluster and penalize
@@ -573,7 +579,7 @@ export default function GamePage() {
         decrementLives();
 
         if (livesAfterDecrement > 0) {
-          nextHighlightTimerRef.current = setTimeout(() => {
+          nextHighlightTimerRef.current = setTimer(() => {
             highlightNewButtons();
           }, 1000);
         }
@@ -596,6 +602,7 @@ export default function GamePage() {
       reducedEffects,
       soundEnabled,
       screenFlashEnabled,
+      setTimer,
     ]
   );
   
@@ -619,25 +626,25 @@ export default function GamePage() {
       resetGame();
       
       // Show loading screen briefly, then show ready screen
-      const loadingTimer = setTimeout(() => {
+      const loadingTimer = setTimer(() => {
         setIsLoading(false);
         // Ready screen will be shown, game starts when player clicks START
       }, 1500);
       
-      return () => clearTimeout(loadingTimer);
+      return () => clearTimer(loadingTimer);
     }
-  }, [resetGame]);
+  }, [resetGame, setTimer, clearTimer]);
 
   // Start reflex/nightmare/oddOneOut game when component mounts or game resets (only after ready)
   useEffect(() => {
     if ((gameMode === 'reflex' || gameMode === 'nightmare' || gameMode === 'oddOneOut') && !gameOver && isReady && !isPaused) {
       // Small delay to ensure state is ready
-      const startTimer = setTimeout(() => {
+      const startTimer = setTimer(() => {
         highlightNewButtons();
       }, 500);
 
       return () => {
-        clearTimeout(startTimer);
+        clearTimer(startTimer);
         clearHighlightTimer();
       };
     }
@@ -661,11 +668,11 @@ export default function GamePage() {
       highlightedButtons.length === 0 &&
       !isProcessingRef.current
     ) {
-      const restartTimer = setTimeout(() => {
+      const restartTimer = setTimer(() => {
         highlightNewButtons();
       }, 500);
 
-      return () => clearTimeout(restartTimer);
+      return () => clearTimer(restartTimer);
     }
   }, [gameMode, gameOver, isReady, isPaused, highlightedButtons.length, highlightNewButtons]);
 
@@ -685,21 +692,10 @@ export default function GamePage() {
       setGamePageActive(false);
       // Clear all timers to prevent sounds from playing after navigation
       clearHighlightTimer();
-      if (nextHighlightTimerRef.current) {
-        clearTimeout(nextHighlightTimerRef.current);
-        nextHighlightTimerRef.current = null;
-      }
-      if (sequenceTimerRef.current) {
-        clearTimeout(sequenceTimerRef.current);
-        sequenceTimerRef.current = null;
-      }
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-        timerRef.current = null;
-      }
+      clearAllTimers();
       endGame();
     };
-  }, [endGame, clearHighlightTimer]);
+  }, [endGame, clearHighlightTimer, clearAllTimers]);
 
   // ========== SEQUENCE MODE LOGIC ==========
   
@@ -736,17 +732,17 @@ export default function GamePage() {
       playSound('highlight', soundEnabled);
       
       // Schedule next button or completion
-      sequenceTimerRef.current = setTimeout(() => {
+      sequenceTimerRef.current = setTimer(() => {
         setHighlightedButtons([]);
         
         if (index < newSequence.length - 1) {
           // Gap before next button
-          setTimeout(() => {
+          setTimer(() => {
             showNextButton(index + 1);
           }, gapDuration);
         } else {
           // Sequence complete
-          setTimeout(() => {
+          setTimer(() => {
             setIsShowingSequence(false);
             setIsWaitingForInput(true);
             setHighlightedButtons([]);
@@ -757,10 +753,10 @@ export default function GamePage() {
     };
     
     // Start showing sequence after a reduced delay
-    setTimeout(() => {
+    setTimer(() => {
       showNextButton(0);
     }, 200);
-  }, [score, difficulty, gameOver, isReady, soundEnabled, clearHighlightTimer]);
+  }, [score, difficulty, gameOver, isReady, soundEnabled, clearHighlightTimer, setTimer]);
   
   // Handle button press in sequence mode
   const handleSequenceButtonPress = useCallback(
@@ -780,7 +776,7 @@ export default function GamePage() {
           // Correct sequence - show feedback for all buttons
           sequence.forEach((id) => {
             setButtonPressFeedback((prev) => ({ ...prev, [id]: 'correct' }));
-            setTimeout(() => {
+            setTimer(() => {
               setButtonPressFeedback((prev) => ({ ...prev, [id]: null }));
             }, 300);
           });
@@ -793,24 +789,24 @@ export default function GamePage() {
           
           if (screenFlashEnabled) {
             setScreenFlash('success');
-            setTimeout(() => setScreenFlash(null), reducedEffects ? 120 : 200);
+            setTimer(() => setScreenFlash(null), reducedEffects ? 120 : 200);
           }
           
           // Generate next sequence
-          setTimeout(() => {
+          setTimer(() => {
             showSequence();
           }, 1000);
         } else {
           // Wrong sequence - show feedback for wrong button
           setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: 'incorrect' }));
-          setTimeout(() => {
+          setTimer(() => {
             setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: null }));
           }, 300);
 
           // Trigger screen shake (respect comfort settings)
           if (screenShakeEnabled && !reducedEffects) {
             setScreenShake(true);
-            setTimeout(() => {
+            setTimer(() => {
               setScreenShake(false);
             }, 400);
           }
@@ -818,14 +814,14 @@ export default function GamePage() {
           playSound('error', soundEnabled);
           if (screenFlashEnabled) {
             setScreenFlash('error');
-            setTimeout(() => setScreenFlash(null), reducedEffects ? 150 : 300);
+            setTimer(() => setScreenFlash(null), reducedEffects ? 150 : 300);
           }
           setPlayerSequence([]);
           decrementLives();
           
           // Restart sequence after error
           if (!gameOver) {
-            setTimeout(() => {
+            setTimer(() => {
               showSequence();
             }, 1500);
           }
@@ -835,14 +831,14 @@ export default function GamePage() {
         if (newPlayerSequence[newPlayerSequence.length - 1] !== sequence[newPlayerSequence.length - 1]) {
           // Wrong button pressed - show feedback
           setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: 'incorrect' }));
-          setTimeout(() => {
+          setTimer(() => {
             setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: null }));
           }, 300);
 
           // Trigger screen shake (respect comfort settings)
           if (screenShakeEnabled && !reducedEffects) {
             setScreenShake(true);
-            setTimeout(() => {
+            setTimer(() => {
               setScreenShake(false);
             }, 400);
           }
@@ -850,7 +846,7 @@ export default function GamePage() {
           playSound('error', soundEnabled);
           if (screenFlashEnabled) {
             setScreenFlash('error');
-            setTimeout(
+            setTimer(
               () => setScreenFlash(null),
               reducedEffects ? 150 : 300
             );
@@ -860,14 +856,14 @@ export default function GamePage() {
           
           // Restart sequence after error
           if (!gameOver) {
-            setTimeout(() => {
+            setTimer(() => {
               showSequence();
             }, 1500);
           }
         } else {
           // Correct so far - show feedback
           setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: 'correct' }));
-          setTimeout(() => {
+          setTimer(() => {
             setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: null }));
           }, 300);
           
@@ -889,6 +885,7 @@ export default function GamePage() {
       screenShakeEnabled,
       screenFlashEnabled,
       reducedEffects,
+      setTimer,
     ]
   );
   
@@ -1222,6 +1219,7 @@ export default function GamePage() {
                 gameOver,
                 score,
                 difficulty,
+                reducedEffects,
               }}
               comboMilestone={comboMilestone}
             />
@@ -1231,7 +1229,8 @@ export default function GamePage() {
 
       {/* Game Over Modal */}
       {gameOver && (
-        <GameOverModal
+        <Suspense fallback={null}>
+          <GameOverModal
           score={score}
           highScore={highScore}
           isNewHighScore={score > highScore && score > 0}
@@ -1248,10 +1247,12 @@ export default function GamePage() {
             }
           }}
         />
+        </Suspense>
       )}
 
       {/* Unified Settings Modal */}
-      <SettingsModal
+      <Suspense fallback={null}>
+        <SettingsModal
         show={showSettingsModal}
         onClose={() => {
           setShowSettingsModal(false);
@@ -1261,6 +1262,7 @@ export default function GamePage() {
           }
         }}
       />
+      </Suspense>
 
       {/* Pause Confirmation Modal */}
       {showPauseModal && (

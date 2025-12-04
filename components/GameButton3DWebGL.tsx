@@ -276,6 +276,7 @@ interface BackgroundGridProps {
     gameOver: boolean;
     score: number;
     difficulty: string; // DifficultyPreset from game context
+    reducedEffects?: boolean;
   };
   highlightedCount?: number;
   comboMilestone?: number | null; // Triggered when combo hits 5, 10, 20, 30, 50
@@ -581,12 +582,17 @@ interface ParticleBurstProps {
   position: [number, number, number];
 }
 
-const ParticleBurst = memo(function ParticleBurst({ trigger, position }: ParticleBurstProps) {
+interface ParticleBurstPropsWithQuality extends ParticleBurstProps {
+  reducedEffects?: boolean;
+}
+
+const ParticleBurst = memo(function ParticleBurst({ trigger, position, reducedEffects = false }: ParticleBurstPropsWithQuality) {
   const particlesRef = useRef<Particle[]>([]);
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const prevTrigger = useRef<'success' | 'error' | null>(null);
   
-  const PARTICLE_COUNT = 20;
+  // Adaptive particle count based on reducedEffects
+  const PARTICLE_COUNT = reducedEffects ? 8 : 20;
   const dummy = useMemo(() => new THREE.Object3D(), []);
   const tempColor = useMemo(() => new THREE.Color(), []);
   
@@ -1267,6 +1273,7 @@ interface ButtonMeshProps {
   keyLabel?: string; // Keyboard key to display on button
   showLabel?: boolean; // Whether to show label
   highlightedButtons?: number[]; // All currently highlighted button indices for arc effects
+  reducedEffects?: boolean;
 }
 
 const ButtonMesh = memo(function ButtonMesh({
@@ -1285,6 +1292,7 @@ const ButtonMesh = memo(function ButtonMesh({
   keyLabel,
   showLabel = true,
   highlightedButtons = [],
+  reducedEffects = false,
 }: ButtonMeshProps) {
   const meshRef = useRef<THREE.Mesh>(null);
   const materialRef = useRef<THREE.MeshPhysicalMaterial>(null);
@@ -1881,10 +1889,13 @@ const ButtonMesh = memo(function ButtonMesh({
       />
       
       {/* Particle Burst Effect */}
-      <ParticleBurst 
-        trigger={pressFeedback} 
-        position={[0, 0, 0]} 
-      />
+      {!reducedEffects && (
+        <ParticleBurst 
+          trigger={pressFeedback} 
+          position={[0, 0, 0]}
+          reducedEffects={reducedEffects}
+        />
+      )}
       
       {/* Electric Arcs to other highlighted buttons */}
       {connectedHighlightedButtons.map(targetIdx => {
@@ -1980,6 +1991,7 @@ interface GameButtonGridWebGLProps {
     gameOver: boolean;
     score: number;
     difficulty: string; // DifficultyPreset from game context
+    reducedEffects?: boolean;
   };
   // Combo milestone for celebration effects (5, 10, 20, 30, 50)
   comboMilestone?: number | null;
@@ -2174,35 +2186,38 @@ export const GameButtonGridWebGL = memo(function GameButtonGridWebGL({
                   keyLabel={keyLabels[index]}
                   showLabel={showLabels}
                   highlightedButtons={highlightedButtonIndices}
+                  reducedEffects={gameState?.reducedEffects}
                 />
               );
             })}
           </group>
           
           
-          {/* Post-processing effects - enhanced for next-level visuals */}
-          <EffectComposer multisampling={4}>
-            {/* Dynamic Bloom - responds to combo milestones */}
-            <DynamicBloom comboMilestone={comboMilestone} baseIntensity={0.7} />
-            
-            {/* Subtle chromatic aberration for energy feel */}
-            <ChromaticAberration
-              blendFunction={BlendFunction.NORMAL}
-              offset={[0.0008, 0.0008]}
-              radialModulation={true}
-              modulationOffset={0.5}
-            />
-            
-            {/* Vignette for focus effect */}
-            <Vignette
-              offset={0.35}
-              darkness={0.4}
-              blendFunction={BlendFunction.NORMAL}
-            />
-            
-            {/* Tone mapping for cinematic look */}
-            <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
-          </EffectComposer>
+          {/* Post-processing effects - adaptive quality based on reducedEffects */}
+          {!gameState?.reducedEffects && (
+            <EffectComposer multisampling={4}>
+              {/* Dynamic Bloom - responds to combo milestones */}
+              <DynamicBloom comboMilestone={comboMilestone} baseIntensity={0.7} />
+              
+              {/* Subtle chromatic aberration for energy feel */}
+              <ChromaticAberration
+                blendFunction={BlendFunction.NORMAL}
+                offset={[0.0008, 0.0008]}
+                radialModulation={true}
+                modulationOffset={0.5}
+              />
+              
+              {/* Vignette for focus effect */}
+              <Vignette
+                offset={0.35}
+                darkness={0.4}
+                blendFunction={BlendFunction.NORMAL}
+              />
+              
+              {/* Tone mapping for cinematic look */}
+              <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
+            </EffectComposer>
+          )}
         </Suspense>
       </Canvas>
     </div>
@@ -2271,17 +2286,20 @@ export const GameButton3DWebGL = memo(function GameButton3DWebGL({
             onPress={handlePress}
             disabled={disabled}
             position={[0, 0, 0]}
+            reducedEffects={false}
           />
           
-          <EffectComposer multisampling={4}>
-            <Bloom
-              intensity={0.8}
-              luminanceThreshold={0.25}
-              luminanceSmoothing={0.9}
-              mipmapBlur
-            />
-            <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
-          </EffectComposer>
+          {!gameState?.reducedEffects && (
+            <EffectComposer multisampling={4}>
+              <Bloom
+                intensity={0.8}
+                luminanceThreshold={0.25}
+                luminanceSmoothing={0.9}
+                mipmapBlur
+              />
+              <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
+            </EffectComposer>
+          )}
         </Suspense>
       </Canvas>
     </div>

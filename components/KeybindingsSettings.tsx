@@ -106,7 +106,7 @@ export function KeybindingsSettings({ onClose, embedded = false }: KeybindingsSe
       <div className="mb-4 sm:mb-6">
         {embedded ? (
           <>
-            <h3 className="text-lg sm:text-xl font-bold text-primary mb-1">
+            <h3 className="text-lg sm:text-xl font-bold text-foreground mb-1">
               {t(language, 'keybindings.title')}
             </h3>
             <p className="text-xs text-foreground/70">
@@ -115,7 +115,10 @@ export function KeybindingsSettings({ onClose, embedded = false }: KeybindingsSe
           </>
         ) : (
           <>
-            <h2 className="text-2xl sm:text-3xl font-bold text-primary mb-2 pixel-border px-4 py-2 inline-block">
+            <h2 
+              className="text-2xl sm:text-3xl font-bold text-foreground mb-2 pixel-border px-4 py-2 inline-block"
+              style={{ borderColor: '#3E7CAC' }}
+            >
               {t(language, 'keybindings.title.upper')}
             </h2>
             <p className="text-sm text-foreground/70 mt-2">
@@ -126,7 +129,7 @@ export function KeybindingsSettings({ onClose, embedded = false }: KeybindingsSe
       </div>
 
       {error && (
-        <div className="mb-4 p-3 bg-destructive/20 border-2 border-destructive pixel-border">
+        <div className="mb-4 p-3 bg-destructive/20 border-2 border-destructive pixel-border shadow-[0_0_10px_rgba(255,0,0,0.3)]">
           <p className="text-destructive text-sm font-bold">{error}</p>
         </div>
       )}
@@ -152,10 +155,29 @@ export function KeybindingsSettings({ onClose, embedded = false }: KeybindingsSe
                       'border-4 pixel-border font-bold text-lg sm:text-xl',
                       'transition-all duration-200',
                       editingButtonId === buttonId
-                        ? 'bg-accent border-accent text-accent-foreground animate-pulse'
-                        : 'bg-card border-primary text-primary hover:bg-primary hover:text-primary-foreground',
-                      'focus:outline-none focus:ring-2 focus:ring-primary'
+                        ? 'animate-pulse'
+                        : '',
+                      'focus:outline-none focus:ring-2'
                     )}
+                    style={editingButtonId === buttonId ? {
+                      backgroundColor: 'rgba(62, 124, 172, 0.5)',
+                      borderColor: '#3E7CAC',
+                      color: '#ffffff',
+                    } : {
+                      backgroundColor: 'rgba(0, 58, 99, 0.6)',
+                      borderColor: '#3E7CAC',
+                      color: '#ffffff',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (editingButtonId !== buttonId) {
+                        e.currentTarget.style.backgroundColor = 'rgba(62, 124, 172, 0.3)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (editingButtonId !== buttonId) {
+                        e.currentTarget.style.backgroundColor = 'rgba(0, 58, 99, 0.6)';
+                      }
+                    }}
                     aria-label={`${t(language, 'keybindings.button')} ${buttonId} - ${
                       editingButtonId === buttonId
                         ? t(language, 'keybindings.aria.edit')
@@ -180,14 +202,36 @@ export function KeybindingsSettings({ onClose, embedded = false }: KeybindingsSe
         <button
           onClick={handleReset}
           draggable={false}
-          className="px-6 py-3 border-4 border-accent bg-accent/20 text-accent pixel-border font-bold hover:bg-accent hover:text-accent-foreground transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-accent"
+          className="px-6 py-3 border-4 pixel-border font-bold transition-all duration-200 focus:outline-none focus:ring-2"
+          style={{
+            borderColor: '#3E7CAC',
+            backgroundColor: 'rgba(0, 58, 99, 0.6)',
+            color: '#ffffff',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'rgba(62, 124, 172, 0.3)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'rgba(0, 58, 99, 0.6)';
+          }}
         >
           {t(language, 'keybindings.reset')}
         </button>
         <button
           onClick={handleApplyNumpadPreset}
           draggable={false}
-          className="px-6 py-3 border-4 border-primary/60 bg-card text-primary pixel-border font-bold hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary"
+          className="px-6 py-3 border-4 pixel-border font-bold transition-all duration-200 focus:outline-none focus:ring-2"
+          style={{
+            borderColor: '#3E7CAC',
+            backgroundColor: 'rgba(0, 58, 99, 0.6)',
+            color: '#ffffff',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'rgba(62, 124, 172, 0.3)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'rgba(0, 58, 99, 0.6)';
+          }}
         >
           {t(language, 'keybindings.numpad')}
         </button>
@@ -195,7 +239,18 @@ export function KeybindingsSettings({ onClose, embedded = false }: KeybindingsSe
           <button
             onClick={onClose}
             draggable={false}
-            className="px-6 py-3 border-4 border-primary bg-primary text-primary-foreground pixel-border font-bold hover:bg-primary/80 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary"
+            className="px-6 py-3 border-4 pixel-border font-bold transition-all duration-200 focus:outline-none focus:ring-2"
+            style={{
+              borderColor: '#3E7CAC',
+              backgroundColor: '#3E7CAC',
+              color: '#ffffff',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(62, 124, 172, 0.8)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#3E7CAC';
+            }}
           >
             {t(language, 'keybindings.close')}
           </button>
@@ -203,11 +258,16 @@ export function KeybindingsSettings({ onClose, embedded = false }: KeybindingsSe
       </div>
 
       {!embedded && (
-        <div className="mt-6 p-3 bg-card/50 border-2 border-border pixel-border">
-          <p className="text-xs text-foreground/60">
-            <strong>{t(language, 'keybindings.defaultLayout')}</strong> Q W E (top row), A S D F (middle row), Y X C (bottom row)
+        <div 
+          className="mt-6 p-3 border-2 transition-colors pixel-border"
+          style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 58, 99, 0.5)' }}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(62, 124, 172, 0.7)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#3E7CAC'; }}
+        >
+          <p className="text-xs text-foreground/70">
+            <strong className="text-foreground">{t(language, 'keybindings.defaultLayout')}</strong> Q W E (top row), A S D F (middle row), Y X C (bottom row)
           </p>
-          <p className="text-xs text-foreground/60 mt-1">
+          <p className="text-xs text-foreground/70 mt-1">
             {t(language, 'keybindings.customize')}
           </p>
         </div>
@@ -217,7 +277,13 @@ export function KeybindingsSettings({ onClose, embedded = false }: KeybindingsSe
 
   if (embedded) {
     return (
-      <div className="bg-card/80 p-4 sm:p-6 md:p-8 w-full max-w-2xl mx-auto max-h-[80vh] overflow-y-auto">
+      <div 
+        className="border-2 rounded p-4 sm:p-6 md:p-8 w-full max-w-2xl mx-auto max-h-[80vh] overflow-y-auto"
+        style={{
+          borderColor: '#3E7CAC',
+          backgroundColor: '#003A63',
+        }}
+      >
         {content}
       </div>
     );
@@ -225,7 +291,13 @@ export function KeybindingsSettings({ onClose, embedded = false }: KeybindingsSe
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 pixel-border">
-      <div className="bg-card border-4 border-primary pixel-border p-4 sm:p-6 md:p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <div 
+        className="border-4 pixel-border shadow-[0_0_20px_rgba(62,124,172,0.4)] p-4 sm:p-6 md:p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+        style={{
+          borderColor: '#3E7CAC',
+          backgroundColor: '#003A63',
+        }}
+      >
         {content}
       </div>
     </div>

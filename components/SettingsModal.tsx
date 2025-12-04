@@ -76,28 +76,33 @@ export function SettingsModal({ show, onClose }: SettingsModalProps) {
         <ModalTransition show={show} duration={250}>
           <div 
             className={cn(
-              'bg-card border-4 border-primary pixel-border',
+              'border-4 pixel-border',
               'p-4 sm:p-6 md:p-8 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto',
-              'shadow-[0_0_20px_rgba(0,255,255,0.3)]'
+              'shadow-[0_0_20px_rgba(62,124,172,0.4)]'
             )}
+            style={{
+              borderColor: '#3E7CAC',
+              backgroundColor: '#003A63',
+            }}
             onClick={(e) => e.stopPropagation()}
           >
         {/* Header */}
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-2xl sm:text-3xl font-bold text-primary mb-1 sm:mb-0 pixel-border px-4 py-2 inline-block">
+          <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-1 sm:mb-0 pixel-border px-4 py-2 inline-block">
             {t(language, 'settings.title')}
           </h2>
           <div className="flex flex-wrap gap-2 sm:gap-3 items-center">
             {/* Simple tab switcher */}
-            <div className="inline-flex rounded-md border-2 border-border bg-background/80 overflow-hidden">
+            <div className="inline-flex rounded-md border-2 overflow-hidden" style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 0, 0, 0.4)' }}>
               <button
                 type="button"
                 className={
                   'px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold transition-colors ' +
                   (activeTab === 'audio'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:bg-primary/10')
+                    ? 'text-foreground'
+                    : 'text-foreground/70 hover:text-foreground')
                 }
+                style={activeTab === 'audio' ? { backgroundColor: 'rgba(62, 124, 172, 0.3)' } : {}}
                 onClick={() => setActiveTab('audio')}
               >
                 {t(language, 'settings.tab.audio')}
@@ -105,11 +110,15 @@ export function SettingsModal({ show, onClose }: SettingsModalProps) {
               <button
                 type="button"
                 className={
-                  'px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold border-l border-border transition-colors ' +
+                  'px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold border-l transition-colors ' +
                   (activeTab === 'controls'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:bg-primary/10')
+                    ? 'text-foreground'
+                    : 'text-foreground/70 hover:text-foreground')
                 }
+                style={{
+                  borderLeftColor: '#3E7CAC',
+                  ...(activeTab === 'controls' ? { backgroundColor: 'rgba(62, 124, 172, 0.3)' } : {})
+                }}
                 onClick={() => setActiveTab('controls')}
               >
                 {t(language, 'settings.tab.controls')}
@@ -117,11 +126,15 @@ export function SettingsModal({ show, onClose }: SettingsModalProps) {
               <button
                 type="button"
                 className={
-                  'px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold border-l border-border transition-colors ' +
+                  'px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold border-l transition-colors ' +
                   (activeTab === 'comfort'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:bg-primary/10')
+                    ? 'text-foreground'
+                    : 'text-foreground/70 hover:text-foreground')
                 }
+                style={{
+                  borderLeftColor: '#3E7CAC',
+                  ...(activeTab === 'comfort' ? { backgroundColor: 'rgba(62, 124, 172, 0.3)' } : {})
+                }}
                 onClick={() => setActiveTab('comfort')}
               >
                 {t(language, 'settings.tab.comfort')}
@@ -131,7 +144,18 @@ export function SettingsModal({ show, onClose }: SettingsModalProps) {
             <button
               onClick={onClose}
               draggable={false}
-              className="px-4 py-2 border-4 border-primary bg-primary text-primary-foreground pixel-border font-bold hover:bg-primary/80 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary text-xs sm:text-sm"
+              className="px-4 py-2 border-4 pixel-border font-bold transition-all duration-200 focus:outline-none focus:ring-2 text-xs sm:text-sm"
+              style={{
+                borderColor: '#3E7CAC',
+                backgroundColor: '#3E7CAC',
+                color: '#ffffff',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(62, 124, 172, 0.8)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#3E7CAC';
+              }}
             >
               {t(language, 'settings.close')}
             </button>
@@ -145,8 +169,18 @@ export function SettingsModal({ show, onClose }: SettingsModalProps) {
               <button
                 onClick={toggleSound}
                 draggable={false}
-                className="w-full px-4 py-3 border-4 pixel-border font-bold text-sm sm:text-base transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary
-                  bg-card border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+                className="w-full px-4 py-3 border-4 pixel-border font-bold text-sm sm:text-base transition-all duration-200 focus:outline-none focus:ring-2"
+                style={{
+                  borderColor: '#3E7CAC',
+                  backgroundColor: 'rgba(0, 58, 99, 0.6)',
+                  color: '#ffffff',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(62, 124, 172, 0.3)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(0, 58, 99, 0.6)';
+                }}
               >
                 {t(language, 'settings.audio.sound')} {soundEnabled ? t(language, 'settings.audio.soundOn') : t(language, 'settings.audio.soundOff')}
               </button>
@@ -170,8 +204,18 @@ export function SettingsModal({ show, onClose }: SettingsModalProps) {
               <button
                 onClick={toggleMusic}
                 draggable={false}
-                className="w-full px-4 py-3 border-4 pixel-border font-bold text-sm sm:text-base transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary
-                  bg-card border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+                className="w-full px-4 py-3 border-4 pixel-border font-bold text-sm sm:text-base transition-all duration-200 focus:outline-none focus:ring-2"
+                style={{
+                  borderColor: '#3E7CAC',
+                  backgroundColor: 'rgba(0, 58, 99, 0.6)',
+                  color: '#ffffff',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(62, 124, 172, 0.3)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(0, 58, 99, 0.6)';
+                }}
               >
                 {t(language, 'settings.audio.music')} {musicEnabled ? t(language, 'settings.audio.musicOn') : t(language, 'settings.audio.musicOff')}
               </button>
@@ -209,7 +253,7 @@ export function SettingsModal({ show, onClose }: SettingsModalProps) {
         {activeTab === 'comfort' && (
           <section className="space-y-4">
             <div className="flex flex-col gap-3 text-xs sm:text-sm">
-              <label className="flex items-start gap-2 cursor-pointer border border-border bg-card/80 rounded px-3 py-2">
+              <label className="flex items-start gap-2 cursor-pointer border-2 rounded px-3 py-2 transition-colors" style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 58, 99, 0.5)' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(62, 124, 172, 0.7)'; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#3E7CAC'; }}>
                 <input
                   type="checkbox"
                   className="mt-0.5 accent-primary"
@@ -224,7 +268,7 @@ export function SettingsModal({ show, onClose }: SettingsModalProps) {
                 </span>
               </label>
 
-              <label className="flex items-start gap-2 cursor-pointer border border-border bg-card/80 rounded px-3 py-2">
+              <label className="flex items-start gap-2 cursor-pointer border-2 rounded px-3 py-2 transition-colors" style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 58, 99, 0.5)' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(62, 124, 172, 0.7)'; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#3E7CAC'; }}>
                 <input
                   type="checkbox"
                   className="mt-0.5 accent-primary"
@@ -239,7 +283,7 @@ export function SettingsModal({ show, onClose }: SettingsModalProps) {
                 </span>
               </label>
 
-              <label className="flex items-start gap-2 cursor-pointer border border-border bg-card/80 rounded px-3 py-2">
+              <label className="flex items-start gap-2 cursor-pointer border-2 rounded px-3 py-2 transition-colors" style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 58, 99, 0.5)' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(62, 124, 172, 0.7)'; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#3E7CAC'; }}>
                 <input
                   type="checkbox"
                   className="mt-0.5 accent-primary"
@@ -254,7 +298,7 @@ export function SettingsModal({ show, onClose }: SettingsModalProps) {
                 </span>
               </label>
 
-              <label className="flex items-start gap-2 cursor-pointer border border-border bg-card/80 rounded px-3 py-2">
+              <label className="flex items-start gap-2 cursor-pointer border-2 rounded px-3 py-2 transition-colors" style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 58, 99, 0.5)' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(62, 124, 172, 0.7)'; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#3E7CAC'; }}>
                 <input
                   type="checkbox"
                   className="mt-0.5 accent-primary"
@@ -269,7 +313,7 @@ export function SettingsModal({ show, onClose }: SettingsModalProps) {
                 </span>
               </label>
 
-              <div className="border border-border bg-card/80 rounded px-3 py-2 flex items-center justify-between">
+              <div className="border-2 rounded px-3 py-2 flex items-center justify-between transition-colors" style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 58, 99, 0.5)' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(62, 124, 172, 0.7)'; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#3E7CAC'; }}>
                 <div>
                   <div className="font-semibold">Language / Sprache</div>
                   <div className="text-foreground/70">

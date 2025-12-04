@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useEffect, useState, useRef } from 'react';
+import { memo, useEffect, useState, useRef, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { t, type Language } from '@/lib/i18n';
 import { useGameState } from '@/lib/GameContext';
@@ -141,6 +141,19 @@ export const PerformanceFeedback = memo(function PerformanceFeedback({
   const lastHighImpactTimeRef = useRef(0);
   const lastLowImpactTimeRef = useRef(0);
 
+  // Memoize message pools to avoid recreating on every render
+  const messagePools = useMemo(() => ({
+    veryFast: getReactionVeryFastMessages(language),
+    fast: getReactionFastMessages(language),
+    slow: getReactionSlowMessages(language),
+    combo5: getCombo5Messages(language),
+    combo10: getCombo10Messages(language),
+    combo20: getCombo20Messages(language),
+    combo30: getCombo30Messages(language),
+    combo50: getCombo50Messages(language),
+    comboHigh: getComboHighMessages(language),
+  }), [language]);
+
   // Generate feedback based on performance metrics
   useEffect(() => {
     let newMessage: FeedbackMessage | null = null;
@@ -158,7 +171,7 @@ export const PerformanceFeedback = memo(function PerformanceFeedback({
           newMessage = {
             id: `msg-${messageIdCounter.current++}`,
             type: 'reaction-very-fast',
-            message: getRandomMessage(getReactionVeryFastMessages(language)),
+            message: getRandomMessage(messagePools.veryFast),
             color: '#00ff00',
             timestamp: Date.now(),
           };
@@ -167,7 +180,7 @@ export const PerformanceFeedback = memo(function PerformanceFeedback({
           newMessage = {
             id: `msg-${messageIdCounter.current++}`,
             type: 'reaction-fast',
-            message: getRandomMessage(getReactionFastMessages(language)),
+            message: getRandomMessage(messagePools.fast),
             color: '#00ff9f',
             timestamp: Date.now(),
           };
@@ -185,7 +198,7 @@ export const PerformanceFeedback = memo(function PerformanceFeedback({
           newMessage = {
             id: `msg-${messageIdCounter.current++}`,
             type: 'reaction-slow',
-            message: getRandomMessage(getReactionSlowMessages(language)),
+            message: getRandomMessage(messagePools.slow),
             color: '#ffff66',
             timestamp: Date.now(),
           };
@@ -203,7 +216,7 @@ export const PerformanceFeedback = memo(function PerformanceFeedback({
         comboMessage = {
           id: `msg-${messageIdCounter.current++}`,
           type: 'combo-5',
-          message: getRandomMessage(getCombo5Messages(language)),
+          message: getRandomMessage(messagePools.combo5),
           color: '#00f0ff',
           timestamp: Date.now(),
         };
@@ -212,7 +225,7 @@ export const PerformanceFeedback = memo(function PerformanceFeedback({
         comboMessage = {
           id: `msg-${messageIdCounter.current++}`,
           type: 'combo-10',
-          message: getRandomMessage(getCombo10Messages(language)),
+          message: getRandomMessage(messagePools.combo10),
           color: '#00ffff',
           timestamp: Date.now(),
         };
@@ -221,7 +234,7 @@ export const PerformanceFeedback = memo(function PerformanceFeedback({
         comboMessage = {
           id: `msg-${messageIdCounter.current++}`,
           type: 'combo-20',
-          message: getRandomMessage(getCombo20Messages(language)),
+          message: getRandomMessage(messagePools.combo20),
           color: '#ff00ff',
           timestamp: Date.now(),
         };
@@ -230,7 +243,7 @@ export const PerformanceFeedback = memo(function PerformanceFeedback({
         comboMessage = {
           id: `msg-${messageIdCounter.current++}`,
           type: 'combo-30',
-          message: getRandomMessage(getCombo30Messages(language)),
+          message: getRandomMessage(messagePools.combo30),
           color: '#ff00ff',
           timestamp: Date.now(),
         };
@@ -239,7 +252,7 @@ export const PerformanceFeedback = memo(function PerformanceFeedback({
         comboMessage = {
           id: `msg-${messageIdCounter.current++}`,
           type: 'combo-50',
-          message: getRandomMessage(getCombo50Messages(language)),
+          message: getRandomMessage(messagePools.combo50),
           color: '#ff00ff',
           timestamp: Date.now(),
         };
@@ -248,7 +261,7 @@ export const PerformanceFeedback = memo(function PerformanceFeedback({
         comboMessage = {
           id: `msg-${messageIdCounter.current++}`,
           type: 'combo-10',
-          message: getRandomMessage(getComboHighMessages(language)),
+          message: getRandomMessage(messagePools.comboHigh),
           color: '#ff00ff',
           timestamp: Date.now(),
         };
@@ -321,7 +334,7 @@ export const PerformanceFeedback = memo(function PerformanceFeedback({
     if (score !== lastProcessedScoreRef.current) {
       lastProcessedScoreRef.current = score;
     }
-  }, [reactionTime, combo, score, isNewBestReaction]);
+  }, [reactionTime, combo, score, isNewBestReaction, messagePools]);
 
   // Remove message after it expires
   useEffect(() => {

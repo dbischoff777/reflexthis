@@ -425,7 +425,7 @@ const de: TranslationDict = {
   'keybindings.button': 'BUTTON',
   'keybindings.pressKey': 'TASTE DRÜCKEN',
   'keybindings.reset': 'AUF STANDARD ZURÜCKSETZEN',
-  'keybindings.numpad': 'ZIFERNBLOCK-VOREINSTELLUNG',
+  'keybindings.numpad': 'ZIFFERNBLOCK-VOREINSTELLUNG',
   'keybindings.close': 'SCHLIESSEN',
   'keybindings.defaultLayout': 'Standard-Layout:',
   'keybindings.customize': 'Du kannst diese an deine Tastaturbelegung oder Präferenz anpassen.',

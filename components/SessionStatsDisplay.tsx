@@ -55,11 +55,24 @@ export function SessionStatsDisplay({ stats, hideTitle = false }: SessionStatsDi
   };
   if (stats.totalGames === 0) {
     return (
-      <div className="p-6 bg-card border-4 border-border text-center pixel-border">
+      <div className="p-6 border-4 text-center pixel-border" style={{ backgroundColor: '#003A63', borderColor: '#3E7CAC' }}>
         <p className="text-muted-foreground mb-4 wrap-break-word">{t(language, 'stats.noGames')}</p>
         <Link
           href="/game"
-          className="inline-block px-6 py-2 border-4 border-primary bg-primary text-primary-foreground font-semibold hover:border-secondary hover:bg-secondary transition-all duration-100 pixel-border"
+          className="inline-block px-6 py-2 border-4 font-semibold transition-all duration-100 pixel-border"
+          style={{
+            borderColor: '#3E7CAC',
+            backgroundColor: '#3E7CAC',
+            color: '#ffffff',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#ff00ff';
+            e.currentTarget.style.borderColor = '#ff00ff';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = '#3E7CAC';
+            e.currentTarget.style.borderColor = '#3E7CAC';
+          }}
         >
           {t(language, 'stats.playFirst')}
         </Link>
@@ -81,23 +94,28 @@ export function SessionStatsDisplay({ stats, hideTitle = false }: SessionStatsDi
   ];
 
   return (
-    <div className={hideTitle ? 'w-full' : 'p-4 sm:p-6 bg-card border-4 border-border pixel-border'}>
+    <div className={hideTitle ? 'w-full min-w-full block' : 'p-4 sm:p-6 border-4 pixel-border w-full block'} style={hideTitle ? { width: '100%', minWidth: '100%', maxWidth: '100%', display: 'block', boxSizing: 'border-box' } : { backgroundColor: '#003A63', borderColor: '#3E7CAC', width: '100%', minWidth: '100%', maxWidth: '100%', display: 'block', boxSizing: 'border-box' }}>
       {!hideTitle && (
-        <h3 className="text-lg sm:text-xl font-bold text-primary mb-4">{t(language, 'stats.title')}</h3>
+        <h3 className="text-lg sm:text-xl font-bold text-foreground mb-4">{t(language, 'stats.title')}</h3>
       )}
       
       {/* Tabs */}
-      <div className="flex gap-1 sm:gap-2 mb-4 border-b border-border/70">
+      <div className="flex gap-1 sm:gap-2 mb-4 border-b" style={{ borderColor: '#3E7CAC' }}>
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={cn(
-              'relative px-3 sm:px-4 py-2 text-sm font-semibold transition-all duration-200 rounded-t-md',
+              'relative flex-1 px-3 sm:px-4 py-2 text-sm font-semibold transition-all duration-200 rounded-t-md',
               activeTab === tab.id
-                ? 'text-primary bg-primary/15 border-b-2 border-primary shadow-[0_3px_0_rgba(0,255,255,0.7)]'
-                : 'text-muted-foreground hover:text-foreground hover:bg-primary/5 border-b-2 border-transparent'
+                ? 'text-foreground border-b-2'
+                : 'text-foreground/70 hover:text-foreground border-b-2 border-transparent'
             )}
+            style={activeTab === tab.id ? {
+              backgroundColor: 'rgba(62, 124, 172, 0.2)',
+              borderBottomColor: '#3E7CAC',
+              boxShadow: '0 3px 0 rgba(62, 124, 172, 0.5)',
+            } : {}}
             aria-selected={activeTab === tab.id}
             role="tab"
           >
@@ -107,40 +125,40 @@ export function SessionStatsDisplay({ stats, hideTitle = false }: SessionStatsDi
       </div>
 
       {/* Tab content - flexible height to avoid scrollbars */}
-      <div className="min-h-0 w-full overflow-hidden">
+      <div className="min-h-0 w-full block" style={{ width: '100%', minWidth: '100%', maxWidth: '100%', flexShrink: 0, display: 'block', boxSizing: 'border-box' }}>
         {/* Overview Tab */}
         {activeTab === 'overview' && (
-          <div className="space-y-3 sm:space-y-4 w-full">
+          <div className="space-y-3 sm:space-y-4 w-full" style={{ width: '100%', minWidth: '100%' }}>
             {/* Overview Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
-          <div className="bg-card p-2 sm:p-3 border-2 border-border pixel-border">
+          <div className="p-2 sm:p-3 border-2 pixel-border" style={{ backgroundColor: 'rgba(0, 58, 99, 0.6)', borderColor: '#3E7CAC' }}>
             <p className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">{t(language, 'stats.overview.totalGames')}</p>
-            <p className="text-xl sm:text-2xl font-bold text-primary">{stats.totalGames}</p>
+            <p className="text-xl sm:text-2xl font-bold text-foreground">{stats.totalGames}</p>
           </div>
           
-          <div className="bg-card p-2 sm:p-3 border-2 border-border pixel-border">
+          <div className="p-2 sm:p-3 border-2 pixel-border" style={{ backgroundColor: 'rgba(0, 58, 99, 0.6)', borderColor: '#3E7CAC' }}>
             <p className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">{t(language, 'stats.overview.playtime')}</p>
-            <p className="text-xl sm:text-2xl font-bold text-primary">{formatPlaytime(stats.totalPlaytime)}</p>
+            <p className="text-xl sm:text-2xl font-bold text-foreground">{formatPlaytime(stats.totalPlaytime)}</p>
           </div>
           
-          <div className="bg-card p-2 sm:p-3 border-2 border-border pixel-border">
+          <div className="p-2 sm:p-3 border-2 pixel-border" style={{ backgroundColor: 'rgba(0, 58, 99, 0.6)', borderColor: '#3E7CAC' }}>
             <p className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">{t(language, 'stats.overview.today')}</p>
             <p className="text-xl sm:text-2xl font-bold text-secondary">{stats.gamesPlayedToday}</p>
           </div>
           
-          <div className="bg-card p-2 sm:p-3 border-2 border-border pixel-border">
+          <div className="p-2 sm:p-3 border-2 pixel-border" style={{ backgroundColor: 'rgba(0, 58, 99, 0.6)', borderColor: '#3E7CAC' }}>
             <p className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">{t(language, 'stats.overview.bestScore')}</p>
-            <p className="text-xl sm:text-2xl font-bold text-primary">{stats.bestScore}</p>
+            <p className="text-xl sm:text-2xl font-bold text-foreground">{stats.bestScore}</p>
           </div>
           
-          <div className="bg-card p-2 sm:p-3 border-2 border-border pixel-border">
+          <div className="p-2 sm:p-3 border-2 pixel-border" style={{ backgroundColor: 'rgba(0, 58, 99, 0.6)', borderColor: '#3E7CAC' }}>
             <p className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">{t(language, 'stats.overview.bestCombo')}</p>
             <p className="text-xl sm:text-2xl font-bold text-secondary">{stats.bestCombo}x</p>
           </div>
           
-          <div className="bg-card p-2 sm:p-3 border-2 border-border pixel-border">
+          <div className="p-2 sm:p-3 border-2 pixel-border" style={{ backgroundColor: 'rgba(0, 58, 99, 0.6)', borderColor: '#3E7CAC' }}>
             <p className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">{t(language, 'stats.overview.avgScore')}</p>
-            <p className="text-xl sm:text-2xl font-bold text-primary">{Math.round(stats.averageScore)}</p>
+            <p className="text-xl sm:text-2xl font-bold text-foreground">{Math.round(stats.averageScore)}</p>
           </div>
             </div>
 
@@ -148,16 +166,16 @@ export function SessionStatsDisplay({ stats, hideTitle = false }: SessionStatsDi
             {(stats.averageReactionTime !== null || stats.fastestReactionTime !== null) && (
               <div className="grid grid-cols-2 gap-2 sm:gap-3">
             {stats.averageReactionTime !== null && (
-              <div className="bg-card p-2 sm:p-3 border-2 border-border pixel-border">
+              <div className="p-2 sm:p-3 border-2 pixel-border" style={{ backgroundColor: 'rgba(0, 58, 99, 0.6)', borderColor: '#3E7CAC' }}>
                 <p className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">{t(language, 'stats.overview.avgReaction')}</p>
-                <p className="text-lg sm:text-xl font-bold text-primary">
+                <p className="text-lg sm:text-xl font-bold text-foreground">
                   {formatTime(stats.averageReactionTime)}
                 </p>
               </div>
             )}
             
             {stats.fastestReactionTime !== null && (
-              <div className="bg-card p-2 sm:p-3 border-2 border-border pixel-border">
+              <div className="p-2 sm:p-3 border-2 pixel-border" style={{ backgroundColor: 'rgba(0, 58, 99, 0.6)', borderColor: '#3E7CAC' }}>
                 <p className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">{t(language, 'stats.overview.fastest')}</p>
                 <p className="text-lg sm:text-xl font-bold text-chart-3">
                   {formatTime(stats.fastestReactionTime)}
@@ -170,9 +188,9 @@ export function SessionStatsDisplay({ stats, hideTitle = false }: SessionStatsDi
             {/* Rank & Recommendation */}
             {meta.rank && (
               <div className="grid gap-2 sm:gap-3 sm:grid-cols-[minmax(0,1.2fr)_minmax(0,1.6fr)]">
-            <div className="p-2 sm:p-3 bg-card border-2 border-border pixel-border text-left">
+            <div className="p-2 sm:p-3 border-2 pixel-border text-left" style={{ backgroundColor: 'rgba(0, 58, 99, 0.6)', borderColor: '#3E7CAC' }}>
               <p className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">{t(language, 'stats.overview.currentRank')}</p>
-              <p className="text-base sm:text-lg font-bold text-primary">{meta.rank.name}</p>
+              <p className="text-base sm:text-lg font-bold text-foreground">{meta.rank.name}</p>
               {meta.rank.nextName && meta.rank.nextMinScore !== undefined && (
                 <p className="mt-0.5 sm:mt-1 text-[10px] sm:text-[11px] text-foreground/70">
                   {t(language, 'stats.overview.nextRank')} <span className="font-semibold">{meta.rank.nextName}</span> {t(language, 'stats.overview.atScore')}{' '}
@@ -181,8 +199,8 @@ export function SessionStatsDisplay({ stats, hideTitle = false }: SessionStatsDi
               )}
             </div>
             {meta.recommendation && (
-              <div className="p-2 sm:p-3 bg-card border-2 border-primary/60 pixel-border text-left">
-                <p className="text-[10px] sm:text-xs font-semibold text-primary mb-0.5 sm:mb-1 uppercase tracking-wide">
+              <div className="p-2 sm:p-3 border-2 pixel-border text-left" style={{ backgroundColor: 'rgba(0, 58, 99, 0.6)', borderColor: '#3E7CAC' }}>
+                <p className="text-[10px] sm:text-xs font-semibold text-foreground mb-0.5 sm:mb-1 uppercase tracking-wide">
                   {t(language, 'stats.overview.suggestedGoal')}
                 </p>
                 <p className="text-[10px] sm:text-xs text-foreground/80 wrap-break-word">
@@ -197,13 +215,9 @@ export function SessionStatsDisplay({ stats, hideTitle = false }: SessionStatsDi
 
         {/* Achievements Tab */}
         {activeTab === 'achievements' && (
-          <div className="space-y-2 sm:space-y-3 w-full flex flex-col">
+          <div className="space-y-3 sm:space-y-4 w-full" style={{ width: '100%', minWidth: '100%' }}>
             {meta.achievements.length > 0 ? (
-              <>
-                <h4 className="text-xs sm:text-sm font-semibold text-primary shrink-0">
-                  {t(language, 'stats.achievements.title')}
-                </h4>
-                <div className="space-y-1.5 sm:space-y-2 max-h-[calc(100vh-400px)] sm:max-h-[calc(100vh-450px)] overflow-y-auto overflow-x-hidden rounded-md bg-background/10 border border-border/60 p-2 sm:p-3">
+              <div className="block w-full space-y-1.5 sm:space-y-2 max-h-[calc(100vh-400px)] sm:max-h-[calc(100vh-450px)] overflow-y-auto rounded-md p-2 sm:p-3" style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)', borderColor: '#3E7CAC', borderWidth: '1px', borderStyle: 'solid', width: '100%', minWidth: '100%', maxWidth: '100%', flexShrink: 0, boxSizing: 'border-box' }}>
                   {meta.achievements.map((a) => {
                     const progressPercent = Math.round((a.current / a.target) * 100);
                     const rarityLabel = t(language, `rarity.${a.rarity}`);
@@ -211,9 +225,10 @@ export function SessionStatsDisplay({ stats, hideTitle = false }: SessionStatsDi
                       <div
                         key={a.id}
                         className={cn(
-                          'p-2 sm:p-3 border border-border/60 bg-card/80 rounded pixel-border',
+                          'p-2 sm:p-3 border rounded pixel-border w-full',
                           'text-xs sm:text-[13px] flex flex-col gap-1.5'
                         )}
+                        style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 58, 99, 0.5)', width: '100%' }}
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex items-start gap-2 min-w-0">
@@ -222,7 +237,7 @@ export function SessionStatsDisplay({ stats, hideTitle = false }: SessionStatsDi
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-0.5">
-                                <span className="font-semibold text-primary wrap-break-word">
+                                <span className="font-semibold text-foreground wrap-break-word">
                                   {(() => {
                                     const key = `achievement.${a.id}.title`;
                                     const translated = t(language, key);
@@ -245,7 +260,7 @@ export function SessionStatsDisplay({ stats, hideTitle = false }: SessionStatsDi
                             </div>
                           </div>
                           <div className="flex flex-col items-end gap-0.5 shrink-0">
-                            <span className="text-[10px] px-1.5 py-0.5 border border-border/60 bg-background/60 rounded uppercase tracking-wide">
+                            <span className="text-[10px] px-1.5 py-0.5 border rounded uppercase tracking-wide" style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 0, 0, 0.4)' }}>
                               {rarityLabel}
                             </span>
                             <span className="text-[11px] text-muted-foreground font-mono">
@@ -254,7 +269,7 @@ export function SessionStatsDisplay({ stats, hideTitle = false }: SessionStatsDi
                           </div>
                         </div>
                         {!a.achieved && (
-                          <div className="h-1.5 bg-background/80 border border-border mt-1 overflow-hidden rounded-full">
+                          <div className="h-1.5 border mt-1 overflow-hidden rounded-full" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)', borderColor: '#3E7CAC', borderWidth: '1px', borderStyle: 'solid' }}>
                             <div
                               className={cn(
                                 'h-full transition-all',
@@ -270,10 +285,9 @@ export function SessionStatsDisplay({ stats, hideTitle = false }: SessionStatsDi
                       </div>
                     );
                   })}
-                </div>
-              </>
+              </div>
             ) : (
-              <div className="flex-1 flex items-center justify-center">
+              <div className="flex items-center justify-center min-h-[200px]">
                 <p className="text-sm text-muted-foreground text-center">
                   {t(language, 'stats.achievements.noAchievements')}
                 </p>
@@ -284,14 +298,10 @@ export function SessionStatsDisplay({ stats, hideTitle = false }: SessionStatsDi
 
         {/* History Tab */}
         {activeTab === 'history' && (
-          <div className="space-y-2 sm:space-y-3 w-full flex flex-col">
+          <div className="space-y-3 sm:space-y-4 w-full" style={{ width: '100%', minWidth: '100%' }}>
             {stats.recentGames.length > 0 ? (
-              <>
-                <h4 className="text-xs sm:text-sm font-semibold text-primary shrink-0">
-                  {t(language, 'stats.history.title')}
-                </h4>
-                <div className="space-y-1.5 sm:space-y-2 max-h-[calc(100vh-400px)] sm:max-h-[calc(100vh-450px)] overflow-y-auto overflow-x-hidden rounded-md bg-background/10 border border-border/60 p-2 sm:p-3">
-                  <div className="hidden sm:grid grid-cols-[minmax(0,1.2fr)_minmax(0,1.1fr)_auto] text-[11px] uppercase tracking-wide text-muted-foreground/80 px-2 pb-1 border-b border-border/40">
+              <div className="block w-full space-y-1.5 sm:space-y-2 max-h-[calc(100vh-400px)] sm:max-h-[calc(100vh-450px)] overflow-y-auto rounded-md p-2 sm:p-3" style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)', borderColor: '#3E7CAC', borderWidth: '1px', borderStyle: 'solid', width: '100%', minWidth: '100%', maxWidth: '100%', flexShrink: 0, boxSizing: 'border-box' }}>
+                  <div className="hidden sm:grid grid-cols-[3fr_2fr_2fr] text-[11px] uppercase tracking-wide text-foreground/60 px-2 pb-1" style={{ borderBottomColor: '#3E7CAC', borderBottomWidth: '1px', borderBottomStyle: 'solid', width: '100%', minWidth: '100%', maxWidth: '100%', display: 'grid', boxSizing: 'border-box' }}>
                     <span>{t(language, 'stats.history.scoreCombo')}</span>
                     <span>{t(language, 'stats.history.reaction')}</span>
                     <span className="text-right">{t(language, 'stats.history.date')}</span>
@@ -299,10 +309,11 @@ export function SessionStatsDisplay({ stats, hideTitle = false }: SessionStatsDi
                   {stats.recentGames.map((game) => (
                     <div
                       key={game.id}
-                      className="grid grid-cols-[minmax(0,1.2fr)_minmax(0,1.1fr)_auto] items-center gap-2 px-2 py-1.5 bg-card/80 border border-border/60 rounded text-xs sm:text-sm"
+                      className="grid grid-cols-[3fr_2fr_2fr] items-center gap-2 px-2 py-1.5 border rounded text-xs sm:text-sm"
+                      style={{ backgroundColor: 'rgba(0, 58, 99, 0.5)', borderColor: '#3E7CAC', width: '100%', minWidth: '100%', maxWidth: '100%', display: 'grid', boxSizing: 'border-box' }}
                     >
                       <div className="flex items-center gap-2 min-w-0">
-                        <span className="font-bold text-primary">
+                        <span className="font-bold text-foreground">
                           {game.score}
                         </span>
                         {game.bestCombo > 0 && (
@@ -321,10 +332,9 @@ export function SessionStatsDisplay({ stats, hideTitle = false }: SessionStatsDi
                       </span>
                     </div>
                   ))}
-                </div>
-              </>
+              </div>
             ) : (
-              <div className="flex-1 flex items-center justify-center">
+              <div className="flex items-center justify-center min-h-[200px]">
                 <p className="text-sm text-muted-foreground text-center">
                   {t(language, 'stats.history.noHistory')}
                 </p>

@@ -522,14 +522,14 @@ function LandingPageContent() {
               setShowSettings(false);
             }}
             draggable={false}
-            style={showMode ? {
+            style={showMode || showDifficulty ? {
               background: 'linear-gradient(135deg, #1e3a5f 0%, #000000 100%)',
               borderColor: '#1e3a5f',
             } : {
               borderColor: '#3E7CAC',
               backgroundColor: '#003A63',
             }}
-            className={showMode 
+            className={showMode || showDifficulty
               ? "inline-flex items-center justify-center h-8 px-3 text-xs sm:text-sm font-semibold border-2 text-foreground/70 hover:text-foreground hover:opacity-90 transition-all duration-100 focus:outline-none focus:ring-1 focus:ring-primary pixel-border"
               : "inline-flex items-center justify-center min-h-[56px] px-6 py-3 text-base sm:text-lg font-semibold border-4 text-foreground hover:opacity-90 transition-all duration-100 focus:outline-none focus:ring-2 focus:ring-primary pixel-border"
             }
@@ -545,14 +545,14 @@ function LandingPageContent() {
               setShowMode(false);
             }}
             draggable={false}
-            style={showMode ? {
+            style={showMode || showDifficulty ? {
               background: 'linear-gradient(135deg, #1e3a5f 0%, #000000 100%)',
               borderColor: '#1e3a5f',
             } : {
               borderColor: '#3E7CAC',
               backgroundColor: '#003A63',
             }}
-            className={showMode 
+            className={showMode || showDifficulty
               ? "inline-flex items-center justify-center h-8 px-3 text-xs sm:text-sm font-semibold border-2 text-foreground/70 hover:text-foreground hover:opacity-90 transition-all duration-100 focus:outline-none focus:ring-1 focus:ring-primary pixel-border"
               : "inline-flex items-center justify-center min-h-[56px] px-6 py-3 text-base sm:text-lg font-semibold border-4 text-foreground hover:opacity-90 transition-all duration-100 focus:outline-none focus:ring-2 focus:ring-primary pixel-border"
             }
@@ -563,14 +563,14 @@ function LandingPageContent() {
           <button
             onClick={() => setShowExitConfirm(true)}
             draggable={false}
-            style={showMode ? {
+            style={showMode || showDifficulty ? {
               background: 'linear-gradient(135deg, #1e3a5f 0%, #000000 100%)',
               borderColor: '#1e3a5f',
             } : {
               borderColor: '#3E7CAC',
               backgroundColor: '#003A63',
             }}
-            className={showMode 
+            className={showMode || showDifficulty
               ? "inline-flex items-center justify-center h-8 px-3 text-xs sm:text-sm font-semibold border-2 text-foreground/70 hover:text-foreground hover:opacity-90 transition-all duration-100 focus:outline-none focus:ring-1 focus:ring-primary pixel-border"
               : "inline-flex items-center justify-center min-h-[56px] px-6 py-3 text-base sm:text-lg font-semibold border-4 text-foreground hover:opacity-90 transition-all duration-100 focus:outline-none focus:ring-2 focus:ring-primary pixel-border"
             }

@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode, useMemo } from 'react';
 import { playSound, preloadSounds, playBackgroundMusic, stopBackgroundMusic, setBackgroundMusicVolume, setSoundEffectsVolume, playMenuMusic, stopMenuMusic, setMenuMusicVolume, getIsGamePageActive } from '@/lib/soundUtils';
 import { getComboMultiplier } from '@/lib/gameUtils';
 import { DifficultyPreset, DIFFICULTY_PRESETS } from '@/lib/difficulty';
@@ -8,6 +8,7 @@ import { saveGameSession, calculateSessionStatistics, SessionStatistics, getGame
 import { GameMode } from '@/lib/gameModes';
 import type { Language } from '@/lib/i18n';
 import { checkAndUnlockAchievements } from '@/lib/achievements';
+import { localStorageBatcher } from '@/lib/localStorageBatch';
 
 export interface ReactionTimeStats {
   current: number | null;
@@ -120,19 +121,19 @@ export function GameProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
       // Load sound preference
       if (typeof window !== 'undefined') {
-        const savedSound = localStorage.getItem(STORAGE_KEYS.SOUND_ENABLED);
+        const savedSound = localStorageBatcher.getItem(STORAGE_KEYS.SOUND_ENABLED);
         if (savedSound !== null) {
           setSoundEnabled(savedSound === 'true');
         }
 
         // Load music preference
-        const savedMusic = localStorage.getItem(STORAGE_KEYS.MUSIC_ENABLED);
+        const savedMusic = localStorageBatcher.getItem(STORAGE_KEYS.MUSIC_ENABLED);
         if (savedMusic !== null) {
           setMusicEnabled(savedMusic === 'true');
         }
 
         // Load high score
-        const savedHighScore = localStorage.getItem(STORAGE_KEYS.HIGH_SCORE);
+        const savedHighScore = localStorageBatcher.getItem(STORAGE_KEYS.HIGH_SCORE);
         if (savedHighScore !== null) {
           const parsed = parseInt(savedHighScore, 10);
           if (!isNaN(parsed)) {
@@ -141,7 +142,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         }
 
         // Load best combo
-        const savedBestCombo = localStorage.getItem(STORAGE_KEYS.BEST_COMBO);
+        const savedBestCombo = localStorageBatcher.getItem(STORAGE_KEYS.BEST_COMBO);
         if (savedBestCombo !== null) {
           const parsed = parseInt(savedBestCombo, 10);
           if (!isNaN(parsed)) {
@@ -150,13 +151,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
         }
 
         // Load difficulty preference
-        const savedDifficulty = localStorage.getItem(STORAGE_KEYS.DIFFICULTY);
+        const savedDifficulty = localStorageBatcher.getItem(STORAGE_KEYS.DIFFICULTY);
         if (savedDifficulty && ['easy', 'medium', 'hard', 'custom', 'nightmare'].includes(savedDifficulty)) {
           setDifficulty(savedDifficulty as DifficultyPreset);
         }
 
         // Load game mode preference
-        const savedMode = localStorage.getItem(STORAGE_KEYS.GAME_MODE);
+        const savedMode = localStorageBatcher.getItem(STORAGE_KEYS.GAME_MODE);
         if (
           savedMode &&
           ['reflex', 'sequence', 'survival', 'nightmare', 'oddOneOut'].includes(savedMode)
@@ -165,8 +166,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
         }
 
         // Load volumes
-        const savedSoundVolume = localStorage.getItem(STORAGE_KEYS.SOUND_VOLUME);
-        const savedMusicVolume = localStorage.getItem(STORAGE_KEYS.MUSIC_VOLUME);
+        const savedSoundVolume = localStorageBatcher.getItem(STORAGE_KEYS.SOUND_VOLUME);
+        const savedMusicVolume = localStorageBatcher.getItem(STORAGE_KEYS.MUSIC_VOLUME);
         if (savedSoundVolume !== null) {
           const parsed = parseFloat(savedSoundVolume);
           if (!isNaN(parsed)) {
@@ -189,27 +190,27 @@ export function GameProvider({ children }: { children: ReactNode }) {
         }
 
         // Load visual comfort settings
-        const savedScreenShake = localStorage.getItem(STORAGE_KEYS.SCREEN_SHAKE_ENABLED);
+        const savedScreenShake = localStorageBatcher.getItem(STORAGE_KEYS.SCREEN_SHAKE_ENABLED);
         if (savedScreenShake !== null) {
           setScreenShakeEnabledState(savedScreenShake === 'true');
         }
 
-        const savedScreenFlash = localStorage.getItem(STORAGE_KEYS.SCREEN_FLASH_ENABLED);
+        const savedScreenFlash = localStorageBatcher.getItem(STORAGE_KEYS.SCREEN_FLASH_ENABLED);
         if (savedScreenFlash !== null) {
           setScreenFlashEnabledState(savedScreenFlash === 'true');
         }
 
-        const savedReducedEffects = localStorage.getItem(STORAGE_KEYS.REDUCED_EFFECTS);
+        const savedReducedEffects = localStorageBatcher.getItem(STORAGE_KEYS.REDUCED_EFFECTS);
         if (savedReducedEffects !== null) {
           setReducedEffectsState(savedReducedEffects === 'true');
         }
 
-        const savedHighContrast = localStorage.getItem(STORAGE_KEYS.HIGH_CONTRAST_MODE);
+        const savedHighContrast = localStorageBatcher.getItem(STORAGE_KEYS.HIGH_CONTRAST_MODE);
         if (savedHighContrast !== null) {
           setHighContrastModeState(savedHighContrast === 'true');
         }
 
-        const savedLanguage = localStorage.getItem(STORAGE_KEYS.LANGUAGE) as Language | null;
+        const savedLanguage = localStorageBatcher.getItem(STORAGE_KEYS.LANGUAGE) as Language | null;
         if (savedLanguage && (savedLanguage === 'en' || savedLanguage === 'de')) {
           setLanguageState(savedLanguage);
         }
@@ -228,22 +229,16 @@ export function GameProvider({ children }: { children: ReactNode }) {
       if (!newValue) {
         setSoundVolumeState(0);
         setSoundEffectsVolume(0);
-        if (typeof window !== 'undefined') {
-          localStorage.setItem(STORAGE_KEYS.SOUND_VOLUME, String(0));
-        }
+        localStorageBatcher.setItem(STORAGE_KEYS.SOUND_VOLUME, String(0));
       } else if (soundVolume === 0) {
         // When turning on from 0 volume, restore to a reasonable default
         const defaultVolume = 0.7;
         setSoundVolumeState(defaultVolume);
         setSoundEffectsVolume(defaultVolume);
-        if (typeof window !== 'undefined') {
-          localStorage.setItem(STORAGE_KEYS.SOUND_VOLUME, String(defaultVolume));
-        }
+        localStorageBatcher.setItem(STORAGE_KEYS.SOUND_VOLUME, String(defaultVolume));
       }
 
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(STORAGE_KEYS.SOUND_ENABLED, String(newValue));
-      }
+      localStorageBatcher.setItem(STORAGE_KEYS.SOUND_ENABLED, String(newValue));
       return newValue;
     });
   }, [soundVolume]);
@@ -260,23 +255,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
         setMusicVolumeState(0);
         setBackgroundMusicVolume(0);
         setMenuMusicVolume(0);
-        if (typeof window !== 'undefined') {
-          localStorage.setItem(STORAGE_KEYS.MUSIC_VOLUME, String(0));
-        }
+        localStorageBatcher.setItem(STORAGE_KEYS.MUSIC_VOLUME, String(0));
       } else if (musicVolume === 0) {
         // When turning on from 0 volume, restore to a reasonable default
         const defaultVolume = 0.3;
         setMusicVolumeState(defaultVolume);
         setBackgroundMusicVolume(defaultVolume);
         setMenuMusicVolume(defaultVolume);
-        if (typeof window !== 'undefined') {
-          localStorage.setItem(STORAGE_KEYS.MUSIC_VOLUME, String(defaultVolume));
-        }
+        localStorageBatcher.setItem(STORAGE_KEYS.MUSIC_VOLUME, String(defaultVolume));
       }
 
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(STORAGE_KEYS.MUSIC_ENABLED, String(newValue));
-      }
+      localStorageBatcher.setItem(STORAGE_KEYS.MUSIC_ENABLED, String(newValue));
       
       // Context-aware music control
       if (isOnGamePage) {
@@ -304,10 +293,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setSoundVolumeState(clamped);
     // Update enabled flag based on volume
     setSoundEnabled(clamped > 0);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEYS.SOUND_ENABLED, String(clamped > 0));
-      localStorage.setItem(STORAGE_KEYS.SOUND_VOLUME, String(clamped));
-    }
+    localStorageBatcher.setItem(STORAGE_KEYS.SOUND_ENABLED, String(clamped > 0));
+    localStorageBatcher.setItem(STORAGE_KEYS.SOUND_VOLUME, String(clamped));
     setSoundEffectsVolume(clamped);
   }, []);
 
@@ -319,10 +306,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
     // Update enabled flag based on volume
     const isEnabled = clamped > 0;
     setMusicEnabled(isEnabled);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEYS.MUSIC_ENABLED, String(isEnabled));
-      localStorage.setItem(STORAGE_KEYS.MUSIC_VOLUME, String(clamped));
-    }
+    localStorageBatcher.setItem(STORAGE_KEYS.MUSIC_ENABLED, String(isEnabled));
+    localStorageBatcher.setItem(STORAGE_KEYS.MUSIC_VOLUME, String(clamped));
     
     // Context-aware volume updates - only update the volume for the currently active music
     if (isOnGamePage) {
@@ -353,53 +338,39 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const setScreenShakeEnabled = useCallback((enabled: boolean) => {
     setScreenShakeEnabledState(enabled);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEYS.SCREEN_SHAKE_ENABLED, String(enabled));
-    }
+    localStorageBatcher.setItem(STORAGE_KEYS.SCREEN_SHAKE_ENABLED, String(enabled));
   }, []);
 
   const setScreenFlashEnabled = useCallback((enabled: boolean) => {
     setScreenFlashEnabledState(enabled);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEYS.SCREEN_FLASH_ENABLED, String(enabled));
-    }
+    localStorageBatcher.setItem(STORAGE_KEYS.SCREEN_FLASH_ENABLED, String(enabled));
   }, []);
 
   const setReducedEffects = useCallback((enabled: boolean) => {
     setReducedEffectsState(enabled);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEYS.REDUCED_EFFECTS, String(enabled));
-    }
+    localStorageBatcher.setItem(STORAGE_KEYS.REDUCED_EFFECTS, String(enabled));
   }, []);
 
   const setHighContrastMode = useCallback((enabled: boolean) => {
     setHighContrastModeState(enabled);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEYS.HIGH_CONTRAST_MODE, String(enabled));
-    }
+    localStorageBatcher.setItem(STORAGE_KEYS.HIGH_CONTRAST_MODE, String(enabled));
   }, []);
 
   const setLanguage = useCallback((newLanguage: Language) => {
     setLanguageState(newLanguage);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEYS.LANGUAGE, newLanguage);
-    }
+    localStorageBatcher.setItem(STORAGE_KEYS.LANGUAGE, newLanguage);
   }, []);
 
   // Set difficulty preset
   const handleSetDifficulty = useCallback((newDifficulty: DifficultyPreset) => {
     setDifficulty(newDifficulty);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEYS.DIFFICULTY, newDifficulty);
-    }
+    localStorageBatcher.setItem(STORAGE_KEYS.DIFFICULTY, newDifficulty);
   }, []);
 
   // Set game mode
   const handleSetGameMode = useCallback((newMode: GameMode) => {
     setGameMode(newMode);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEYS.GAME_MODE, newMode);
-    }
+    localStorageBatcher.setItem(STORAGE_KEYS.GAME_MODE, newMode);
   }, []);
 
   const pauseGame = useCallback(() => {
@@ -435,9 +406,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       // Update best combo
       if (newCombo > bestCombo) {
         setBestCombo(newCombo);
-        if (typeof window !== 'undefined') {
-          localStorage.setItem(STORAGE_KEYS.BEST_COMBO, String(newCombo));
-        }
+        localStorageBatcher.setItem(STORAGE_KEYS.BEST_COMBO, String(newCombo));
       }
       
       // Calculate score with combo multiplier
@@ -487,15 +456,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   // Check and update high score when game ends, and save session
   useEffect(() => {
-    if (gameOver && typeof window !== 'undefined') {
+      if (gameOver && typeof window !== 'undefined') {
       setIsPaused(false);
       const currentHighScore = parseInt(
-        localStorage.getItem(STORAGE_KEYS.HIGH_SCORE) || '0',
+        localStorageBatcher.getItem(STORAGE_KEYS.HIGH_SCORE) || '0',
         10
       );
       
       if (score > currentHighScore) {
-        localStorage.setItem(STORAGE_KEYS.HIGH_SCORE, String(score));
+        localStorageBatcher.setItem(STORAGE_KEYS.HIGH_SCORE, String(score));
         setHighScore(score);
       }
       
@@ -515,24 +484,34 @@ export function GameProvider({ children }: { children: ReactNode }) {
           duration,
         });
         
-        // Update session statistics
-        const updatedStats = calculateSessionStatistics();
-        setSessionStatistics(updatedStats);
-        
-        // Check and unlock achievements
-        const sessions = getGameSessions();
-        const newlyUnlocked = checkAndUnlockAchievements(updatedStats, sessions);
-        if (newlyUnlocked.length > 0) {
-          setNewlyUnlockedAchievements(newlyUnlocked);
-          // Clear any existing timeout before creating a new one
-          if (achievementClearTimeoutRef.current) {
-            clearTimeout(achievementClearTimeoutRef.current);
+        // Update session statistics - use requestIdleCallback for non-critical updates
+        const updateStats = () => {
+          const updatedStats = calculateSessionStatistics();
+          setSessionStatistics(updatedStats);
+          
+          // Check and unlock achievements
+          const sessions = getGameSessions();
+          const newlyUnlocked = checkAndUnlockAchievements(updatedStats, sessions);
+          if (newlyUnlocked.length > 0) {
+            setNewlyUnlockedAchievements(newlyUnlocked);
+            // Clear any existing timeout before creating a new one
+            if (achievementClearTimeoutRef.current) {
+              clearTimeout(achievementClearTimeoutRef.current);
+            }
+            // Clear after 5 seconds
+            achievementClearTimeoutRef.current = setTimeout(() => {
+              setNewlyUnlockedAchievements([]);
+              achievementClearTimeoutRef.current = null;
+            }, 5000);
           }
-          // Clear after 5 seconds
-          achievementClearTimeoutRef.current = setTimeout(() => {
-            setNewlyUnlockedAchievements([]);
-            achievementClearTimeoutRef.current = null;
-          }, 5000);
+        };
+        
+        // Use requestIdleCallback for non-critical stats updates
+        if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+          requestIdleCallback(updateStats, { timeout: 2000 });
+        } else {
+          // Fallback for browsers without requestIdleCallback
+          setTimeout(updateStats, 0);
         }
         
         gameStartTimeRef.current = null;
@@ -611,53 +590,97 @@ export function GameProvider({ children }: { children: ReactNode }) {
     // Music will restart automatically via useEffect when gameOver becomes false and isGameStarted is true
   }, [gameMode]);
 
+  // Memoize context value to prevent unnecessary re-renders
+  const contextValue = useMemo(() => ({
+    score,
+    lives,
+    highlightedButtons,
+    gameOver,
+    isPaused,
+    soundEnabled,
+    musicEnabled,
+    soundVolume,
+    musicVolume,
+    highScore,
+    combo,
+    bestCombo,
+    reactionTimeStats,
+    difficulty,
+    gameMode,
+    sessionStatistics,
+    screenShakeEnabled,
+    screenFlashEnabled,
+    reducedEffects,
+    highContrastMode,
+    language,
+    toggleSound,
+    toggleMusic,
+    setSoundVolume,
+    setMusicVolume,
+    setScreenShakeEnabled,
+    setScreenFlashEnabled,
+    setReducedEffects,
+    setHighContrastMode,
+    setLanguage,
+    pauseGame,
+    resumeGame,
+    setDifficulty: handleSetDifficulty,
+    setGameMode: handleSetGameMode,
+    incrementScore,
+    decrementLives,
+    setHighlightedButtons,
+    setLives,
+    resetGame,
+    startGame,
+    endGame,
+    newlyUnlockedAchievements,
+  }), [
+    score,
+    lives,
+    highlightedButtons,
+    gameOver,
+    isPaused,
+    soundEnabled,
+    musicEnabled,
+    soundVolume,
+    musicVolume,
+    highScore,
+    combo,
+    bestCombo,
+    reactionTimeStats,
+    difficulty,
+    gameMode,
+    sessionStatistics,
+    screenShakeEnabled,
+    screenFlashEnabled,
+    reducedEffects,
+    highContrastMode,
+    language,
+    toggleSound,
+    toggleMusic,
+    setSoundVolume,
+    setMusicVolume,
+    setScreenShakeEnabled,
+    setScreenFlashEnabled,
+    setReducedEffects,
+    setHighContrastMode,
+    setLanguage,
+    pauseGame,
+    resumeGame,
+    handleSetDifficulty,
+    handleSetGameMode,
+    incrementScore,
+    decrementLives,
+    setHighlightedButtons,
+    setLives,
+    resetGame,
+    startGame,
+    endGame,
+    newlyUnlockedAchievements,
+  ]);
+
   return (
-    <GameContext.Provider
-      value={{
-        score,
-        lives,
-        highlightedButtons,
-        gameOver,
-        isPaused,
-        soundEnabled,
-        musicEnabled,
-        soundVolume,
-        musicVolume,
-        highScore,
-        combo,
-        bestCombo,
-        reactionTimeStats,
-        difficulty,
-        gameMode,
-        sessionStatistics,
-        screenShakeEnabled,
-        screenFlashEnabled,
-        reducedEffects,
-        highContrastMode,
-        language,
-        toggleSound,
-        toggleMusic,
-        setSoundVolume,
-        setMusicVolume,
-        setScreenShakeEnabled,
-        setScreenFlashEnabled,
-        setReducedEffects,
-        setHighContrastMode,
-        setLanguage,
-        pauseGame,
-        resumeGame,
-        setDifficulty: handleSetDifficulty,
-        setGameMode: handleSetGameMode,
-        incrementScore,
-        decrementLives,
-        setHighlightedButtons,
-        setLives,
-        resetGame,
-        startGame,
-        endGame,
-        newlyUnlockedAchievements,
-      }}
-    >
+    <GameContext.Provider value={contextValue}>
       {children}
     </GameContext.Provider>
   );
