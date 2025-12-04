@@ -1,5 +1,6 @@
 'use client';
 
+import { memo, useMemo } from 'react';
 import type { CSSProperties } from 'react';
 import type { DifficultyPreset } from '@/lib/difficulty';
 import type { GameMode } from '@/lib/gameModes';
@@ -40,7 +41,7 @@ const modeLabelMap: Record<GameMode, string> = {
   oddOneOut: 'Odd One Out',
 };
 
-export function RetroHudWidgets({
+export const RetroHudWidgets = memo(function RetroHudWidgets({
   score,
   highScore,
   combo,
@@ -57,15 +58,30 @@ export function RetroHudWidgets({
   onOpenSettings,
 }: RetroHudWidgetsProps) {
   const { language } = useGameState();
-  const comboIntensity = Math.min(combo / 15, 1);
-  const livesRatio = maxLives > 0 ? Math.max(0, Math.min(1, lives / maxLives)) : 1;
-  const accent = difficultyAccentMap[difficulty] ?? '#ffff00';
-  const gearDuration = `${Math.max(1.2, 2.5 - comboIntensity * 1.5)}s`;
-  const ledColor = accent;
-  const meterColor = livesRatio > 0.4 ? '#00ffa7' : '#ff005d';
-  const formattedScore = score.toString().padStart(6, '0');
-  const formattedHighScore = highScore.toString().padStart(6, '0');
-  const tierValue = Math.min(5, Math.max(1, Math.ceil(combo / 10)));
+  
+  // Memoize expensive calculations
+  const { comboIntensity, livesRatio, accent, gearDuration, ledColor, meterColor, formattedScore, formattedHighScore, tierValue } = useMemo(() => {
+    const comboIntensity = Math.min(combo / 15, 1);
+    const livesRatio = maxLives > 0 ? Math.max(0, Math.min(1, lives / maxLives)) : 1;
+    const accent = difficultyAccentMap[difficulty] ?? '#ffff00';
+    const gearDuration = `${Math.max(1.2, 2.5 - comboIntensity * 1.5)}s`;
+    const meterColor = livesRatio > 0.4 ? '#00ffa7' : '#ff005d';
+    const formattedScore = score.toString().padStart(6, '0');
+    const formattedHighScore = highScore.toString().padStart(6, '0');
+    const tierValue = Math.min(5, Math.max(1, Math.ceil(combo / 10)));
+    
+    return {
+      comboIntensity,
+      livesRatio,
+      accent,
+      gearDuration,
+      ledColor: accent,
+      meterColor,
+      formattedScore,
+      formattedHighScore,
+      tierValue,
+    };
+  }, [combo, maxLives, lives, difficulty, score, highScore]);
 
   const getReactionLabel = (value: number | null) =>
     value !== null && value !== undefined ? `${Math.round(value)}ms` : '--';
@@ -217,5 +233,21 @@ export function RetroHudWidgets({
       </div>
     </div>
   );
-}
+}, (prevProps, nextProps) => {
+  // Custom comparison function for better performance
+  return (
+    prevProps.score === nextProps.score &&
+    prevProps.highScore === nextProps.highScore &&
+    prevProps.combo === nextProps.combo &&
+    prevProps.lives === nextProps.lives &&
+    prevProps.maxLives === nextProps.maxLives &&
+    prevProps.difficulty === nextProps.difficulty &&
+    prevProps.gameMode === nextProps.gameMode &&
+    prevProps.soundEnabled === nextProps.soundEnabled &&
+    prevProps.musicEnabled === nextProps.musicEnabled &&
+    prevProps.reactionStats.current === nextProps.reactionStats.current &&
+    prevProps.reactionStats.average === nextProps.reactionStats.average &&
+    prevProps.reactionStats.fastest === nextProps.reactionStats.fastest
+  );
+});
 

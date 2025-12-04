@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { memo, useEffect, useState, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { t, type Language } from '@/lib/i18n';
 import { useGameState } from '@/lib/GameContext';
@@ -124,7 +124,7 @@ function getRandomMessage(messages: string[]): string {
   return messages[Math.floor(Math.random() * messages.length)];
 }
 
-export function PerformanceFeedback({
+export const PerformanceFeedback = memo(function PerformanceFeedback({
   reactionTime,
   combo,
   score,
@@ -346,7 +346,7 @@ export function PerformanceFeedback({
       </div>
     </div>
   );
-}
+});
 
 interface FeedbackPopupProps {
   message: FeedbackMessage;

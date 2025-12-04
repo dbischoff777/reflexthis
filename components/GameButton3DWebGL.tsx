@@ -2012,12 +2012,12 @@ export const GameButtonGridWebGL = memo(function GameButtonGridWebGL({
   const lastPressTime = useRef<number>(0);
   const [rippleEvents, setRippleEvents] = useState<RippleEvent[]>([]);
   
-  // Clean up old ripple events
+  // Clean up old ripple events - reduced frequency for better performance
   useEffect(() => {
     const cleanup = setInterval(() => {
       const now = Date.now();
       setRippleEvents(prev => prev.filter(e => now - e.timestamp < 500));
-    }, 500);
+    }, 1000); // Reduced from 500ms to 1000ms
     return () => clearInterval(cleanup);
   }, []);
   

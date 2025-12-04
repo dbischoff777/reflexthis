@@ -66,7 +66,7 @@ function BackgroundVideo() {
       }
     };
 
-    const interval = setInterval(checkAndFade, 100); // Check every 100ms
+    const interval = setInterval(checkAndFade, 250); // Check every 250ms (reduced frequency for better performance)
 
     return () => {
       clearInterval(interval);
@@ -129,10 +129,15 @@ function LandingPageContent() {
   const [showStats, setShowStats] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  // Always start with true for hydration safety - check sessionStorage after mount
   const [bootstrapping, setBootstrapping] = useState(true);
   const [bootProgress, setBootProgress] = useState(0);
   const [bootTipIndex, setBootTipIndex] = useState(0);
   const [demoReady, setDemoReady] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  
+  // Use a ref to prevent multiple initializations even if component remounts (StrictMode protection)
+  const bootstrappingInitRef = useRef(false);
 
   // Hidden warm-up grid to pre-initialize WebGL and shaders
   const WarmupGrid = () => (
@@ -157,18 +162,35 @@ function LandingPageContent() {
     </div>
   );
 
+  // Mark component as mounted after hydration to prevent hydration mismatches
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // Initial boot splash: preload critical assets & hold landing until ready.
   // Only runs on first app start in this browser tab; subsequent navigations skip the splash.
   useEffect(() => {
-    let cancelled = false;
+    // Wait for hydration to complete
+    if (!mounted) return;
 
-    // If we've already shown the splash once in this tab, skip bootstrapping entirely
-    if (typeof window !== 'undefined' && window.sessionStorage.getItem('reflex_boot_done') === '1') {
-      setBootstrapping(false);
-      return () => {
-        cancelled = true;
-      };
+    // Prevent re-initialization (React StrictMode protection)
+    if (bootstrappingInitRef.current) {
+      return;
     }
+
+    // Check sessionStorage after hydration to determine if we should show splash
+    const bootDone = typeof window !== 'undefined' && window.sessionStorage.getItem('reflex_boot_done') === '1';
+    
+    if (bootDone) {
+      // Already booted - skip splash
+      setBootstrapping(false);
+      return;
+    }
+
+    // Mark as initialized to prevent multiple runs (StrictMode protection)
+    bootstrappingInitRef.current = true;
+
+    let cancelled = false;
 
     let completedSteps = 0;
     const totalSteps = 4; // icon, animation, audio, minimum delay
@@ -224,6 +246,9 @@ function LandingPageContent() {
     Promise.all([imagePromise, videoPromise, audioPromise, minDelay]).then(() => {
       if (!cancelled) {
         setBootstrapping(false);
+        // Set sessionStorage flag ONLY after all assets are successfully preloaded
+        // This ensures that if the page unmounts/refreshes before preloading completes,
+        // the next mount will still show the splash and complete the preloading
         if (typeof window !== 'undefined') {
           window.sessionStorage.setItem('reflex_boot_done', '1');
         }
@@ -233,7 +258,7 @@ function LandingPageContent() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [mounted, router]);
 
   // Rotate loading tips while bootstrapping
   useEffect(() => {
@@ -298,6 +323,18 @@ function LandingPageContent() {
     }
   };
 
+  // During SSR or before hydration, always render splash placeholder to match server/client
+  if (!mounted) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-background text-foreground overflow-hidden">
+        <div className="relative w-full h-full flex items-center justify-center">
+          {/* Placeholder during SSR/hydration - will update after mount */}
+        </div>
+      </div>
+    );
+  }
+
+  // After hydration, check if we should show splash or landing page
   if (bootstrapping) {
     const statusLabel =
       bootProgress < 40

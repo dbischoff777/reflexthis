@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useCallback, useState, useMemo } from 'react';
+import { useEffect, useRef, useCallback, useState, useMemo, startTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useGameState } from '@/lib/GameContext';
@@ -165,9 +165,8 @@ export default function GamePage() {
   const [isWaitingForInput, setIsWaitingForInput] = useState(false);
   const sequenceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Derived keybinding map for control hints.
-  // Computed on each render so updated keybindings from Settings are reflected immediately.
-  const keybindingHints: Record<number, string> = (() => {
+  // Memoized keybinding map for control hints - only recalculates when keybindings change
+  const keybindingHints: Record<number, string> = useMemo(() => {
     const bindings =
       typeof window === 'undefined' ? DEFAULT_KEYBINDINGS : getKeybindings();
     const result: Record<number, string> = {};
@@ -175,7 +174,7 @@ export default function GamePage() {
       result[i] = getKeyDisplayName(bindings[i]);
     }
     return result;
-  })();
+  }, []); // Empty deps since keybindings are stored in localStorage and we want to recalc on mount
 
   // Memoized button data for 3D grid to prevent unnecessary re-renders
   // Only recalculates when button states actually change
@@ -341,9 +340,14 @@ export default function GamePage() {
         setCurrentReactionTime(reactionTime);
 
         // Correct button pressed - show feedback and particles
-        setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: 'correct' }));
+        // Use startTransition for non-urgent UI updates to maintain FPS
+        startTransition(() => {
+          setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: 'correct' }));
+        });
         setTimeout(() => {
-          setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: null }));
+          startTransition(() => {
+            setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: null }));
+          });
         }, 300);
 
         // Increment score, with a small bonus multiplier when a fast-streak objective is active
@@ -424,9 +428,13 @@ export default function GamePage() {
         }
       } else {
         // Wrong button pressed - show feedback, screen shake, and error particles
-        setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: 'incorrect' }));
+        startTransition(() => {
+          setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: 'incorrect' }));
+        });
         setTimeout(() => {
-          setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: null }));
+          startTransition(() => {
+            setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: null }));
+          });
         }, 300);
 
         // Trigger screen shake (respect comfort settings)
