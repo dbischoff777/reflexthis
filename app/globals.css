@@ -160,6 +160,14 @@
   * {
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   }
+  
+  /* Performance optimization for video elements */
+  video {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    will-change: opacity, transform;
+  }
 }
 
 @layer utilities {

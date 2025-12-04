@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { BuildInfo } from '@/components/BuildInfo';
@@ -24,34 +24,37 @@ const WARMUP_BUTTONS = Array.from({ length: 10 }, (_, i) => ({
 
 /**
  * BackgroundVideo component - Smooth looping background video with crossfade
+ * Optimized for performance with GPU acceleration and efficient event handling
  */
-function BackgroundVideo() {
+const BackgroundVideo = React.memo(function BackgroundVideo() {
   const [activeVideo, setActiveVideo] = useState(0);
   const video1Ref = useRef<HTMLVideoElement>(null);
   const video2Ref = useRef<HTMLVideoElement>(null);
   const fadeTriggeredRef = useRef(false);
+  const rafIdRef = useRef<number | null>(null);
 
   useEffect(() => {
     const video1 = video1Ref.current;
     const video2 = video2Ref.current;
     if (!video1 || !video2) return;
 
-    const checkAndFade = () => {
+    // Use timeupdate event for more efficient checking (fires ~4 times per second)
+    const handleTimeUpdate = () => {
       const currentVideo = activeVideo === 0 ? video1 : video2;
       const nextVideo = activeVideo === 0 ? video2 : video1;
       
-      if (!currentVideo || !nextVideo) return;
+      if (!currentVideo || !nextVideo || !currentVideo.duration) return;
       
       // Start crossfade when we're 0.8 seconds from the end
-      if (currentVideo.duration && currentVideo.currentTime >= currentVideo.duration - 0.8 && !fadeTriggeredRef.current) {
+      if (currentVideo.currentTime >= currentVideo.duration - 0.8 && !fadeTriggeredRef.current) {
         fadeTriggeredRef.current = true;
         
         // Prepare next video
         nextVideo.currentTime = 0;
         nextVideo.play().catch(() => {});
         
-        // Start crossfade transition
-        setTimeout(() => {
+        // Use requestAnimationFrame for smoother transitions
+        rafIdRef.current = requestAnimationFrame(() => {
           if (currentVideo && nextVideo) {
             currentVideo.style.opacity = '0';
             nextVideo.style.opacity = '1';
@@ -62,14 +65,20 @@ function BackgroundVideo() {
               fadeTriggeredRef.current = false;
             }, 1000);
           }
-        }, 300);
+        });
       }
     };
 
-    const interval = setInterval(checkAndFade, 250); // Check every 250ms (reduced frequency for better performance)
+    // Attach event listeners to both videos
+    video1.addEventListener('timeupdate', handleTimeUpdate);
+    video2.addEventListener('timeupdate', handleTimeUpdate);
 
     return () => {
-      clearInterval(interval);
+      video1.removeEventListener('timeupdate', handleTimeUpdate);
+      video2.removeEventListener('timeupdate', handleTimeUpdate);
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+      }
     };
   }, [activeVideo]);
 
@@ -78,11 +87,17 @@ function BackgroundVideo() {
       <video
         ref={video1Ref}
         className="fixed inset-0 w-full h-full object-cover transition-opacity duration-[1200ms] ease-in-out"
-        style={{ opacity: activeVideo === 0 ? 1 : 0 }}
+        style={{ 
+          opacity: activeVideo === 0 ? 1 : 0,
+          transform: 'translateZ(0)',
+          willChange: 'opacity',
+          backfaceVisibility: 'hidden',
+        }}
         autoPlay
         loop
         muted
         playsInline
+        preload="auto"
         aria-hidden="true"
       >
         <source src="/animation/menu-background-animated.mp4" type="video/mp4" />
@@ -90,18 +105,24 @@ function BackgroundVideo() {
       <video
         ref={video2Ref}
         className="fixed inset-0 w-full h-full object-cover transition-opacity duration-[1200ms] ease-in-out"
-        style={{ opacity: activeVideo === 1 ? 1 : 0 }}
+        style={{ 
+          opacity: activeVideo === 1 ? 1 : 0,
+          transform: 'translateZ(0)',
+          willChange: 'opacity',
+          backfaceVisibility: 'hidden',
+        }}
         autoPlay
         loop
         muted
         playsInline
+        preload="auto"
         aria-hidden="true"
       >
         <source src="/animation/menu-background-animated.mp4" type="video/mp4" />
       </video>
     </div>
   );
-}
+});
 
 function LandingPageContent() {
   const router = useRouter();
@@ -260,14 +281,16 @@ function LandingPageContent() {
     };
   }, [mounted, router]);
 
-  // Rotate loading tips while bootstrapping
+  // Rotate loading tips while bootstrapping - memoized to prevent recreation
+  const loadingTips = useMemo(() => LOADING_TIPS, [language]);
+  
   useEffect(() => {
     if (!bootstrapping) return;
     const interval = setInterval(() => {
-      setBootTipIndex((prev) => (prev + 1) % LOADING_TIPS.length);
+      setBootTipIndex((prev) => (prev + 1) % loadingTips.length);
     }, 2800);
     return () => clearInterval(interval);
-  }, [bootstrapping]);
+  }, [bootstrapping, loadingTips.length]);
 
   // Ensure game music is stopped on landing page and prevent any game sounds
   // Play menu music if enabled
@@ -292,22 +315,23 @@ function LandingPageContent() {
   }, [musicEnabled]);
 
   // Handle ESC key for exit confirmation (modals handle their own ESC keys)
-  useEffect(() => {
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return;
-      // Don't interfere when modals are open (they handle their own ESC)
-      if (showSettings || showStats || showMode || showDifficulty) return;
-      
-      e.preventDefault();
-      setShowExitConfirm(true);
-    };
-
-    window.addEventListener('keydown', handleEsc);
-    return () => window.removeEventListener('keydown', handleEsc);
+  // Memoized callback to prevent unnecessary re-renders
+  const handleEsc = useCallback((e: KeyboardEvent) => {
+    if (e.key !== 'Escape') return;
+    // Don't interfere when modals are open (they handle their own ESC)
+    if (showSettings || showStats || showMode || showDifficulty) return;
+    
+    e.preventDefault();
+    setShowExitConfirm(true);
   }, [showSettings, showStats, showMode, showDifficulty]);
 
-  // Handle exit confirmation
-  const handleExit = async () => {
+  useEffect(() => {
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [handleEsc]);
+
+  // Handle exit confirmation - memoized to prevent recreation
+  const handleExit = useCallback(async () => {
     // Check if we're in Electron
     if (typeof window !== 'undefined' && window.electronAPI?.quit) {
       try {
@@ -321,7 +345,7 @@ function LandingPageContent() {
         window.close();
       }
     }
-  };
+  }, []);
 
   // During SSR or before hydration, always render splash placeholder to match server/client
   if (!mounted) {
@@ -389,6 +413,12 @@ function LandingPageContent() {
             muted
             loop
             playsInline
+            preload="auto"
+            style={{
+              transform: 'translateZ(0)',
+              willChange: 'transform',
+              backfaceVisibility: 'hidden',
+            }}
           />
           <div className="pointer-events-none absolute inset-0 bg-gradient-radial from-transparent via-transparent to-black/60" />
 

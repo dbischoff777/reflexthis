@@ -118,7 +118,14 @@ export function DemoMode({ onStart, onReady }: DemoModeProps) {
 
   return (
     <div className="w-full max-w-xl mx-auto">
-      <div className="h-[280px] sm:h-[320px] md:h-[360px]">
+      <div 
+        className="h-[280px] sm:h-[320px] md:h-[360px]"
+        style={{
+          willChange: 'transform',
+          transform: 'translateZ(0)',
+          backfaceVisibility: 'hidden',
+        }}
+      >
         <GameButtonGridWebGL
           buttons={buttons}
           highlightDuration={DEMO_HIGHLIGHT_DURATION}
