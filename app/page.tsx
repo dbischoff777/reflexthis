@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { BuildInfo } from '@/components/BuildInfo';
 import { DifficultySelector } from '@/components/DifficultySelector';
 import { ModeSelector } from '@/components/ModeSelector';
-import { SessionStatsDisplay } from '@/components/SessionStatsDisplay';
+import { StatsModal } from '@/components/StatsModal';
 import { DemoMode } from '@/components/DemoMode';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import { GameButtonGridWebGL } from '@/components/GameButton3DWebGL';
@@ -266,11 +266,11 @@ function LandingPageContent() {
     };
   }, [musicEnabled]);
 
-  // Handle ESC key for exit confirmation
+  // Handle ESC key for exit confirmation (modals handle their own ESC keys)
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
-      // Don't interfere when modals are open
+      // Don't interfere when modals are open (they handle their own ESC)
       if (showSettings || showStats || showMode || showDifficulty) return;
       
       e.preventDefault();
@@ -409,12 +409,12 @@ function LandingPageContent() {
           </div>
         )}
         
-        {/* Statistics Display */}
-        {showStats && (
-          <div className="mb-8 w-full max-w-2xl">
-            <SessionStatsDisplay stats={sessionStatistics} />
-          </div>
-        )}
+        {/* Statistics Modal */}
+        <StatsModal 
+          show={showStats} 
+          stats={sessionStatistics} 
+          onClose={() => setShowStats(false)} 
+        />
 
         {/* Mode Selector */}
         {showMode && !showDifficulty && !showStats && (
@@ -547,11 +547,10 @@ function LandingPageContent() {
       <WarmupGrid />
 
       {/* Unified Settings Modal */}
-      {showSettings && (
-        <SettingsModal
-          onClose={() => setShowSettings(false)}
-        />
-      )}
+      <SettingsModal
+        show={showSettings}
+        onClose={() => setShowSettings(false)}
+      />
 
       {/* Exit Confirmation Modal */}
       {showExitConfirm && (

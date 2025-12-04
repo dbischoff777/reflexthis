@@ -1243,17 +1243,16 @@ export default function GamePage() {
       )}
 
       {/* Unified Settings Modal */}
-      {showSettingsModal && (
-        <SettingsModal
-          onClose={() => {
-            setShowSettingsModal(false);
-            if (pausedByMenu) {
-              resumeGame();
-              setPausedByMenu(false);
-            }
-          }}
-        />
-      )}
+      <SettingsModal
+        show={showSettingsModal}
+        onClose={() => {
+          setShowSettingsModal(false);
+          if (pausedByMenu) {
+            resumeGame();
+            setPausedByMenu(false);
+          }
+        }}
+      />
 
       {/* Pause Confirmation Modal */}
       {showPauseModal && (

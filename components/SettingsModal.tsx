@@ -1,19 +1,36 @@
 'use client';
 
-import { ChangeEvent, useState } from 'react';
+import { ChangeEvent, useState, useEffect } from 'react';
 import { KeybindingsSettings } from '@/components/KeybindingsSettings';
 import { useGameState } from '@/lib/GameContext';
 import { t } from '@/lib/i18n';
 import { SUPPORTED_LANGUAGES, type Language } from '@/lib/i18n';
+import { BackdropTransition, ModalTransition } from '@/components/Transition';
+import { cn } from '@/lib/utils';
 
 interface SettingsModalProps {
+  show: boolean;
   onClose: () => void;
 }
 
 /**
  * Unified SettingsModal - combines audio, keybinding, and comfort settings
  */
-export function SettingsModal({ onClose }: SettingsModalProps) {
+export function SettingsModal({ show, onClose }: SettingsModalProps) {
+  // Handle ESC key to close modal
+  useEffect(() => {
+    if (!show) return;
+
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [show, onClose]);
   const [activeTab, setActiveTab] = useState<'audio' | 'controls' | 'comfort'>('audio');
   const {
     language,
@@ -54,8 +71,17 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 pixel-border">
-      <div className="bg-card border-4 border-primary pixel-border p-4 sm:p-6 md:p-8 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+    <BackdropTransition show={show} duration={200}>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 pixel-border" onClick={onClose}>
+        <ModalTransition show={show} duration={250}>
+          <div 
+            className={cn(
+              'bg-card border-4 border-primary pixel-border',
+              'p-4 sm:p-6 md:p-8 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto',
+              'shadow-[0_0_20px_rgba(0,255,255,0.3)]'
+            )}
+            onClick={(e) => e.stopPropagation()}
+          >
         {/* Header */}
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-2xl sm:text-3xl font-bold text-primary mb-1 sm:mb-0 pixel-border px-4 py-2 inline-block">
@@ -262,8 +288,10 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
             </div>
           </section>
         )}
+          </div>
+        </ModalTransition>
       </div>
-    </div>
+    </BackdropTransition>
   );
 }
 
