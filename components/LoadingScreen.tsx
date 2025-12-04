@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { useGameState } from '@/lib/GameContext';
 import { t } from '@/lib/i18n';
@@ -12,11 +12,21 @@ interface LoadingScreenProps {
 
 /**
  * LoadingScreen component - Retro Sinclair-style loading animation
+ * Optimized with requestAnimationFrame for smoother animations
  */
-export function LoadingScreen({ message = 'LOADING...', onComplete }: LoadingScreenProps) {
+export const LoadingScreen = React.memo(function LoadingScreen({ message = 'LOADING...', onComplete }: LoadingScreenProps) {
   const { language } = useGameState();
   const [progress, setProgress] = useState(0);
   const [dots, setDots] = useState('');
+  const rafIdRef = useRef<number | null>(null);
+  const dotsTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const startTimeRef = useRef<number>(Date.now());
+  const onCompleteRef = useRef(onComplete);
+  
+  // Keep ref updated
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
   
   const statusMessages = useMemo(
     () => [
@@ -30,23 +40,38 @@ export function LoadingScreen({ message = 'LOADING...', onComplete }: LoadingScr
   );
   const [statusIndex, setStatusIndex] = useState(0);
 
+  // Animate progress using requestAnimationFrame for smoother 60fps animation
   useEffect(() => {
-    // Animate progress
-    const progressInterval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(progressInterval);
-          if (onComplete) {
-            setTimeout(onComplete, 300);
-          }
-          return 100;
+    startTimeRef.current = Date.now();
+    
+    const animate = () => {
+      const elapsed = Date.now() - startTimeRef.current;
+      const newProgress = Math.min(100, (elapsed / 3000) * 100); // 3 seconds to 100%
+      
+      setProgress(newProgress);
+      
+      if (newProgress < 100) {
+        rafIdRef.current = requestAnimationFrame(animate);
+      } else {
+        // Complete
+        if (onCompleteRef.current) {
+          setTimeout(onCompleteRef.current, 300);
         }
-        return prev + 2;
-      });
-    }, 30);
+      }
+    };
+    
+    rafIdRef.current = requestAnimationFrame(animate);
+    
+    return () => {
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+      }
+    };
+  }, []);
 
-    // Animate dots
-    const dotsInterval = setInterval(() => {
+  // Animate dots - less frequent updates
+  useEffect(() => {
+    dotsTimerRef.current = setInterval(() => {
       setDots((prev) => {
         if (prev.length >= 3) return '';
         return prev + '.';
@@ -54,10 +79,11 @@ export function LoadingScreen({ message = 'LOADING...', onComplete }: LoadingScr
     }, 300);
 
     return () => {
-      clearInterval(progressInterval);
-      clearInterval(dotsInterval);
+      if (dotsTimerRef.current) {
+        clearInterval(dotsTimerRef.current);
+      }
     };
-  }, [onComplete]);
+  }, []);
 
   // Cycle through status messages
   useEffect(() => {
@@ -87,7 +113,7 @@ export function LoadingScreen({ message = 'LOADING...', onComplete }: LoadingScr
             <div
               className="h-6 bg-primary transition-all duration-100"
               style={{
-                width: `${progress}%`,
+                width: `${Math.round(progress)}%`,
                 imageRendering: 'pixelated',
               }}
             />
@@ -95,7 +121,7 @@ export function LoadingScreen({ message = 'LOADING...', onComplete }: LoadingScr
           
           {/* Progress percentage */}
           <p className="text-sm text-muted-foreground font-mono">
-            {progress}%
+            {Math.round(progress)}%
           </p>
         </div>
         
@@ -123,5 +149,5 @@ export function LoadingScreen({ message = 'LOADING...', onComplete }: LoadingScr
       </div>
     </div>
   );
-}
+});
 

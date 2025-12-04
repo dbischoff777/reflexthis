@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
 interface ScoreDisplayProps {
@@ -10,8 +10,9 @@ interface ScoreDisplayProps {
 
 /**
  * ScoreDisplay component with animation effects when score changes
+ * Optimized with React.memo to prevent unnecessary re-renders
  */
-export function ScoreDisplay({ score, className }: ScoreDisplayProps) {
+export const ScoreDisplay = React.memo(function ScoreDisplay({ score, className }: ScoreDisplayProps) {
   const [animate, setAnimate] = useState(false);
   const [previousScore, setPreviousScore] = useState(score);
 
@@ -34,6 +35,8 @@ export function ScoreDisplay({ score, className }: ScoreDisplayProps) {
         )}
         style={{
           imageRendering: 'pixelated',
+          transform: 'translateZ(0)',
+          willChange: animate ? 'transform, opacity' : 'auto',
         }}
       >
         {score}
@@ -51,5 +54,5 @@ export function ScoreDisplay({ score, className }: ScoreDisplayProps) {
       )}
     </div>
   );
-}
+});
 

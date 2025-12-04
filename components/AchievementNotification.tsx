@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { getAchievementById } from '@/lib/achievements';
 import { cn } from '@/lib/utils';
 import { t } from '@/lib/i18n';
@@ -19,28 +19,44 @@ const RARITY_COLORS = {
 
 /**
  * Achievement notification component that displays unlocked achievements
+ * Optimized with React.memo and proper cleanup
  */
-export function AchievementNotification({ achievementIds }: AchievementNotificationProps) {
+export const AchievementNotification = React.memo(function AchievementNotification({ achievementIds }: AchievementNotificationProps) {
   const { language } = useGameState();
   const [visibleAchievements, setVisibleAchievements] = useState<string[]>([]);
 
+  const timersRef = useRef<Set<NodeJS.Timeout>>(new Set());
+  
   useEffect(() => {
     if (achievementIds.length === 0) {
       setVisibleAchievements([]);
       return;
     }
 
+    // Clear any existing timers
+    timersRef.current.forEach(timer => clearTimeout(timer));
+    timersRef.current.clear();
+
     // Show achievements one at a time with delay
     achievementIds.forEach((id, index) => {
-      setTimeout(() => {
+      const showTimer = setTimeout(() => {
         setVisibleAchievements((prev) => [...prev, id]);
+        timersRef.current.delete(showTimer);
         
         // Hide after 4 seconds
-        setTimeout(() => {
+        const hideTimer = setTimeout(() => {
           setVisibleAchievements((prev) => prev.filter(aid => aid !== id));
+          timersRef.current.delete(hideTimer);
         }, 4000);
+        timersRef.current.add(hideTimer);
       }, index * 500); // Stagger notifications
+      timersRef.current.add(showTimer);
     });
+    
+    return () => {
+      timersRef.current.forEach(timer => clearTimeout(timer));
+      timersRef.current.clear();
+    };
   }, [achievementIds]);
 
   if (visibleAchievements.length === 0) return null;
@@ -62,6 +78,11 @@ export function AchievementNotification({ achievementIds }: AchievementNotificat
               'min-w-[280px] max-w-[320px] shadow-lg',
               'animate-[slideInRight_0.3s_ease-out]'
             )}
+            style={{
+              transform: 'translateZ(0)',
+              willChange: 'transform, opacity',
+              backfaceVisibility: 'hidden',
+            }}
           >
             <div className="flex items-start gap-3">
               <div className="text-3xl flex-shrink-0">{achievement.icon}</div>
@@ -100,8 +121,8 @@ export function AchievementNotification({ achievementIds }: AchievementNotificat
             </div>
           </div>
         );
-      })}
+      }      )}
     </div>
   );
-}
+});
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { cn } from '@/lib/utils';
 
 interface ButtonCountdownProps {
@@ -12,19 +12,27 @@ interface ButtonCountdownProps {
 /**
  * ButtonCountdown component - Shows a single prominent square progress indicator
  * that matches the button shape and communicates urgency through color and intensity
+ * Optimized with requestAnimationFrame for smoother 60fps animation
  */
-export function ButtonCountdown({
+export const ButtonCountdown = React.memo(function ButtonCountdown({
   duration,
   startTime,
   onComplete,
 }: ButtonCountdownProps) {
   const [remaining, setRemaining] = useState(duration);
   const [progress, setProgress] = useState(100);
+  const rafIdRef = useRef<number | null>(null);
+  const onCompleteRef = useRef(onComplete);
+  
+  // Keep ref updated
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
 
   useEffect(() => {
     if (!startTime || duration <= 0) return;
 
-    const interval = setInterval(() => {
+    const animate = () => {
       const elapsed = Date.now() - startTime;
       const newRemaining = Math.max(0, duration - elapsed);
       const newProgress = (newRemaining / duration) * 100;
@@ -32,16 +40,24 @@ export function ButtonCountdown({
       setRemaining(newRemaining);
       setProgress(newProgress);
 
-      if (newRemaining <= 0) {
-        clearInterval(interval);
-        if (onComplete) {
-          onComplete();
+      if (newRemaining > 0) {
+        rafIdRef.current = requestAnimationFrame(animate);
+      } else {
+        // Complete
+        if (onCompleteRef.current) {
+          onCompleteRef.current();
         }
       }
-    }, 16); // ~60fps
+    };
+    
+    rafIdRef.current = requestAnimationFrame(animate);
 
-    return () => clearInterval(interval);
-  }, [duration, startTime, onComplete]);
+    return () => {
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+      }
+    };
+  }, [duration, startTime]);
 
   if (!startTime || duration <= 0) return null;
 
@@ -98,9 +114,11 @@ export function ButtonCountdown({
             ? `0 0 12px ${glow}, 0 0 24px ${glow}, 0 0 36px ${glow}, inset 0 0 12px ${glow}`
             : `0 0 8px ${glow}, 0 0 16px ${glow}, inset 0 0 8px ${glow}`,
           filter: isUrgent ? 'brightness(1.2)' : 'brightness(1)',
+          transform: 'translateZ(0)',
+          willChange: 'inset, border-color, box-shadow',
+          backfaceVisibility: 'hidden',
         }}
       />
     </div>
   );
-}
-
+});

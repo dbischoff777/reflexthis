@@ -39,23 +39,35 @@ export const GameButton3D = memo(function GameButton3D({
   const [hoverGlowIntensity, setHoverGlowIntensity] = useState(0);
   const [ripplePosition, setRipplePosition] = useState<{ x: number; y: number } | null>(null);
   const [progress, setProgress] = useState(100);
-  const hoverGlowRef = useRef<NodeJS.Timeout | null>(null);
+  const hoverGlowRef = useRef<NodeJS.Timeout | number | null>(null);
   const DEBOUNCE_DELAY = 100;
 
-  // Track countdown progress
+  // Track countdown progress - optimized with requestAnimationFrame
   useEffect(() => {
     if (!highlightStartTime || !highlightDuration || highlightDuration <= 0 || !highlighted) {
       setProgress(100);
       return;
     }
 
-    const interval = setInterval(() => {
-      const elapsed = Date.now() - highlightStartTime;
+    let rafId: number | null = null;
+    
+    const animate = () => {
+      const elapsed = Date.now() - highlightStartTime!;
       const newProgress = Math.max(0, ((highlightDuration - elapsed) / highlightDuration) * 100);
       setProgress(newProgress);
-    }, 16);
-
-    return () => clearInterval(interval);
+      
+      if (newProgress > 0 && highlighted) {
+        rafId = requestAnimationFrame(animate);
+      }
+    };
+    
+    rafId = requestAnimationFrame(animate);
+    
+    return () => {
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+      }
+    };
   }, [highlightStartTime, highlightDuration, highlighted]);
 
   // Reset press feedback after animation
@@ -128,34 +140,51 @@ export const GameButton3D = memo(function GameButton3D({
       clearInterval(hoverGlowRef.current);
     }
     
-    // After initial flash, start pulsing
+    // After initial flash, start pulsing with requestAnimationFrame
     setTimeout(() => {
       let increasing = false;
       let intensity = 1;
+      let lastTime = Date.now();
       
-      hoverGlowRef.current = setInterval(() => {
+      const animate = () => {
+        const now = Date.now();
+        const delta = now - lastTime;
+        lastTime = now;
+        
+        // Adjust intensity based on time delta for consistent speed
+        const speed = delta / 40; // Normalize to 40ms intervals
         if (increasing) {
-          intensity += 0.04;
+          intensity += 0.04 * speed;
           if (intensity >= 1) {
             intensity = 1;
             increasing = false;
           }
         } else {
-          intensity -= 0.025;
+          intensity -= 0.025 * speed;
           if (intensity <= 0.5) {
             intensity = 0.5;
             increasing = true;
           }
         }
         setHoverGlowIntensity(intensity);
-      }, 40);
+        
+        if (hoverGlowRef.current !== null) {
+          hoverGlowRef.current = requestAnimationFrame(animate) as any;
+        }
+      };
+      
+      hoverGlowRef.current = requestAnimationFrame(animate) as any;
     }, 100);
   }, [highlighted, pressFeedback]);
   
   const handleMouseLeave = useCallback(() => {
-    // Clear pulsing animation
+    // Clear pulsing animation (works for both setInterval and requestAnimationFrame)
     if (hoverGlowRef.current) {
-      clearInterval(hoverGlowRef.current);
+      if (typeof hoverGlowRef.current === 'number') {
+        cancelAnimationFrame(hoverGlowRef.current);
+      } else {
+        clearInterval(hoverGlowRef.current);
+      }
       hoverGlowRef.current = null;
     }
     
@@ -169,7 +198,11 @@ export const GameButton3D = memo(function GameButton3D({
   useEffect(() => {
     if (highlighted || pressFeedback) {
       if (hoverGlowRef.current) {
-        clearInterval(hoverGlowRef.current);
+        if (typeof hoverGlowRef.current === 'number') {
+          cancelAnimationFrame(hoverGlowRef.current);
+        } else {
+          clearInterval(hoverGlowRef.current);
+        }
         hoverGlowRef.current = null;
       }
       setIsHovered(false);
@@ -178,7 +211,11 @@ export const GameButton3D = memo(function GameButton3D({
     
     return () => {
       if (hoverGlowRef.current) {
-        clearInterval(hoverGlowRef.current);
+        if (typeof hoverGlowRef.current === 'number') {
+          cancelAnimationFrame(hoverGlowRef.current);
+        } else {
+          clearInterval(hoverGlowRef.current);
+        }
         hoverGlowRef.current = null;
       }
     };
