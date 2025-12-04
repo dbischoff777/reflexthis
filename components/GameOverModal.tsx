@@ -156,9 +156,9 @@ export function GameOverModal({
       >
         {/* Header */}
         <div className="text-center mb-6">
-          <h2
+            <h2
             className={cn(
-              'text-3xl sm:text-4xl font-bold text-primary text-glow mb-2',
+              'text-3xl sm:text-4xl font-bold text-foreground text-glow mb-2',
               isNewHighScore && 'animate-glitch'
             )}
           >
@@ -172,11 +172,11 @@ export function GameOverModal({
         {/* Main content: score + details side-by-side on wide screens */}
         <div className="mb-6 grid gap-6 md:grid-cols-[minmax(0,1.1fr)_minmax(0,1.4fr)] items-start">
           {/* Score Display */}
-          <div className="text-center py-6 border-y border-border md:border md:rounded-lg md:bg-card/80 md:px-4">
+          <div className="text-center py-6 border-y md:border md:rounded-lg md:px-4" style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 58, 99, 0.6)' }}>
             <p className="text-sm text-muted-foreground mb-2">{t(language, 'gameover.finalScore')}</p>
             <p
               className={cn(
-                'text-5xl sm:text-6xl font-bold text-primary text-glow mb-4 transition-all duration-75',
+                'text-5xl sm:text-6xl font-bold text-foreground text-glow mb-4 transition-all duration-75',
                 isCounting && 'scale-110'
               )}
             >
@@ -187,11 +187,12 @@ export function GameOverModal({
             {isNewHighScore && (
               <div
                 className={cn(
-                  'mt-4 p-3 bg-primary/30 border-4 border-primary pixel-border',
+                  'mt-4 p-3 border-4 pixel-border',
                   'animate-[pulse_1s_ease-in-out_infinite]'
                 )}
+                style={{ backgroundColor: 'rgba(62, 124, 172, 0.3)', borderColor: '#3E7CAC' }}
               >
-                <p className="text-primary font-bold text-lg text-glow">
+                <p className="text-foreground font-bold text-lg text-glow">
                   {t(language, 'gameover.newHighScore')}
                 </p>
               </div>
@@ -200,13 +201,13 @@ export function GameOverModal({
             {!isNewHighScore && highScore > 0 && (
               <div className="mt-4">
                 <p className="text-xs text-muted-foreground">{t(language, 'gameover.highScore')}</p>
-                <p className="text-xl font-semibold text-primary">{highScore}</p>
+                <p className="text-xl font-semibold text-foreground">{highScore}</p>
               </div>
             )}
 
             {metaSummary.rankName && (
               <div className="mt-4 text-xs text-foreground/80">
-                <p className="font-semibold text-primary">
+                <p className="font-semibold text-foreground">
                   {t(language, 'gameover.currentRank')} {metaSummary.rankName}
                 </p>
                 {metaSummary.nextRank && (
@@ -221,19 +222,19 @@ export function GameOverModal({
           {/* Right column: stats, coaching tip, achievements */}
           <div className="space-y-4">
             {(bestCombo > 0 || reactionTimeStats.allTimes.length > 0) && (
-              <div className="p-4 bg-card border-4 border-border pixel-border">
-                <h3 className="text-sm font-semibold text-primary mb-3">{t(language, 'gameover.stats.title')}</h3>
+              <div className="p-4 border-4 pixel-border" style={{ backgroundColor: 'rgba(0, 58, 99, 0.6)', borderColor: '#3E7CAC' }}>
+                <h3 className="text-sm font-semibold text-foreground mb-3">{t(language, 'gameover.stats.title')}</h3>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   {bestCombo > 0 && (
                     <div>
                       <p className="text-muted-foreground mb-1">{t(language, 'gameover.stats.bestCombo')}</p>
-                      <p className="text-lg font-bold text-accent">{bestCombo}x</p>
+                      <p className="text-lg font-bold text-foreground">{bestCombo}x</p>
                     </div>
                   )}
                   {reactionTimeStats.average !== null && (
                     <div>
                       <p className="text-muted-foreground mb-1">{t(language, 'gameover.stats.avgReaction')}</p>
-                      <p className="text-lg font-bold text-primary">
+                      <p className="text-lg font-bold text-foreground">
                         {Math.round(reactionTimeStats.average)}ms
                       </p>
                     </div>
@@ -249,7 +250,7 @@ export function GameOverModal({
                   {reactionTimeStats.allTimes.length > 0 && (
                     <div>
                       <p className="text-muted-foreground mb-1">{t(language, 'gameover.stats.totalPresses')}</p>
-                      <p className="text-lg font-bold text-primary">
+                      <p className="text-lg font-bold text-foreground">
                         {reactionTimeStats.allTimes.length}
                       </p>
                     </div>
@@ -259,8 +260,8 @@ export function GameOverModal({
             )}
 
             {coachingTip && (
-              <div className="p-4 bg-card/80 border-2 border-primary pixel-border">
-                <h3 className="text-xs font-semibold text-primary mb-2 uppercase tracking-wide">
+              <div className="p-4 border-2 pixel-border" style={{ backgroundColor: 'rgba(0, 58, 99, 0.5)', borderColor: '#3E7CAC' }}>
+                <h3 className="text-xs font-semibold text-foreground mb-2 uppercase tracking-wide">
                   {t(language, 'gameover.coach.title')}
                 </h3>
                 <p className="text-xs text-foreground/80">{coachingTip}</p>
@@ -301,16 +302,25 @@ export function GameOverModal({
 
         {/* Actions */}
         <div className="flex flex-col gap-3">
-          <button
+            <button
             onClick={onRestart}
             draggable={false}
             className={cn(
               'w-full py-3 px-6 border-4 font-bold text-lg',
-              'bg-primary border-primary text-primary-foreground',
-              'hover:border-accent hover:bg-accent',
               'transition-all duration-100 active:scale-95',
-              'focus:outline-none focus:ring-2 focus:ring-primary pixel-border'
+              'focus:outline-none focus:ring-2 pixel-border'
             )}
+            style={{
+              borderColor: '#3E7CAC',
+              backgroundColor: '#3E7CAC',
+              color: '#ffffff',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(62, 124, 172, 0.8)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#3E7CAC';
+            }}
           >
             {t(language, 'gameover.playAgain')}
           </button>
@@ -319,11 +329,21 @@ export function GameOverModal({
             href="/"
             className={cn(
               'w-full py-3 px-6 border-4 font-bold text-base text-center',
-              'border-border bg-card text-foreground',
-              'hover:border-primary hover:bg-primary/20',
-              'transition-all duration-100',
-              'focus:outline-none focus:ring-2 focus:ring-primary pixel-border'
+              'text-foreground transition-all duration-100',
+              'focus:outline-none focus:ring-2 pixel-border'
             )}
+            style={{
+              borderColor: '#3E7CAC',
+              backgroundColor: 'rgba(0, 58, 99, 0.6)',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = 'rgba(62, 124, 172, 0.7)';
+              e.currentTarget.style.backgroundColor = 'rgba(62, 124, 172, 0.3)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = '#3E7CAC';
+              e.currentTarget.style.backgroundColor = 'rgba(0, 58, 99, 0.6)';
+            }}
           >
             {t(language, 'gameover.backHome')}
           </Link>

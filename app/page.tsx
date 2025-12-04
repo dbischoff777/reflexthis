@@ -592,8 +592,17 @@ function LandingPageContent() {
       {/* Exit Confirmation Modal */}
       {showExitConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
-          <div className="bg-card border-4 border-secondary pixel-border p-4 sm:p-6 md:p-8 max-w-sm w-full mx-4 text-center">
-            <h2 className="text-2xl sm:text-3xl font-bold text-secondary mb-4 pixel-border px-4 py-2 inline-block break-words">
+          <div 
+            className="border-4 pixel-border p-4 sm:p-6 md:p-8 max-w-sm w-full mx-4 text-center shadow-[0_0_20px_rgba(62,124,172,0.4)]"
+            style={{
+              borderColor: '#3E7CAC',
+              backgroundColor: '#003A63',
+            }}
+          >
+            <h2 
+              className="text-2xl sm:text-3xl font-bold text-foreground mb-4 pixel-border px-4 py-2 inline-block break-words"
+              style={{ borderColor: '#3E7CAC' }}
+            >
               {t(language, 'landing.exitConfirm.title')}
             </h2>
             <p className="text-sm text-foreground/80 mb-6 break-words">
@@ -602,13 +611,37 @@ function LandingPageContent() {
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <button
                 onClick={() => setShowExitConfirm(false)}
-                className="px-6 py-3 border-4 border-border bg-card text-foreground pixel-border font-bold hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary"
+                className="px-6 py-3 border-4 pixel-border font-bold transition-all duration-200 focus:outline-none focus:ring-2"
+                style={{
+                  borderColor: '#3E7CAC',
+                  backgroundColor: 'rgba(0, 58, 99, 0.6)',
+                  color: '#ffffff',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = 'rgba(62, 124, 172, 0.7)';
+                  e.currentTarget.style.backgroundColor = 'rgba(62, 124, 172, 0.3)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = '#3E7CAC';
+                  e.currentTarget.style.backgroundColor = 'rgba(0, 58, 99, 0.6)';
+                }}
               >
                 {t(language, 'landing.exitConfirm.cancel')}
               </button>
               <button
                 onClick={handleExit}
-                className="px-6 py-3 border-4 border-secondary bg-secondary text-secondary-foreground pixel-border font-bold hover:bg-secondary/80 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-secondary"
+                className="px-6 py-3 border-4 pixel-border font-bold transition-all duration-200 focus:outline-none focus:ring-2"
+                style={{
+                  borderColor: '#3E7CAC',
+                  backgroundColor: '#3E7CAC',
+                  color: '#ffffff',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(62, 124, 172, 0.8)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#3E7CAC';
+                }}
               >
                 {t(language, 'landing.exitConfirm.exit')}
               </button>

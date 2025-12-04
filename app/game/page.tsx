@@ -1153,8 +1153,14 @@ export default function GamePage() {
           )}
 
           {/* Compact mode pill with ? toggle */}
-          <div className="flex items-center gap-2 bg-card/80 border-2 border-border px-3 py-1 rounded-sm pixel-border text-[12px] sm:text-sm">
-            <span className="font-semibold text-primary uppercase">
+          <div 
+            className="flex items-center gap-2 border-2 px-3 py-1 rounded-sm pixel-border text-[12px] sm:text-sm"
+            style={{
+              backgroundColor: 'rgba(0, 58, 99, 0.6)',
+              borderColor: '#3E7CAC',
+            }}
+          >
+            <span className="font-semibold text-foreground uppercase">
               {gameMode === 'reflex' && 'Reflex'}
               {gameMode === 'sequence' && 'Sequence'}
               {gameMode === 'survival' && 'Survival'}
@@ -1164,7 +1170,19 @@ export default function GamePage() {
             <button
               type="button"
               onClick={() => setShowModeHelp((prev) => !prev)}
-              className="ml-1 h-5 w-5 flex items-center justify-center border border-border rounded-sm bg-background/80 text-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
+              className="ml-1 h-5 w-5 flex items-center justify-center border rounded-sm text-foreground transition-colors"
+              style={{
+                borderColor: '#3E7CAC',
+                backgroundColor: 'rgba(0, 0, 0, 0.3)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(62, 124, 172, 0.3)';
+                e.currentTarget.style.borderColor = 'rgba(62, 124, 172, 0.7)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.3)';
+                e.currentTarget.style.borderColor = '#3E7CAC';
+              }}
               aria-label="Toggle mode help"
             >
               ?
@@ -1173,7 +1191,14 @@ export default function GamePage() {
 
           {/* Small help popup when toggled */}
           {showModeHelp && (
-            <div className="mt-1 bg-card/95 border-2 border-primary pixel-border px-3 py-2 max-w-xs shadow-lg">
+            <div 
+              className="mt-1 border-2 pixel-border px-3 py-2 max-w-xs shadow-lg"
+              style={{
+                backgroundColor: '#003A63',
+                borderColor: '#3E7CAC',
+                boxShadow: '0 0 20px rgba(62,124,172,0.4)',
+              }}
+            >
               {gameMode === 'reflex' && (
                 <p className="text-[12px] sm:text-sm text-foreground/80 wrap-break-word">
                   {t(language, 'help.reflex')}
@@ -1267,8 +1292,17 @@ export default function GamePage() {
       {/* Pause Confirmation Modal */}
       {showPauseModal && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/80">
-          <div className="bg-card border-4 border-primary pixel-border p-4 sm:p-6 md:p-8 max-w-sm w-full mx-4 text-center">
-            <h2 className="text-2xl sm:text-3xl font-bold text-primary mb-4 pixel-border px-4 py-2 inline-block">
+          <div 
+            className="border-4 pixel-border p-4 sm:p-6 md:p-8 max-w-sm w-full mx-4 text-center shadow-[0_0_20px_rgba(62,124,172,0.4)]"
+            style={{
+              borderColor: '#3E7CAC',
+              backgroundColor: '#003A63',
+            }}
+          >
+            <h2 
+              className="text-2xl sm:text-3xl font-bold text-foreground mb-4 pixel-border px-4 py-2 inline-block"
+              style={{ borderColor: '#3E7CAC' }}
+            >
               {t(language, 'pause.title')}
             </h2>
             <p className="text-sm text-foreground/80 mb-6">
@@ -1285,7 +1319,18 @@ export default function GamePage() {
                     highlightNewButtons();
                   }
                 }}
-                className="px-6 py-3 border-4 border-primary bg-primary text-primary-foreground pixel-border font-bold hover:bg-primary/80 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary"
+                className="px-6 py-3 border-4 pixel-border font-bold transition-all duration-200 focus:outline-none focus:ring-2"
+                style={{
+                  borderColor: '#3E7CAC',
+                  backgroundColor: '#3E7CAC',
+                  color: '#ffffff',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(62, 124, 172, 0.8)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#3E7CAC';
+                }}
               >
                 {t(language, 'pause.continue')}
               </button>
@@ -1295,7 +1340,18 @@ export default function GamePage() {
                   endGame();
                   router.push('/');
                 }}
-                className="px-6 py-3 border-4 border-secondary bg-secondary text-secondary-foreground pixel-border font-bold hover:bg-secondary/80 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-secondary"
+                className="px-6 py-3 border-4 pixel-border font-bold transition-all duration-200 focus:outline-none focus:ring-2"
+                style={{
+                  borderColor: '#3E7CAC',
+                  backgroundColor: 'rgba(0, 58, 99, 0.6)',
+                  color: '#ffffff',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(62, 124, 172, 0.3)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(0, 58, 99, 0.6)';
+                }}
               >
                 {t(language, 'pause.exit')}
               </button>

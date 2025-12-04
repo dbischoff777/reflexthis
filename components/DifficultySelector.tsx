@@ -191,7 +191,7 @@ export function DifficultySelector({
                   }}
                 >
                   <div className="space-y-3">
-                    <p className="text-sm font-semibold text-primary">{description}</p>
+                    <p className="text-sm font-semibold text-foreground">{description}</p>
                     <div className="space-y-1.5">
                       {tips.map((tip, idx) => (
                         <div key={idx} className="flex items-start gap-2 text-xs text-foreground/90">
