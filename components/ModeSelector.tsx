@@ -78,6 +78,7 @@ export function ModeSelector({
     }
   };
 
+
   // Handle ESC key to cancel
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -90,34 +91,30 @@ export function ModeSelector({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onCancel]);
 
+  // Helper function to get button image path
+  const getButtonImage = (mode: GameMode, isHovered: boolean, isSelected: boolean) => {
+    const modeName = mode === 'oddOneOut' ? 'oddoneout' : mode;
+    // Use hover image when hovered OR selected (selected buttons show hover/magenta state)
+    const state = (isHovered || isSelected) ? 'Hover' : 'Regular';
+    return `/buttons/${modeName}${state}.png`;
+  };
+
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="text-lg font-semibold text-primary">
-          {t(language, 'mode.select.title')}
-        </h3>
-        {onCancel && (
-          <button
-            onClick={onCancel}
-            draggable={false}
-            style={{
-              background: 'linear-gradient(135deg, #1e3a5f 0%, #000000 100%)',
-              borderColor: '#1e3a5f',
-            }}
-            className="text-xs text-foreground/70 hover:text-foreground border-2 px-2 py-1 pixel-border transition-all duration-200 hover:opacity-90 focus:outline-none focus:ring-1 focus:ring-primary"
-            aria-label={t(language, 'difficulty.cancel')}
-          >
-            {t(language, 'difficulty.esc')}
-          </button>
-        )}
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="flex flex-col gap-3 w-full max-w-md mx-auto">
+      {/* Subtitle: "Choice Your Game" - left-aligned */}
+      <h3 className="text-base sm:text-lg font-semibold text-white text-left">
+        Choice Your Game
+      </h3>
+      
+      {/* 3x2 Grid of mode buttons */}
+      <div className="grid grid-cols-3 gap-3 sm:gap-4">
         {modes.map((mode) => {
           const modeInfo = GAME_MODES[mode];
           const isSelected = selected === mode;
           const isHovered = hoveredMode === mode;
           const tips = getModeTips(mode);
           const description = getModeDescription(mode);
+          const buttonImage = getButtonImage(mode, isHovered, isSelected);
 
           return (
             <div
@@ -131,39 +128,39 @@ export function ModeSelector({
                 disabled={disabled}
                 draggable={false}
                 className={cn(
-                  'p-6 sm:p-8 border-4 transition-all duration-150 text-center pixel-border relative',
-                  'focus:outline-none focus:ring-2 focus:ring-primary',
-                  'bg-gradient-to-br from-purple-300 via-purple-200 to-blue-300',
-                  'border-white/80 shadow-lg',
-                  'h-[180px] sm:h-[200px] w-full',
-                  'flex flex-col items-center justify-center',
+                  'relative w-full aspect-square rounded-lg transition-all duration-200',
+                  'min-h-[100px] sm:min-h-[120px] md:min-h-[140px]',
+                  'flex flex-col overflow-hidden',
+                  'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
                   isSelected
-                    ? 'ring-4 ring-primary ring-offset-2 ring-offset-background shadow-2xl shadow-primary/50'
-                    : 'hover:shadow-xl',
-                  disabled && 'opacity-50 cursor-not-allowed',
-                  // Center nightmare mode on large screens when it's alone in the row
-                  mode === 'nightmare' && 'lg:col-start-2'
+                    ? 'ring-4 ring-fuchsia-500 ring-offset-1 ring-offset-background shadow-2xl shadow-fuchsia-500/70'
+                    : '',
+                  disabled && 'opacity-50 cursor-not-allowed'
                 )}
                 style={{
-                  background: isSelected
-                    ? 'linear-gradient(135deg, #C084FC 0%, #A78BFA 50%, #93C5FD 100%)'
-                    : 'linear-gradient(135deg, #D8B4FE 0%, #C4B5FD 50%, #A5B4FC 100%)',
+                  backgroundColor: (isHovered || isSelected) 
+                    ? '#1BFFFE' // Bright cyan for hover/selected
+                    : '#317FA3', // Teal/blue for regular
                 }}
               >
-                <div className="flex flex-col items-center justify-center gap-3">
-                  <span className="text-5xl sm:text-6xl">{modeInfo.icon}</span>
-                  <span className="font-bold text-xl sm:text-2xl text-white drop-shadow-lg">
+                {/* Image container - takes up most of the button, leaving space for text */}
+                <div className="flex-1 relative flex items-center justify-center overflow-hidden px-2 pt-2 sm:px-3 sm:pt-3">
+                  <img
+                    src={buttonImage}
+                    alt={modeInfo.name}
+                    className="w-full h-full max-w-[90%] max-h-[90%] object-contain transition-opacity duration-200"
+                    draggable={false}
+                  />
+                </div>
+                {/* Label at bottom - sits between image and button edge */}
+                <div className="flex items-center justify-center py-2 sm:py-2.5 md:py-3 pointer-events-none shrink-0">
+                  <span className="font-bold text-sm sm:text-base md:text-lg text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)]">
                     {mode === 'reflex' && t(language, 'mode.reflex.name')}
                     {mode === 'sequence' && t(language, 'mode.sequence.name')}
                     {mode === 'survival' && t(language, 'mode.survival.name')}
                     {mode === 'nightmare' && t(language, 'mode.nightmare.name')}
                     {mode === 'oddOneOut' && t(language, 'mode.odd.name')}
                   </span>
-                  {isSelected && (
-                    <span className="text-3xl text-white font-bold drop-shadow-lg" aria-label="Selected">
-                      ✓
-                    </span>
-                  )}
                 </div>
               </button>
               

@@ -89,6 +89,7 @@ export function DifficultySelector({
     }
   };
 
+
   // Handle ESC key to cancel
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

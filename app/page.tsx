@@ -45,37 +45,70 @@ const BackgroundVideo = React.memo(function BackgroundVideo() {
       
       if (!currentVideo || !nextVideo || !currentVideo.duration) return;
       
-      // Start crossfade when we're 0.8 seconds from the end
-      if (currentVideo.currentTime >= currentVideo.duration - 0.8 && !fadeTriggeredRef.current) {
+      // Start crossfade earlier to ensure smooth transition - 1.2 seconds before end
+      // This accounts for the 1200ms transition duration
+      if (currentVideo.currentTime >= currentVideo.duration - 1.2 && !fadeTriggeredRef.current) {
         fadeTriggeredRef.current = true;
         
-        // Prepare next video
+        // Prepare next video - ensure it's ready
         nextVideo.currentTime = 0;
         nextVideo.play().catch(() => {});
         
-        // Use requestAnimationFrame for smoother transitions
-        rafIdRef.current = requestAnimationFrame(() => {
-          if (currentVideo && nextVideo) {
-            currentVideo.style.opacity = '0';
-            nextVideo.style.opacity = '1';
-            setActiveVideo(activeVideo === 0 ? 1 : 0);
-            
-            // Reset trigger when next video starts
-            setTimeout(() => {
-              fadeTriggeredRef.current = false;
-            }, 1000);
+        // Wait for next video to be ready before starting fade
+        const checkReady = () => {
+          if (nextVideo.readyState >= 2) { // HAVE_CURRENT_DATA
+            // Use requestAnimationFrame for smoother transitions
+            rafIdRef.current = requestAnimationFrame(() => {
+              if (currentVideo && nextVideo) {
+                currentVideo.style.opacity = '0';
+                nextVideo.style.opacity = '1';
+                setActiveVideo(activeVideo === 0 ? 1 : 0);
+                
+                // Reset trigger after transition completes
+                setTimeout(() => {
+                  fadeTriggeredRef.current = false;
+                }, 1300);
+              }
+            });
+          } else {
+            // Retry if not ready yet
+            requestAnimationFrame(checkReady);
           }
-        });
+        };
+        checkReady();
+      }
+    };
+
+    // Handle video ended event as fallback for smooth looping
+    const handleEnded = (video: HTMLVideoElement, isCurrent: boolean) => {
+      if (isCurrent && !fadeTriggeredRef.current) {
+        // If we missed the timeupdate, force transition
+        const otherVideo = video === video1 ? video2 : video1;
+        if (otherVideo) {
+          fadeTriggeredRef.current = true;
+          otherVideo.currentTime = 0;
+          otherVideo.play().catch(() => {});
+          video.style.opacity = '0';
+          otherVideo.style.opacity = '1';
+          setActiveVideo(video === video1 ? 1 : 0);
+          setTimeout(() => {
+            fadeTriggeredRef.current = false;
+          }, 1300);
+        }
       }
     };
 
     // Attach event listeners to both videos
     video1.addEventListener('timeupdate', handleTimeUpdate);
     video2.addEventListener('timeupdate', handleTimeUpdate);
+    video1.addEventListener('ended', () => handleEnded(video1, activeVideo === 0));
+    video2.addEventListener('ended', () => handleEnded(video2, activeVideo === 1));
 
     return () => {
       video1.removeEventListener('timeupdate', handleTimeUpdate);
       video2.removeEventListener('timeupdate', handleTimeUpdate);
+      video1.removeEventListener('ended', () => handleEnded(video1, activeVideo === 0));
+      video2.removeEventListener('ended', () => handleEnded(video2, activeVideo === 1));
       if (rafIdRef.current !== null) {
         cancelAnimationFrame(rafIdRef.current);
       }
@@ -458,20 +491,24 @@ function LandingPageContent() {
       {/* Dark overlay for better text readability */}
       <div className={`fixed inset-0 z-[1] ${reducedEffects ? 'bg-black/60' : 'bg-black/40'}`} aria-hidden="true" />
       
-      <main className="relative z-10 flex flex-col items-center justify-center flex-1 w-full max-w-4xl text-center">
-        {/* Hero Section */}
-        <div className="mb-6 sm:mb-8 space-y-4 sm:space-y-6">
-          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-primary text-glow mb-2 sm:mb-4 tracking-tight px-4 sm:px-6 py-2 sm:py-3 inline-block border-3 sm:border-4 border-primary rounded-lg">
-            {t(language, 'landing.title')}
-          </h1>
+      <main className="relative z-10 flex flex-col items-center justify-between flex-1 w-full max-w-4xl text-center py-4">
+        {/* Center content area */}
+        <div className="flex flex-col items-center justify-center flex-1 w-full">
+          {/* Hero Section - Matches demo mode width for symmetry */}
+          <div className="mb-6 sm:mb-8 space-y-4 sm:space-y-6 w-full max-w-md mx-auto">
+          {/* Subtitle above title */}
           <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
             {t(language, 'landing.subtitle')}
           </p>
+          {/* Main title */}
+          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-primary text-glow mb-2 sm:mb-4 tracking-tight px-4 sm:px-6 py-2 sm:py-3 block w-full border-3 sm:border-4 border-primary rounded-lg">
+            {t(language, 'landing.title')}
+          </h1>
         </div>
         
         {/* Demo Mode - only show once the demo canvas has mounted */}
         {!showMode && !showDifficulty && !showStats && (
-          <div className={`mb-8 w-full transition-opacity duration-300 ${demoReady ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+          <div className={`mb-6 w-full max-w-md mx-auto transition-opacity duration-300 ${demoReady ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
             <DemoMode onReady={() => setDemoReady(true)} />
           </div>
         )}
@@ -485,7 +522,7 @@ function LandingPageContent() {
 
         {/* Mode Selector */}
         {showMode && !showDifficulty && !showStats && (
-          <div className="mb-8 w-full max-w-2xl">
+          <div className="mb-6 w-full max-w-md mx-auto">
             <ModeSelector
               selected={gameMode}
               onSelect={(mode) => {
@@ -494,8 +531,11 @@ function LandingPageContent() {
                 // Auto-select nightmare difficulty when nightmare mode is chosen
                 if (mode === 'nightmare') {
                   setDifficulty('nightmare');
+                  // Auto-navigate to game for nightmare mode
+                  router.push('/game');
+                } else {
+                  setShowDifficulty(true);
                 }
-                setShowDifficulty(true);
               }}
               onCancel={() => setShowMode(false)}
             />
@@ -504,10 +544,14 @@ function LandingPageContent() {
 
         {/* Difficulty Selector */}
         {showDifficulty && !showMode && !showStats && (
-          <div className="mb-8 w-full max-w-2xl">
+          <div className="mb-6 w-full max-w-2xl">
             <DifficultySelector
               selected={difficulty}
-              onSelect={setDifficulty}
+              onSelect={(selectedDifficulty) => {
+                setDifficulty(selectedDifficulty);
+                // Auto-navigate to game when difficulty is selected
+                router.push('/game');
+              }}
               gameMode={gameMode}
               onCancel={() => {
                 setShowDifficulty(false);
@@ -517,96 +561,76 @@ function LandingPageContent() {
           </div>
         )}
         
-        {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 items-center">
-          {!showStats && (
+        {/* Action Buttons - Directly beneath demo/mode selector, match demo mode width */}
+        {!showDifficulty && !showStats && (
+          <div className="flex flex-row gap-2 sm:gap-3 items-center justify-center w-full max-w-md mx-auto">
             <Link 
               href="/game"
               onClick={(e) => {
-                if (showDifficulty) {
-                  // Start game - navigate directly, loading screen will show on game page
-                  // Don't prevent default, let Next.js handle navigation
-                } else if (showMode) {
-                  // ModeSelector is displayed - clicking "Select Difficulty" opens DifficultySelector
-                  e.preventDefault();
-                  setShowMode(false);
-                  setShowDifficulty(true);
-                } else if (!showMode && !showDifficulty) {
-                  e.preventDefault();
-                  setShowMode(true);
-                }
+                e.preventDefault();
+                setShowMode(true);
               }}
-              className="group relative inline-flex items-center justify-center min-h-[56px] px-8 py-4 text-lg sm:text-xl font-bold border-4 border-primary bg-primary text-primary-foreground transition-all duration-100 hover:border-secondary hover:bg-secondary active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary pixel-border"
+              className="group relative inline-flex items-center justify-center flex-1 min-w-0 min-h-[56px] px-2 sm:px-3 py-3 text-xs sm:text-sm font-bold border-4 border-primary bg-primary text-primary-foreground transition-all duration-100 hover:border-secondary hover:bg-secondary active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary pixel-border whitespace-nowrap overflow-hidden"
             >
-              <span className="relative z-10">
-                {showDifficulty ? t(language, 'landing.startGame') : showMode ? t(language, 'landing.selectDifficulty') : t(language, 'landing.selectMode')}
+              <span className="relative z-10 truncate">
+                {t(language, 'landing.selectMode')}
               </span>
             </Link>
-          )}
 
-          <button
-            onClick={() => {
-              setShowStats(!showStats);
-              setShowDifficulty(false);
-              setShowMode(false);
-              setShowSettings(false);
-            }}
-            draggable={false}
-            style={showMode || showDifficulty ? {
-              background: 'linear-gradient(135deg, #1e3a5f 0%, #000000 100%)',
-              borderColor: '#1e3a5f',
-            } : {
-              borderColor: '#3E7CAC',
-              backgroundColor: '#003A63',
-            }}
-            className={showMode || showDifficulty
-              ? "inline-flex items-center justify-center h-8 px-3 text-xs sm:text-sm font-semibold border-2 text-foreground/70 hover:text-foreground hover:opacity-90 transition-all duration-100 focus:outline-none focus:ring-1 focus:ring-primary pixel-border"
-              : "inline-flex items-center justify-center min-h-[56px] px-6 py-3 text-base sm:text-lg font-semibold border-4 text-foreground hover:opacity-90 transition-all duration-100 focus:outline-none focus:ring-2 focus:ring-primary pixel-border"
-            }
-          >
-            {showStats ? t(language, 'landing.hideStats') : t(language, 'landing.viewStats')}
-          </button>
+            <button
+              onClick={() => {
+                setShowSettings(true);
+              }}
+              draggable={false}
+              style={{
+                borderColor: '#3E7CAC',
+                backgroundColor: '#003A63',
+              }}
+              className="inline-flex items-center justify-center flex-1 min-w-0 min-h-[56px] px-2 sm:px-3 py-3 text-xs sm:text-sm font-semibold border-4 text-foreground hover:opacity-90 transition-all duration-100 focus:outline-none focus:ring-2 focus:ring-primary pixel-border whitespace-nowrap overflow-hidden"
+            >
+              <span className="truncate">
+                {t(language, 'landing.settings')}
+              </span>
+            </button>
 
-          <button
-            onClick={() => {
-              setShowSettings(!showSettings);
-              setShowStats(false);
-              setShowDifficulty(false);
-              setShowMode(false);
-            }}
-            draggable={false}
-            style={showMode || showDifficulty ? {
-              background: 'linear-gradient(135deg, #1e3a5f 0%, #000000 100%)',
-              borderColor: '#1e3a5f',
-            } : {
-              borderColor: '#3E7CAC',
-              backgroundColor: '#003A63',
-            }}
-            className={showMode || showDifficulty
-              ? "inline-flex items-center justify-center h-8 px-3 text-xs sm:text-sm font-semibold border-2 text-foreground/70 hover:text-foreground hover:opacity-90 transition-all duration-100 focus:outline-none focus:ring-1 focus:ring-primary pixel-border"
-              : "inline-flex items-center justify-center min-h-[56px] px-6 py-3 text-base sm:text-lg font-semibold border-4 text-foreground hover:opacity-90 transition-all duration-100 focus:outline-none focus:ring-2 focus:ring-primary pixel-border"
-            }
-          >
-            {t(language, 'landing.settings')}
-          </button>
-
-          <button
-            onClick={() => setShowExitConfirm(true)}
-            draggable={false}
-            style={showMode || showDifficulty ? {
-              background: 'linear-gradient(135deg, #1e3a5f 0%, #000000 100%)',
-              borderColor: '#1e3a5f',
-            } : {
-              borderColor: '#3E7CAC',
-              backgroundColor: '#003A63',
-            }}
-            className={showMode || showDifficulty
-              ? "inline-flex items-center justify-center h-8 px-3 text-xs sm:text-sm font-semibold border-2 text-foreground/70 hover:text-foreground hover:opacity-90 transition-all duration-100 focus:outline-none focus:ring-1 focus:ring-primary pixel-border"
-              : "inline-flex items-center justify-center min-h-[56px] px-6 py-3 text-base sm:text-lg font-semibold border-4 text-foreground hover:opacity-90 transition-all duration-100 focus:outline-none focus:ring-2 focus:ring-primary pixel-border"
-            }
-          >
-            {t(language, 'landing.exitGame')}
-          </button>
+            <button
+              onClick={() => setShowExitConfirm(true)}
+              draggable={false}
+              style={{
+                borderColor: '#3E7CAC',
+                backgroundColor: '#003A63',
+              }}
+              className="inline-flex items-center justify-center flex-1 min-w-0 min-h-[56px] px-2 sm:px-3 py-3 text-xs sm:text-sm font-semibold border-4 text-foreground hover:opacity-90 transition-all duration-100 focus:outline-none focus:ring-2 focus:ring-primary pixel-border whitespace-nowrap overflow-hidden"
+            >
+              <span className="truncate">
+                {t(language, 'landing.exitGame')}
+              </span>
+            </button>
+            
+            {/* Music Toggle Button - In button row next to Exit Game */}
+            <button
+              onClick={toggleMusic}
+              draggable={false}
+              style={{
+                borderColor: '#3E7CAC',
+                backgroundColor: '#003A63',
+              }}
+              className="inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 border-4 text-foreground hover:opacity-90 transition-all duration-100 focus:outline-none focus:ring-2 focus:ring-primary pixel-border"
+              aria-label={musicEnabled ? 'Mute music' : 'Unmute music'}
+            >
+              {musicEnabled ? (
+                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 14.142M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                </svg>
+              ) : (
+                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+                </svg>
+              )}
+            </button>
+          </div>
+        )}
         </div>
       </main>
 
@@ -679,29 +703,6 @@ function LandingPageContent() {
           </div>
         </div>
       )}
-      
-      {/* Music Mute Button - Fixed position */}
-      <button
-        onClick={toggleMusic}
-        draggable={false}
-        style={{
-          background: 'linear-gradient(135deg, #1e3a5f 0%, #000000 100%)',
-          borderColor: '#1e3a5f',
-        }}
-        className="fixed top-4 right-4 z-50 inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 border-2 text-foreground/70 hover:text-foreground hover:opacity-90 transition-all duration-200 focus:outline-none focus:ring-1 focus:ring-primary pixel-border"
-        aria-label={musicEnabled ? 'Mute music' : 'Unmute music'}
-      >
-        {musicEnabled ? (
-          <svg className="w-6 h-6 sm:w-7 sm:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 14.142M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-          </svg>
-        ) : (
-          <svg className="w-6 h-6 sm:w-7 sm:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
-          </svg>
-        )}
-      </button>
       
       {/* Build Info Footer */}
       <footer className="relative z-10 w-full flex justify-center pb-4">
