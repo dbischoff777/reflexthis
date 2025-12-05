@@ -4,8 +4,7 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { BuildInfo } from '@/components/BuildInfo';
-import { DifficultySelector } from '@/components/DifficultySelector';
-import { ModeSelector } from '@/components/ModeSelector';
+import { ModeAndDifficultySelector } from '@/components/ModeAndDifficultySelector';
 import { StatsModal } from '@/components/StatsModal';
 import { DemoMode } from '@/components/DemoMode';
 import { LoadingScreen } from '@/components/LoadingScreen';
@@ -179,8 +178,8 @@ function LandingPageContent() {
     t(language, 'landing.tip.keybindings'),
   ];
   const [showMode, setShowMode] = useState(false);
-  const [showDifficulty, setShowDifficulty] = useState(false);
   const [showStats, setShowStats] = useState(false);
+  const [statsMode, setStatsMode] = useState<GameMode | undefined>(undefined);
   const [showSettings, setShowSettings] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   // Always start with true for hydration safety - check sessionStorage after mount
@@ -232,6 +231,9 @@ function LandingPageContent() {
       return;
     }
 
+    // Mark as initialized immediately to prevent multiple runs (even if we skip)
+    bootstrappingInitRef.current = true;
+
     // Check sessionStorage after hydration to determine if we should show splash
     const bootDone = typeof window !== 'undefined' && window.sessionStorage.getItem('reflex_boot_done') === '1';
     
@@ -241,13 +243,10 @@ function LandingPageContent() {
       return;
     }
 
-    // Mark as initialized to prevent multiple runs (StrictMode protection)
-    bootstrappingInitRef.current = true;
-
     let cancelled = false;
 
     let completedSteps = 0;
-    const totalSteps = 4; // icon, animation, audio, minimum delay
+    const totalSteps = 5; // icon, animation, audio, button images, minimum delay
 
     const advanceProgress = () => {
       if (cancelled) return;
@@ -285,6 +284,22 @@ function LandingPageContent() {
 
     const minDelay = new Promise<void>((resolve) => setTimeout(resolve, 2000)).then(advanceProgress);
 
+    // Preload all button images for mode selector
+    const buttonImages = [
+      '/buttons/reflexRegular.png',
+      '/buttons/reflexHover.png',
+      '/buttons/sequenceRegular.png',
+      '/buttons/sequenceHover.png',
+      '/buttons/survivalRegular.png',
+      '/buttons/survivalHover.png',
+      '/buttons/nightmareRegular.png',
+      '/buttons/nightmareHover.png',
+      '/buttons/oddoneoutRegular.png',
+      '/buttons/oddoneoutHover.png',
+    ];
+    const buttonImagePromises = buttonImages.map(img => preloadImage(img));
+    const allButtonImagesPromise = Promise.all(buttonImagePromises).then(advanceProgress);
+
     const imagePromise = preloadImage('/logo/ReflexIcon.jpg').then(advanceProgress);
     const videoPromise = preloadVideo('/animation/ReflexIconAnimated.mp4').then(advanceProgress);
     const audioPromise = preloadAudioAssets().then(advanceProgress);
@@ -297,7 +312,7 @@ function LandingPageContent() {
       // Ignore prefetch errors – it will still load on first navigation.
     }
 
-    Promise.all([imagePromise, videoPromise, audioPromise, minDelay]).then(() => {
+    Promise.all([imagePromise, videoPromise, audioPromise, allButtonImagesPromise, minDelay]).then(() => {
       if (!cancelled) {
         setBootstrapping(false);
         // Set sessionStorage flag ONLY after all assets are successfully preloaded
@@ -352,11 +367,11 @@ function LandingPageContent() {
   const handleEsc = useCallback((e: KeyboardEvent) => {
     if (e.key !== 'Escape') return;
     // Don't interfere when modals are open (they handle their own ESC)
-    if (showSettings || showStats || showMode || showDifficulty) return;
+    if (showSettings || showStats || showMode) return;
     
     e.preventDefault();
     setShowExitConfirm(true);
-  }, [showSettings, showStats, showMode, showDifficulty]);
+  }, [showSettings, showStats, showMode]);
 
   useEffect(() => {
     window.addEventListener('keydown', handleEsc);
@@ -507,7 +522,7 @@ function LandingPageContent() {
         </div>
         
         {/* Demo Mode - only show once the demo canvas has mounted */}
-        {!showMode && !showDifficulty && !showStats && (
+        {!showMode && !showStats && (
           <div className={`mb-6 w-full max-w-md mx-auto transition-opacity duration-300 ${demoReady ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
             <DemoMode onReady={() => setDemoReady(true)} />
           </div>
@@ -517,52 +532,37 @@ function LandingPageContent() {
         <StatsModal 
           show={showStats} 
           stats={sessionStatistics} 
-          onClose={() => setShowStats(false)} 
+          gameMode={statsMode}
+          onClose={() => {
+            setShowStats(false);
+            setStatsMode(undefined);
+          }} 
         />
 
-        {/* Mode Selector */}
-        {showMode && !showDifficulty && !showStats && (
+        {/* Combined Mode and Difficulty Selector */}
+        {showMode && !showStats && (
           <div className="mb-6 w-full max-w-md mx-auto">
-            <ModeSelector
-              selected={gameMode}
-              onSelect={(mode) => {
+            <ModeAndDifficultySelector
+              selectedMode={gameMode}
+              selectedDifficulty={difficulty}
+              onStart={(mode, selectedDifficulty) => {
                 setGameMode(mode);
+                setDifficulty(selectedDifficulty);
                 setShowMode(false);
-                // Auto-select nightmare difficulty when nightmare mode is chosen
-                if (mode === 'nightmare') {
-                  setDifficulty('nightmare');
-                  // Auto-navigate to game for nightmare mode
-                  router.push('/game');
-                } else {
-                  setShowDifficulty(true);
-                }
+                // Navigate to game
+                router.push('/game');
+              }}
+              onShowStats={(mode) => {
+                setStatsMode(mode);
+                setShowStats(true);
               }}
               onCancel={() => setShowMode(false)}
             />
           </div>
         )}
-
-        {/* Difficulty Selector */}
-        {showDifficulty && !showMode && !showStats && (
-          <div className="mb-6 w-full max-w-2xl">
-            <DifficultySelector
-              selected={difficulty}
-              onSelect={(selectedDifficulty) => {
-                setDifficulty(selectedDifficulty);
-                // Auto-navigate to game when difficulty is selected
-                router.push('/game');
-              }}
-              gameMode={gameMode}
-              onCancel={() => {
-                setShowDifficulty(false);
-                setShowMode(true);
-              }}
-            />
-          </div>
-        )}
         
         {/* Action Buttons - Directly beneath demo/mode selector, match demo mode width */}
-        {!showDifficulty && !showStats && (
+        {!showMode && !showStats && (
           <div className="flex flex-row gap-2 sm:gap-3 items-center justify-center w-full max-w-md mx-auto">
             <Link 
               href="/game"

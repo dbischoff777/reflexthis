@@ -101,9 +101,9 @@ export function ModeSelector({
 
   return (
     <div className="flex flex-col gap-3 w-full max-w-md mx-auto">
-      {/* Subtitle: "Choice Your Game" - left-aligned */}
+      {/* Subtitle: "Choose Your Game" - left-aligned */}
       <h3 className="text-base sm:text-lg font-semibold text-white text-left">
-        Choice Your Game
+        Choose Your Game
       </h3>
       
       {/* 3x2 Grid of mode buttons */}

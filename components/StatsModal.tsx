@@ -3,22 +3,33 @@
 import { useEffect } from 'react';
 import { BackdropTransition, ModalTransition } from '@/components/Transition';
 import { SessionStatsDisplay } from '@/components/SessionStatsDisplay';
-import { SessionStatistics } from '@/lib/sessionStats';
+import { SessionStatistics, calculateSessionStatisticsFromSessions, getGameSessions } from '@/lib/sessionStats';
 import { useGameState } from '@/lib/GameContext';
 import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
+import { GameMode } from '@/lib/gameModes';
 
 interface StatsModalProps {
   show: boolean;
   stats: SessionStatistics;
   onClose: () => void;
+  gameMode?: GameMode;
 }
 
 /**
  * StatsModal - Modal wrapper for SessionStatsDisplay with transitions and ESC key support
  */
-export function StatsModal({ show, stats, onClose }: StatsModalProps) {
+export function StatsModal({ show, stats, onClose, gameMode }: StatsModalProps) {
   const { language } = useGameState();
+  
+  // Filter stats by game mode if provided
+  const filteredStats = gameMode 
+    ? (() => {
+        const allSessions = getGameSessions();
+        const modeSessions = allSessions.filter(s => s.gameMode === gameMode);
+        return calculateSessionStatisticsFromSessions(modeSessions);
+      })()
+    : stats;
 
   // Handle ESC key to close modal
   useEffect(() => {
@@ -66,7 +77,10 @@ export function StatsModal({ show, stats, onClose }: StatsModalProps) {
                 className="text-2xl sm:text-3xl font-bold text-foreground pixel-border px-4 py-2 inline-block"
                 style={{ borderColor: '#3E7CAC' }}
               >
-                {t(language, 'stats.title')}
+                {gameMode 
+                  ? `${t(language, 'stats.title')} - ${gameMode === 'reflex' ? t(language, 'mode.reflex.name') : gameMode === 'sequence' ? t(language, 'mode.sequence.name') : gameMode === 'survival' ? t(language, 'mode.survival.name') : gameMode === 'nightmare' ? t(language, 'mode.nightmare.name') : t(language, 'mode.odd.name')}`
+                  : t(language, 'stats.title')
+                }
               </h2>
               <button
                 onClick={onClose}
@@ -91,7 +105,7 @@ export function StatsModal({ show, stats, onClose }: StatsModalProps) {
 
             {/* Stats Content - Remove title since modal header has it */}
             <div className="p-4 sm:p-6 min-h-0 overflow-y-auto w-full">
-              <SessionStatsDisplay stats={stats} hideTitle />
+              <SessionStatsDisplay stats={filteredStats} hideTitle gameMode={gameMode} />
             </div>
           </div>
         </ModalTransition>

@@ -6,11 +6,13 @@ import { getMetaProgression } from '@/lib/progression';
 import { cn } from '@/lib/utils';
 import { t, type Language } from '@/lib/i18n';
 import { useGameState } from '@/lib/GameContext';
+import { GameMode } from '@/lib/gameModes';
 import Link from 'next/link';
 
 interface SessionStatsDisplayProps {
   stats: SessionStatistics;
   hideTitle?: boolean;
+  gameMode?: GameMode;
 }
 
 type TabType = 'overview' | 'achievements' | 'history';
@@ -18,7 +20,7 @@ type TabType = 'overview' | 'achievements' | 'history';
 /**
  * SessionStatsDisplay component - Shows overall session statistics with tabs
  */
-export function SessionStatsDisplay({ stats, hideTitle = false }: SessionStatsDisplayProps) {
+export function SessionStatsDisplay({ stats, hideTitle = false, gameMode }: SessionStatsDisplayProps) {
   const { language } = useGameState();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
 
