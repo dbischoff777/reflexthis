@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { SessionStatistics, formatPlaytime } from '@/lib/sessionStats';
-import { getMetaProgression } from '@/lib/progression';
+import { SessionStatistics, formatPlaytime, getGameSessions } from '@/lib/sessionStats';
+import { getMetaProgression, getMetaProgressionFromSessions } from '@/lib/progression';
 import { cn } from '@/lib/utils';
 import { t, type Language } from '@/lib/i18n';
 import { useGameState } from '@/lib/GameContext';
@@ -87,7 +87,14 @@ export function SessionStatsDisplay({ stats, hideTitle = false, gameMode }: Sess
     return `${Math.round(time)}ms`;
   };
 
-  const meta = getMetaProgression(stats);
+  // Get meta progression - filter by gameMode if provided
+  const meta = gameMode
+    ? (() => {
+        const allSessions = getGameSessions();
+        const modeSessions = allSessions.filter(s => s.gameMode === gameMode);
+        return getMetaProgressionFromSessions(stats, modeSessions);
+      })()
+    : getMetaProgression(stats);
 
   const tabs: { id: TabType; label: string }[] = [
     { id: 'overview', label: t(language, 'stats.tab.overview') },

@@ -266,6 +266,7 @@ const en: TranslationDict = {
 
   // Statistics Modal
   'stats.title': 'Session Statistics',
+  'stats.filter.all': 'All Modes',
   'stats.noGames': 'No games played yet!',
   'stats.playFirst': 'Play Your First Game',
   'stats.overview.totalGames': 'Total Games',
@@ -578,6 +579,7 @@ const de: TranslationDict = {
 
   // Statistics Modal
   'stats.title': 'Sitzungsstatistiken',
+  'stats.filter.all': 'Alle Modi',
   'stats.noGames': 'Noch keine Spiele gespielt!',
   'stats.playFirst': 'Spiele dein erstes Spiel',
   'stats.overview.totalGames': 'Gesamt Spiele',

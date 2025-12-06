@@ -536,6 +536,8 @@ function LandingPageContent() {
           onClose={() => {
             setShowStats(false);
             setStatsMode(undefined);
+            // Show mode selector when closing stats modal
+            setShowMode(true);
           }} 
         />
 

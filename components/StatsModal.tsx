@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { BackdropTransition, ModalTransition } from '@/components/Transition';
 import { SessionStatsDisplay } from '@/components/SessionStatsDisplay';
 import { SessionStatistics, calculateSessionStatisticsFromSessions, getGameSessions } from '@/lib/sessionStats';
 import { useGameState } from '@/lib/GameContext';
 import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
-import { GameMode } from '@/lib/gameModes';
+import { GameMode, GAME_MODES } from '@/lib/gameModes';
 
 interface StatsModalProps {
   show: boolean;
@@ -19,14 +19,21 @@ interface StatsModalProps {
 /**
  * StatsModal - Modal wrapper for SessionStatsDisplay with transitions and ESC key support
  */
-export function StatsModal({ show, stats, onClose, gameMode }: StatsModalProps) {
+export function StatsModal({ show, stats, onClose, gameMode: initialGameMode }: StatsModalProps) {
   const { language } = useGameState();
+  const [selectedMode, setSelectedMode] = useState<GameMode | undefined>(initialGameMode);
+  const modes: GameMode[] = ['reflex', 'sequence', 'survival', 'nightmare', 'oddOneOut'];
   
-  // Filter stats by game mode if provided
-  const filteredStats = gameMode 
+  // Update selected mode when initialGameMode prop changes
+  useEffect(() => {
+    setSelectedMode(initialGameMode);
+  }, [initialGameMode]);
+  
+  // Filter stats by selected game mode
+  const filteredStats = selectedMode 
     ? (() => {
         const allSessions = getGameSessions();
-        const modeSessions = allSessions.filter(s => s.gameMode === gameMode);
+        const modeSessions = allSessions.filter(s => s.gameMode === selectedMode);
         return calculateSessionStatisticsFromSessions(modeSessions);
       })()
     : stats;
@@ -65,47 +72,95 @@ export function StatsModal({ show, stats, onClose, gameMode }: StatsModalProps) 
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header with close button */}
+            {/* Header with close button and mode filter */}
             <div 
-              className="shrink-0 border-b-4 pixel-border p-4 flex items-center justify-between"
+              className="shrink-0 border-b-4 pixel-border p-4"
               style={{
                 borderColor: '#3E7CAC',
                 backgroundColor: '#003A63',
               }}
             >
-              <h2 
-                className="text-2xl sm:text-3xl font-bold text-foreground pixel-border px-4 py-2 inline-block"
-                style={{ borderColor: '#3E7CAC' }}
-              >
-                {gameMode 
-                  ? `${t(language, 'stats.title')} - ${gameMode === 'reflex' ? t(language, 'mode.reflex.name') : gameMode === 'sequence' ? t(language, 'mode.sequence.name') : gameMode === 'survival' ? t(language, 'mode.survival.name') : gameMode === 'nightmare' ? t(language, 'mode.nightmare.name') : t(language, 'mode.odd.name')}`
-                  : t(language, 'stats.title')
-                }
-              </h2>
-              <button
-                onClick={onClose}
-                draggable={false}
-                className="px-4 py-2 border-4 pixel-border font-bold transition-all duration-200 focus:outline-none focus:ring-2 text-xs sm:text-sm"
-                style={{
-                  borderColor: '#3E7CAC',
-                  backgroundColor: '#3E7CAC',
-                  color: '#ffffff',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(62, 124, 172, 0.8)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#3E7CAC';
-                }}
-                aria-label={t(language, 'settings.close')}
-              >
-                {t(language, 'settings.close')}
-              </button>
+              <div className="flex items-center justify-between mb-3">
+                <h2 
+                  className="text-2xl sm:text-3xl font-bold text-foreground pixel-border px-4 py-2 inline-block"
+                  style={{ borderColor: '#3E7CAC' }}
+                >
+                  {t(language, 'stats.title')}
+                </h2>
+                <button
+                  onClick={onClose}
+                  draggable={false}
+                  className="px-4 py-2 border-4 pixel-border font-bold transition-all duration-200 focus:outline-none focus:ring-2 text-xs sm:text-sm"
+                  style={{
+                    borderColor: '#3E7CAC',
+                    backgroundColor: '#3E7CAC',
+                    color: '#ffffff',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(62, 124, 172, 0.8)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#3E7CAC';
+                  }}
+                  aria-label={t(language, 'settings.close')}
+                >
+                  {t(language, 'settings.close')}
+                </button>
+              </div>
+              
+              {/* Mode Filter Selector */}
+              <div className="flex flex-wrap gap-2 items-center">
+                <span className="text-sm font-semibold text-foreground/80">
+                  {t(language, 'mode.select.title')}:
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => setSelectedMode(undefined)}
+                    className={cn(
+                      'px-3 py-1.5 text-xs sm:text-sm font-semibold border-2 pixel-border transition-all duration-200',
+                      'focus:outline-none focus:ring-2 focus:ring-primary',
+                      selectedMode === undefined
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-transparent text-foreground/70 hover:text-foreground hover:bg-primary/20'
+                    )}
+                    style={{
+                      borderColor: '#3E7CAC',
+                    }}
+                  >
+                    {t(language, 'stats.filter.all')}
+                  </button>
+                  {modes.map((mode) => {
+                    const isSelected = selectedMode === mode;
+                    return (
+                      <button
+                        key={mode}
+                        onClick={() => setSelectedMode(mode)}
+                        className={cn(
+                          'px-3 py-1.5 text-xs sm:text-sm font-semibold border-2 pixel-border transition-all duration-200',
+                          'focus:outline-none focus:ring-2 focus:ring-primary',
+                          isSelected
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-transparent text-foreground/70 hover:text-foreground hover:bg-primary/20'
+                        )}
+                        style={{
+                          borderColor: '#3E7CAC',
+                        }}
+                      >
+                        {mode === 'reflex' && t(language, 'mode.reflex.name')}
+                        {mode === 'sequence' && t(language, 'mode.sequence.name')}
+                        {mode === 'survival' && t(language, 'mode.survival.name')}
+                        {mode === 'nightmare' && t(language, 'mode.nightmare.name')}
+                        {mode === 'oddOneOut' && t(language, 'mode.odd.name')}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
 
             {/* Stats Content - Remove title since modal header has it */}
             <div className="p-4 sm:p-6 min-h-0 overflow-y-auto w-full">
-              <SessionStatsDisplay stats={filteredStats} hideTitle gameMode={gameMode} />
+              <SessionStatsDisplay stats={filteredStats} hideTitle gameMode={selectedMode} />
             </div>
           </div>
         </ModalTransition>
