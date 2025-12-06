@@ -29,7 +29,6 @@ const difficultyAccentMap: Record<DifficultyPreset, string> = {
   easy: '#00ff9f',
   medium: '#00f0ff',
   hard: '#ff00ff',
-  custom: '#ffff00',
   nightmare: '#ff00ff',
 };
 

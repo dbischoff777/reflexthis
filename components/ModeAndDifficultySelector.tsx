@@ -126,10 +126,20 @@ export function ModeAndDifficultySelector({
     ? ['nightmare'] 
     : ['easy', 'medium', 'hard'];
 
-  // Get recently played mode
+  // Get recently played mode and difficulty
   const recentlyPlayedMode = useMemo(() => {
     if (sessionStatistics.recentGames.length > 0) {
       return sessionStatistics.recentGames[0].gameMode;
+    }
+    return null;
+  }, [sessionStatistics.recentGames]);
+
+  const recentlyPlayedDifficulty = useMemo(() => {
+    if (sessionStatistics.recentGames.length > 0) {
+      const difficulty = sessionStatistics.recentGames[0].difficulty;
+      if (difficulty && ['easy', 'medium', 'hard', 'nightmare'].includes(difficulty)) {
+        return difficulty as DifficultyPreset;
+      }
     }
     return null;
   }, [sessionStatistics.recentGames]);
@@ -206,17 +216,25 @@ export function ModeAndDifficultySelector({
     nightmare: t(language, 'difficulty.stars.nightmare'),
   };
 
-  // Handle ESC key to cancel
+  // Handle ESC key to cancel and Enter for Quick Start
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && onCancel) {
         onCancel();
       }
+      // Quick Start on Enter key (only when in mode selection)
+      if (e.key === 'Enter' && showModeSelection && !disabled && onStart) {
+        const quickMode: GameMode = (recentlyPlayedMode as GameMode) || 'reflex';
+        const quickDifficulty: DifficultyPreset = recentlyPlayedDifficulty 
+          ? (quickMode === 'nightmare' ? 'nightmare' : recentlyPlayedDifficulty)
+          : (quickMode === 'nightmare' ? 'nightmare' : 'easy');
+        onStart(quickMode, quickDifficulty);
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onCancel]);
+  }, [onCancel, showModeSelection, disabled, onStart, recentlyPlayedMode, recentlyPlayedDifficulty]);
 
   const handleStart = () => {
     if (!disabled && localMode && localDifficulty) {
@@ -316,60 +334,57 @@ export function ModeAndDifficultySelector({
             );
           })}
           
-          {/* Quick Start Button - Uses the empty spot in row 2 */}
-          <button
-            onClick={() => {
-              if (!disabled) {
-                // Use recently played mode or default to reflex
-                const quickMode: GameMode = (recentlyPlayedMode as GameMode) || 'reflex';
-                const quickDifficulty: DifficultyPreset = quickMode === 'nightmare' ? 'nightmare' : 'easy';
-                
-                // Set mode and difficulty, then start game directly
-                setLocalMode(quickMode);
-                setLocalDifficulty(quickDifficulty);
-                
-                // Transition through screens quickly
-                setShowModeSelection(false);
-                setTimeout(() => {
-                  setShowDifficultySelection(true);
-                  setTimeout(() => {
-                    setShowDifficultySelection(false);
-                    setTimeout(() => {
-                      // Start the game with quick mode and difficulty
-                      if (onStart) {
-                        onStart(quickMode, quickDifficulty);
-                      }
-                    }, 300);
-                  }, 300);
-                }, 300);
-              }
-            }}
-            disabled={disabled}
-            draggable={false}
-            className={cn(
-              'relative w-full aspect-square rounded-2xl transition-all duration-200',
-              'min-h-[100px] sm:min-h-[120px] md:min-h-[140px]',
-              'flex flex-col items-center justify-center overflow-hidden',
-              'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
-              // Distinct 3D effect with green accent for quick action
-              'shadow-[0_8px_16px_rgba(0,255,160,0.3),0_4px_8px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15)]',
-              'hover:shadow-[0_12px_24px_rgba(0,255,160,0.4),0_6px_12px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.2)]',
-              'hover:scale-[1.03]',
-              'border-2',
-              disabled && 'opacity-50 cursor-not-allowed'
-            )}
-            style={{
-              backgroundColor: '#00A86B', // Green background for quick action
-              borderColor: '#00FFA0', // Bright green border
-            }}
-          >
-            <div className="flex flex-col items-center justify-center gap-2 px-2">
-              <span className="text-4xl sm:text-5xl drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">⚡</span>
-              <span className="font-bold text-xs sm:text-sm text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)] text-center">
-                Quick Start
-              </span>
-            </div>
-          </button>
+          {/* Quick Start Button - Uses the empty spot in row 2 to maintain 3x3 grid symmetry */}
+          {(() => {
+            const quickMode: GameMode = (recentlyPlayedMode as GameMode) || 'reflex';
+            const quickDifficulty: DifficultyPreset = recentlyPlayedDifficulty 
+              ? (quickMode === 'nightmare' ? 'nightmare' : recentlyPlayedDifficulty)
+              : (quickMode === 'nightmare' ? 'nightmare' : 'easy');
+            
+            return (
+              <button
+                onClick={() => {
+                  if (!disabled && onStart) {
+                    // Instant start - no transitions
+                    onStart(quickMode, quickDifficulty);
+                  }
+                }}
+                disabled={disabled}
+                draggable={false}
+                className={cn(
+                  'relative w-full aspect-square rounded-2xl transition-all duration-200',
+                  'min-h-[100px] sm:min-h-[120px] md:min-h-[140px]',
+                  'flex flex-col items-center justify-center overflow-hidden',
+                  'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
+                  // Distinct 3D effect with green accent for quick action
+                  'shadow-[0_8px_16px_rgba(0,255,160,0.3),0_4px_8px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15)]',
+                  'hover:shadow-[0_12px_24px_rgba(0,255,160,0.4),0_6px_12px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.2)]',
+                  'hover:scale-[1.03]',
+                  'border-2',
+                  disabled && 'opacity-50 cursor-not-allowed'
+                )}
+                style={{
+                  backgroundColor: '#00A86B', // Green background for quick action
+                  borderColor: '#00FFA0', // Bright green border
+                }}
+              >
+                <div className="flex flex-col items-center justify-center gap-2 px-2 flex-1">
+                  <span className="text-5xl sm:text-5xl drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">⚡</span>
+                  <span className="font-bold text-sm sm:text-base text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)] text-center">
+                    Quick Start
+                  </span>
+                  {recentlyPlayedMode && (
+                    <span className="text-[10px] sm:text-lg text-white/80 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] text-center px-1">
+                      {getModeName(quickMode)} • {quickDifficulty === 'easy' && t(language, 'difficulty.name.easy')}
+                      {quickDifficulty === 'medium' && t(language, 'difficulty.name.medium')}
+                      {quickDifficulty === 'hard' && t(language, 'difficulty.name.hard')}
+                      {quickDifficulty === 'nightmare' && t(language, 'difficulty.name.nightmare')}
+                    </span>
+                  )}
+                </div>
+              </button>
+            );
+          })()}
           </div>
         </div>
       </SlideTransition>
