@@ -128,13 +128,15 @@ export function ModeSelector({
                 disabled={disabled}
                 draggable={false}
                 className={cn(
-                  'relative w-full aspect-square rounded-lg transition-all duration-200',
+                  'relative w-full aspect-square rounded-2xl transition-all duration-200',
                   'min-h-[100px] sm:min-h-[120px] md:min-h-[140px]',
                   'flex flex-col overflow-hidden',
                   'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
-                  isSelected
-                    ? 'ring-4 ring-fuchsia-500 ring-offset-1 ring-offset-background shadow-2xl shadow-fuchsia-500/70'
-                    : '',
+                  // 3D effect with shadows
+                  'shadow-[0_8px_16px_rgba(0,0,0,0.4),0_4px_8px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)]',
+                  isSelected && 'ring-4 ring-primary ring-offset-1 ring-offset-background shadow-[0_12px_24px_rgba(0,0,0,0.5),0_6px_12px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15)]',
+                  isSelected && 'scale-[1.02]',
+                  !isSelected && 'hover:shadow-[0_10px_20px_rgba(0,0,0,0.45),0_5px_10px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.12)]',
                   disabled && 'opacity-50 cursor-not-allowed'
                 )}
                 style={{
@@ -143,12 +145,12 @@ export function ModeSelector({
                     : '#317FA3', // Teal/blue for regular
                 }}
               >
-                {/* Image container - takes up most of the button, leaving space for text */}
+                {/* Image container - larger icons */}
                 <div className="flex-1 relative flex items-center justify-center overflow-hidden px-2 pt-2 sm:px-3 sm:pt-3">
                   <img
                     src={buttonImage}
                     alt={modeInfo.name}
-                    className="w-full h-full max-w-[90%] max-h-[90%] object-contain transition-opacity duration-200"
+                    className="w-full h-full max-w-[95%] max-h-[95%] object-contain transition-opacity duration-200"
                     draggable={false}
                   />
                 </div>

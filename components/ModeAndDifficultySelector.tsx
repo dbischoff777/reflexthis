@@ -6,6 +6,7 @@ import { DifficultyPreset, DIFFICULTY_PRESETS } from '@/lib/difficulty';
 import { cn } from '@/lib/utils';
 import { useGameState } from '@/lib/GameContext';
 import { t } from '@/lib/i18n';
+import { SlideTransition, FadeTransition } from '@/components/Transition';
 
 interface ModeAndDifficultySelectorProps {
   selectedMode: GameMode;
@@ -34,22 +35,91 @@ export function ModeAndDifficultySelector({
   const [hoveredDifficulty, setHoveredDifficulty] = useState<DifficultyPreset | null>(null);
   const [localMode, setLocalMode] = useState<GameMode>(selectedMode);
   const [localDifficulty, setLocalDifficulty] = useState<DifficultyPreset>(selectedDifficulty);
+  
+  // Track which section to show - always start with mode selection
+  const [showModeSelection, setShowModeSelection] = useState<boolean>(true);
+  const [showDifficultySelection, setShowDifficultySelection] = useState<boolean>(false);
+  const [showStartButton, setShowStartButton] = useState<boolean>(false);
 
-  // Sync local state with props when they change
+  // Sync local state with props when they change (but don't change section visibility)
   useEffect(() => {
-    setLocalMode(selectedMode);
-    setLocalDifficulty(selectedDifficulty);
-  }, [selectedMode, selectedDifficulty]);
+    // Only sync if we're not actively in a selection flow
+    // This prevents the component from jumping to different sections when props change
+    if (showModeSelection) {
+      // Reset to initial state when in mode selection
+      setLocalMode(selectedMode);
+      setLocalDifficulty(selectedDifficulty);
+    }
+  }, [selectedMode, selectedDifficulty, showModeSelection]);
 
   // Auto-select nightmare difficulty when nightmare mode is chosen
   useEffect(() => {
     if (localMode === 'nightmare') {
       setLocalDifficulty('nightmare');
     } else if (localDifficulty === 'nightmare') {
-      // If switching away from nightmare mode, reset to medium
-      setLocalDifficulty('medium');
+      // If switching away from nightmare mode, reset to easy
+      setLocalDifficulty('easy');
     }
   }, [localMode, localDifficulty]);
+
+  // Handle mode selection - transition to difficulty selection
+  const handleModeSelect = (mode: GameMode) => {
+    if (!disabled) {
+      setLocalMode(mode);
+      // Auto-select nightmare difficulty if nightmare mode, otherwise default to easy
+      if (mode === 'nightmare') {
+        setLocalDifficulty('nightmare');
+      } else {
+        setLocalDifficulty('easy'); // Default to easy
+      }
+      
+      // Transition to difficulty selection
+      setShowModeSelection(false);
+      setTimeout(() => {
+        setShowDifficultySelection(true);
+      }, 300); // Wait for exit animation
+    }
+  };
+
+  // Handle difficulty selection - transition to start button
+  const handleDifficultySelect = (difficulty: DifficultyPreset) => {
+    if (!disabled) {
+      setLocalDifficulty(difficulty);
+      
+      // Transition to start button
+      setShowDifficultySelection(false);
+      setTimeout(() => {
+        setShowStartButton(true);
+      }, 300); // Wait for exit animation
+    }
+  };
+
+  // Handle back button - go back to mode selection
+  const handleBackToModes = () => {
+    setShowDifficultySelection(false);
+    setShowStartButton(false);
+    setTimeout(() => {
+      setShowModeSelection(true);
+      // Reset local selections to initial prop values to go back to mode selection
+      // Don't call onCancel() as that would navigate away - just reset state
+      setLocalMode(selectedMode);
+      setLocalDifficulty(selectedDifficulty);
+    }, 300);
+  };
+
+  // Handle back button from start button - go back to difficulty selection
+  const handleBackToDifficulty = () => {
+    setShowStartButton(false);
+    setTimeout(() => {
+      setShowDifficultySelection(true);
+      // Reset difficulty but keep mode - default to easy
+      if (localMode === 'nightmare') {
+        setLocalDifficulty('nightmare');
+      } else {
+        setLocalDifficulty('easy');
+      }
+    }, 300);
+  };
 
   // Get available difficulties based on selected mode
   const difficulties: DifficultyPreset[] = localMode === 'nightmare' 
@@ -169,20 +239,19 @@ export function ModeAndDifficultySelector({
   };
 
   return (
-    <div className="flex flex-col gap-6 w-full max-w-md mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h3 className="text-base sm:text-lg font-semibold text-white text-left">
-          {t(language, 'landing.chooseGame')}
-        </h3>
-      </div>
-
-      {/* Mode Selection Grid */}
-      <div className="flex flex-col gap-3">
-        <h4 className="text-sm font-semibold text-white/80 text-left">
-          {t(language, 'mode.select.title')}
-        </h4>
-        <div className="grid grid-cols-3 gap-3 sm:gap-4">
+    <div className="flex flex-col gap-6 w-full max-w-md mx-auto relative min-h-[400px]">
+      {/* Mode Selection Grid - Slide transition */}
+      <SlideTransition
+        show={showModeSelection}
+        direction="right"
+        duration={300}
+        className="absolute inset-0"
+      >
+        <div className="flex flex-col gap-3">
+          <h4 className="text-sm font-semibold text-white/80 text-left">
+            {t(language, 'mode.select.title')}
+          </h4>
+          <div className="grid grid-cols-3 gap-3 sm:gap-4">
           {modes.map((mode) => {
             const modeInfo = GAME_MODES[mode];
             const isSelected = localMode === mode;
@@ -200,16 +269,19 @@ export function ModeAndDifficultySelector({
                 onMouseLeave={() => setHoveredMode(null)}
               >
                 <button
-                  onClick={() => !disabled && setLocalMode(mode)}
+                  onClick={() => handleModeSelect(mode)}
                   disabled={disabled}
                   draggable={false}
                   className={cn(
-                    'relative w-full aspect-square rounded-lg transition-all duration-200',
+                    'relative w-full aspect-square rounded-2xl transition-all duration-200',
                     'min-h-[100px] sm:min-h-[120px] md:min-h-[140px]',
                     'flex flex-col overflow-hidden',
                     'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
-                    isSelected && 'ring-4 ring-fuchsia-500 ring-offset-1 ring-offset-background shadow-2xl shadow-fuchsia-500/70',
-                    isSelected && 'animate-pulse',
+                    // 3D effect with shadows
+                    'shadow-[0_8px_16px_rgba(0,0,0,0.4),0_4px_8px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)]',
+                    isSelected && 'ring-4 ring-primary ring-offset-1 ring-offset-background shadow-[0_12px_24px_rgba(0,0,0,0.5),0_6px_12px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15)]',
+                    isSelected && 'scale-[1.02]',
+                    !isSelected && 'hover:shadow-[0_10px_20px_rgba(0,0,0,0.45),0_5px_10px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.12)]',
                     disabled && 'opacity-50 cursor-not-allowed'
                   )}
                   style={{
@@ -218,26 +290,12 @@ export function ModeAndDifficultySelector({
                       : '#317FA3', // Teal/blue for regular
                   }}
                 >
-                  {/* Recently Played Badge */}
-                  {isRecentlyPlayed && (
-                    <div className="absolute top-1 left-1 z-10 px-1.5 py-0.5 bg-fuchsia-500/90 text-white text-[10px] font-bold rounded border border-fuchsia-300">
-                      {t(language, 'mode.recentlyPlayed')}
-                    </div>
-                  )}
-
-                  {/* Recommended Badge */}
-                  {isRecommended && !isRecentlyPlayed && (
-                    <div className="absolute top-1 left-1 z-10 px-1.5 py-0.5 bg-primary/90 text-primary-foreground text-[10px] font-bold rounded border border-primary/50">
-                      {t(language, 'mode.recommended')}
-                    </div>
-                  )}
-
-                  {/* Image container */}
+                  {/* Image container - larger icons */}
                   <div className="flex-1 relative flex items-center justify-center overflow-hidden px-2 pt-2 sm:px-3 sm:pt-3">
                     <img
                       src={buttonImage}
                       alt={modeInfo.name}
-                      className="w-full h-full max-w-[90%] max-h-[90%] object-contain transition-opacity duration-200"
+                      className="w-full h-full max-w-[95%] max-h-[95%] object-contain transition-opacity duration-200"
                       draggable={false}
                     />
                   </div>
@@ -261,43 +319,129 @@ export function ModeAndDifficultySelector({
             );
           })}
           
-          {/* Statistics Button - Uses the empty spot in row 2 */}
-          {localMode && onShowStats && (
+          {/* Quick Start Button - Uses the empty spot in row 2 */}
+          <button
+            onClick={() => {
+              if (!disabled) {
+                // Use recently played mode or default to reflex
+                const quickMode: GameMode = (recentlyPlayedMode as GameMode) || 'reflex';
+                const quickDifficulty: DifficultyPreset = quickMode === 'nightmare' ? 'nightmare' : 'easy';
+                
+                // Set mode and difficulty, then start game directly
+                setLocalMode(quickMode);
+                setLocalDifficulty(quickDifficulty);
+                
+                // Transition through screens quickly
+                setShowModeSelection(false);
+                setTimeout(() => {
+                  setShowDifficultySelection(true);
+                  setTimeout(() => {
+                    setShowDifficultySelection(false);
+                    setTimeout(() => {
+                      // Start the game with quick mode and difficulty
+                      if (onStart) {
+                        onStart(quickMode, quickDifficulty);
+                      }
+                    }, 300);
+                  }, 300);
+                }, 300);
+              }
+            }}
+            disabled={disabled}
+            draggable={false}
+            className={cn(
+              'relative w-full aspect-square rounded-2xl transition-all duration-200',
+              'min-h-[100px] sm:min-h-[120px] md:min-h-[140px]',
+              'flex flex-col items-center justify-center overflow-hidden',
+              'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
+              // Distinct 3D effect with green accent for quick action
+              'shadow-[0_8px_16px_rgba(0,255,160,0.3),0_4px_8px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15)]',
+              'hover:shadow-[0_12px_24px_rgba(0,255,160,0.4),0_6px_12px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.2)]',
+              'hover:scale-[1.03]',
+              'border-2',
+              disabled && 'opacity-50 cursor-not-allowed'
+            )}
+            style={{
+              backgroundColor: '#00A86B', // Green background for quick action
+              borderColor: '#00FFA0', // Bright green border
+            }}
+          >
+            <div className="flex flex-col items-center justify-center gap-2 px-2">
+              <span className="text-4xl sm:text-5xl drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">⚡</span>
+              <span className="font-bold text-xs sm:text-sm text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)] text-center">
+                Quick Start
+              </span>
+            </div>
+          </button>
+          </div>
+        </div>
+      </SlideTransition>
+
+      {/* Difficulty Selection Grid - Slide transition */}
+      <SlideTransition
+        show={showDifficultySelection}
+        direction="right"
+        duration={300}
+        className="absolute inset-0"
+      >
+        <div className="flex flex-col gap-3">
+          {/* Back button and Statistics button */}
+          <div className="flex items-center justify-between gap-2">
             <button
-              onClick={() => onShowStats(localMode)}
+              onClick={handleBackToModes}
               disabled={disabled}
               draggable={false}
               className={cn(
-                'relative w-full aspect-square rounded-lg transition-all duration-200',
-                'min-h-[100px] sm:min-h-[120px] md:min-h-[140px]',
-                'flex flex-col items-center justify-center overflow-hidden',
-                'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
-                'border-4 pixel-border',
-                'hover:ring-2 hover:ring-primary/50',
+                'px-3 py-1.5 text-sm font-semibold border-2 pixel-border',
+                'transition-all duration-200 hover:opacity-90',
+                'focus:outline-none focus:ring-2 focus:ring-primary',
                 disabled && 'opacity-50 cursor-not-allowed'
               )}
               style={{
                 borderColor: '#3E7CAC',
                 backgroundColor: '#003A63',
+                color: '#fff',
               }}
             >
-              <div className="flex flex-col items-center justify-center gap-2 px-2">
-                <span className="text-3xl sm:text-4xl">📊</span>
-                <span className="font-bold text-xs sm:text-sm text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] text-center">
-                  {t(language, 'landing.viewStats')} - {getModeName(localMode)}
-                </span>
-              </div>
+              ← {t(language, 'mode.select.title')}
             </button>
+            <h4 className="text-sm font-semibold text-white/80 flex-1 text-center">
+              {t(language, 'difficulty.select.title')}
+            </h4>
+            {/* Statistics Button - Now in difficulty selection screen */}
+            {onShowStats && localMode && (
+              <button
+                onClick={() => onShowStats(localMode)}
+                disabled={disabled}
+                draggable={false}
+                className={cn(
+                  'px-3 py-1.5 text-sm font-semibold border-2 rounded-xl',
+                  'transition-all duration-200 hover:opacity-90 hover:scale-105',
+                  'focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2',
+                  'shadow-[0_4px_8px_rgba(255,193,7,0.3)]',
+                  disabled && 'opacity-50 cursor-not-allowed'
+                )}
+                style={{
+                  borderColor: '#FFD700',
+                  backgroundColor: '#FFA500',
+                  color: '#fff',
+                }}
+                title={t(language, 'landing.viewStats')}
+              >
+                📊
+              </button>
+            )}
+          </div>
+          
+          {/* Selected mode indicator */}
+          {localMode && (
+            <div className="px-3 py-2 rounded-lg border-2 pixel-border" style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 58, 99, 0.3)' }}>
+              <span className="text-xs text-white/80">
+                {t(language, 'mode.select.title')}: <span className="text-primary font-semibold">{getModeName(localMode)}</span>
+              </span>
+            </div>
           )}
-        </div>
-      </div>
-
-      {/* Difficulty Selection Grid - Only show if mode is selected */}
-      {localMode && (
-        <div className="flex flex-col gap-3">
-          <h4 className="text-sm font-semibold text-white/80 text-left">
-            {t(language, 'difficulty.select.title')}
-          </h4>
+          
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {difficulties.map((preset) => {
               const isSelected = localDifficulty === preset;
@@ -312,16 +456,20 @@ export function ModeAndDifficultySelector({
                   onMouseLeave={() => setHoveredDifficulty(null)}
                 >
                   <button
-                    onClick={() => !disabled && setLocalDifficulty(preset)}
+                    onClick={() => handleDifficultySelect(preset)}
                     disabled={disabled}
                     draggable={false}
                     className={cn(
-                      'relative w-full aspect-square rounded-lg transition-all duration-200',
+                      'relative w-full aspect-square rounded-2xl transition-all duration-200',
                       'min-h-[70px] sm:min-h-[80px]',
                       'flex flex-col items-center justify-center overflow-hidden',
                       'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
                       'pt-2 pb-2',
-                      isSelected && 'ring-4 ring-fuchsia-500 ring-offset-1 ring-offset-background shadow-2xl shadow-fuchsia-500/70',
+                      // 3D effect with shadows - matching mode buttons
+                      'shadow-[0_8px_16px_rgba(0,0,0,0.4),0_4px_8px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)]',
+                      isSelected && 'ring-4 ring-primary ring-offset-1 ring-offset-background shadow-[0_12px_24px_rgba(0,0,0,0.5),0_6px_12px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15)]',
+                      isSelected && 'scale-[1.02]',
+                      !isSelected && 'hover:shadow-[0_10px_20px_rgba(0,0,0,0.45),0_5px_10px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.12)]',
                       disabled && 'opacity-50 cursor-not-allowed'
                     )}
                     style={{
@@ -373,27 +521,52 @@ export function ModeAndDifficultySelector({
             })}
           </div>
         </div>
-      )}
+      </SlideTransition>
 
-      {/* Start Game Button with Mode Summary */}
-      {localMode && localDifficulty && (
-        <div className="flex flex-col gap-2">
+      {/* Start Game Button - Slide transition */}
+      <SlideTransition
+        show={showStartButton}
+        direction="right"
+        duration={300}
+        className="absolute inset-0"
+      >
+        <div className="flex flex-col gap-4">
+          {/* Back button */}
+          <button
+            onClick={handleBackToDifficulty}
+            disabled={disabled}
+            draggable={false}
+            className={cn(
+              'self-start px-3 py-1.5 text-sm font-semibold border-2 pixel-border',
+              'transition-all duration-200 hover:opacity-90',
+              'focus:outline-none focus:ring-2 focus:ring-primary',
+              disabled && 'opacity-50 cursor-not-allowed'
+            )}
+            style={{
+              borderColor: '#3E7CAC',
+              backgroundColor: '#003A63',
+              color: '#fff',
+            }}
+          >
+            ← {t(language, 'difficulty.select.title')}
+          </button>
+
           {/* Quick Summary */}
           <div 
-            className="p-3 border-2 pixel-border rounded-lg"
+            className="p-4 border-2 pixel-border rounded-lg"
             style={{
               borderColor: '#3E7CAC',
               backgroundColor: '#003A63',
             }}
           >
-            <div className="flex flex-col gap-1 text-xs text-foreground/90">
+            <div className="flex flex-col gap-2 text-sm text-foreground/90">
               <div className="flex items-center justify-between">
                 <span className="font-semibold">{t(language, 'mode.select.title')}:</span>
-                <span className="text-primary">{getModeName(localMode)}</span>
+                <span className="text-primary font-bold">{getModeName(localMode)}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="font-semibold">{t(language, 'difficulty.select.title')}:</span>
-                <span className="text-primary">
+                <span className="text-primary font-bold">
                   {localDifficulty === 'easy' && t(language, 'difficulty.name.easy')}
                   {localDifficulty === 'medium' && t(language, 'difficulty.name.medium')}
                   {localDifficulty === 'hard' && t(language, 'difficulty.name.hard')}
@@ -403,6 +576,7 @@ export function ModeAndDifficultySelector({
               </div>
             </div>
           </div>
+          
           <button
             onClick={handleStart}
             disabled={disabled}
@@ -413,13 +587,14 @@ export function ModeAndDifficultySelector({
               'transition-all duration-100 hover:border-secondary hover:bg-secondary',
               'active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary',
               'pixel-border whitespace-nowrap',
+              'shadow-[0_8px_16px_rgba(0,0,0,0.4)]',
               disabled && 'opacity-50 cursor-not-allowed'
             )}
           >
             {t(language, 'landing.startGame')} - {getModeName(localMode)}
           </button>
         </div>
-      )}
+      </SlideTransition>
     </div>
   );
 }
