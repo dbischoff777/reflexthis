@@ -84,7 +84,8 @@
           ]
         }
       ],
-      "icon": "public/logo/ReflexIcon.jpg"
+      "icon": "public/logo/ReflexIcon.jpg",
+      "requestedExecutionLevel": "asInvoker"
     },
     "mac": {
       "target": [
@@ -121,7 +122,13 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "createStartMenuShortcut": true
+      "createStartMenuShortcut": true,
+      "runAfterFinish": true,
+      "menuCategory": false,
+      "shortcutName": "Reflex This",
+      "perMachine": false,
+      "deleteAppDataOnUninstall": true,
+      "warningsAsErrors": false
     }
   }
 }

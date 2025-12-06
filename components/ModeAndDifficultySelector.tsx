@@ -374,7 +374,7 @@ export function ModeAndDifficultySelector({
                     Quick Start
                   </span>
                   {recentlyPlayedMode && (
-                    <span className="text-[10px] sm:text-lg text-white/80 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] text-center px-1">
+                    <span className="text-[10px] sm:text-md text-white/80 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] text-center px-1">
                       {getModeName(quickMode)} • {quickDifficulty === 'easy' && t(language, 'difficulty.name.easy')}
                       {quickDifficulty === 'medium' && t(language, 'difficulty.name.medium')}
                       {quickDifficulty === 'hard' && t(language, 'difficulty.name.hard')}

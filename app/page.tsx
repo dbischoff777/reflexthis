@@ -548,10 +548,12 @@ function LandingPageContent() {
               selectedMode={gameMode}
               selectedDifficulty={difficulty}
               onStart={(mode, selectedDifficulty) => {
+                // Update state first - these update localStorage synchronously in GameContext
                 setGameMode(mode);
                 setDifficulty(selectedDifficulty);
                 setShowMode(false);
-                // Navigate to game
+                // Navigate to game - state updates are batched by React, but localStorage
+                // is updated synchronously, so game page will read correct values
                 router.push('/game');
               }}
               onShowStats={(mode) => {
