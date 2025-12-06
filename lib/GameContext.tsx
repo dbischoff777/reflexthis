@@ -93,7 +93,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [highScore, setHighScore] = useState(0);
   const [combo, setCombo] = useState(0);
   const [bestCombo, setBestCombo] = useState(0);
-  const [difficulty, setDifficulty] = useState<DifficultyPreset>('custom');
+  const [difficulty, setDifficulty] = useState<DifficultyPreset>('medium');
   const [gameMode, setGameMode] = useState<GameMode>('reflex');
   const [sessionStatistics, setSessionStatistics] = useState<SessionStatistics>(
     calculateSessionStatistics()
@@ -152,7 +152,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
         // Load difficulty preference
         const savedDifficulty = localStorageBatcher.getItem(STORAGE_KEYS.DIFFICULTY);
-        if (savedDifficulty && ['easy', 'medium', 'hard', 'custom', 'nightmare'].includes(savedDifficulty)) {
+        if (savedDifficulty && ['easy', 'medium', 'hard', 'nightmare'].includes(savedDifficulty)) {
           setDifficulty(savedDifficulty as DifficultyPreset);
         }
 

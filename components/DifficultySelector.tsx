@@ -30,14 +30,13 @@ export function DifficultySelector({
   // For nightmare mode, only show nightmare difficulty
   const difficulties: DifficultyPreset[] = gameMode === 'nightmare' 
     ? ['nightmare'] 
-    : ['easy', 'medium', 'hard', 'custom'];
+    : ['easy', 'medium', 'hard'];
 
   // Icons for each difficulty level
   const difficultyIcons: Record<DifficultyPreset, string> = {
     easy: '🌱',
     medium: '⚡',
     hard: '🔥',
-    custom: '⚙️',
     nightmare: '💀',
   };
 
@@ -46,7 +45,6 @@ export function DifficultySelector({
       case 'easy': return t(language, 'difficulty.desc.easy');
       case 'medium': return t(language, 'difficulty.desc.medium');
       case 'hard': return t(language, 'difficulty.desc.hard');
-      case 'custom': return t(language, 'difficulty.desc.custom');
       case 'nightmare': return t(language, 'difficulty.desc.nightmare');
       default: return '';
     }
@@ -71,12 +69,6 @@ export function DifficultySelector({
           { icon: '🔥', text: t(language, 'difficulty.tip.hard.1') },
           { icon: '🔢', text: t(language, 'difficulty.tip.hard.2') },
           { icon: '📈', text: t(language, 'difficulty.tip.hard.3') },
-        ];
-      case 'custom':
-        return [
-          { icon: '⚙️', text: t(language, 'difficulty.tip.custom.1') },
-          { icon: '🎯', text: t(language, 'difficulty.tip.custom.2') },
-          { icon: '📊', text: t(language, 'difficulty.tip.custom.3') },
         ];
       case 'nightmare':
         return [
@@ -164,7 +156,6 @@ export function DifficultySelector({
                     {preset === 'easy' && t(language, 'difficulty.name.easy')}
                     {preset === 'medium' && t(language, 'difficulty.name.medium')}
                     {preset === 'hard' && t(language, 'difficulty.name.hard')}
-                    {preset === 'custom' && t(language, 'difficulty.name.custom')}
                     {preset === 'nightmare' && t(language, 'difficulty.name.nightmare')}
                   </span>
                   {isSelected && (

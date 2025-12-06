@@ -124,7 +124,7 @@ export function ModeAndDifficultySelector({
   // Get available difficulties based on selected mode
   const difficulties: DifficultyPreset[] = localMode === 'nightmare' 
     ? ['nightmare'] 
-    : ['easy', 'medium', 'hard', 'custom'];
+    : ['easy', 'medium', 'hard'];
 
   // Get recently played mode
   const recentlyPlayedMode = useMemo(() => {
@@ -186,7 +186,6 @@ export function ModeAndDifficultySelector({
       case 'easy': return t(language, 'difficulty.desc.easy');
       case 'medium': return t(language, 'difficulty.desc.medium');
       case 'hard': return t(language, 'difficulty.desc.hard');
-      case 'custom': return t(language, 'difficulty.desc.custom');
       case 'nightmare': return t(language, 'difficulty.desc.nightmare');
       default: return '';
     }
@@ -197,7 +196,6 @@ export function ModeAndDifficultySelector({
     easy: '🌱',
     medium: '⚡',
     hard: '🔥',
-    custom: '⚙️',
     nightmare: '💀',
   };
 
@@ -205,7 +203,6 @@ export function ModeAndDifficultySelector({
     easy: t(language, 'difficulty.stars.easy'),
     medium: t(language, 'difficulty.stars.medium'),
     hard: t(language, 'difficulty.stars.hard'),
-    custom: t(language, 'difficulty.stars.custom'),
     nightmare: t(language, 'difficulty.stars.nightmare'),
   };
 
@@ -442,7 +439,7 @@ export function ModeAndDifficultySelector({
             </div>
           )}
           
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             {difficulties.map((preset) => {
               const isSelected = localDifficulty === preset;
               const isHovered = hoveredDifficulty === preset;
@@ -481,18 +478,17 @@ export function ModeAndDifficultySelector({
                     <div className="flex flex-col items-center justify-center flex-1 px-2">
                       {/* Icon or stars for difficulty */}
                       <div className="flex items-center justify-center flex-1 pb-1">
-                        {preset === 'custom' || preset === 'nightmare' ? (
+                        {preset === 'nightmare' ? (
                           <span className="text-2xl sm:text-3xl">{difficultyIcons[preset]}</span>
                         ) : (
                           <span className="text-xl sm:text-2xl leading-none">{difficultyStars[preset]}</span>
                         )}
                       </div>
                       {/* Text label */}
-                      <span className="font-bold text-[10px] sm:text-xs text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] text-center shrink-0">
+                      <span className="font-bold text-[10px] sm:text-xl text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] text-center shrink-0">
                         {preset === 'easy' && t(language, 'difficulty.name.easy')}
                         {preset === 'medium' && t(language, 'difficulty.name.medium')}
                         {preset === 'hard' && t(language, 'difficulty.name.hard')}
-                        {preset === 'custom' && t(language, 'difficulty.name.custom')}
                         {preset === 'nightmare' && t(language, 'difficulty.name.nightmare')}
                       </span>
                     </div>
@@ -570,7 +566,6 @@ export function ModeAndDifficultySelector({
                   {localDifficulty === 'easy' && t(language, 'difficulty.name.easy')}
                   {localDifficulty === 'medium' && t(language, 'difficulty.name.medium')}
                   {localDifficulty === 'hard' && t(language, 'difficulty.name.hard')}
-                  {localDifficulty === 'custom' && t(language, 'difficulty.name.custom')}
                   {localDifficulty === 'nightmare' && t(language, 'difficulty.name.nightmare')}
                 </span>
               </div>

@@ -42,15 +42,6 @@ export const SEQUENCE_DIFFICULTY_PRESETS: Record<DifficultyPreset, SequenceDiffi
     sequenceIncreaseRate: 0.7, // Fast increase
     description: 'Fast sequences, long patterns. For memory masters!',
   },
-  custom: {
-    name: 'Custom',
-    sequenceDisplayDuration: 600, // Default
-    sequenceGapDuration: 150,
-    maxSequenceLength: 15,
-    startingSequenceLength: 4,
-    sequenceIncreaseRate: 0.6, // Progressive scaling
-    description: 'Progressive difficulty that scales with your score.',
-  },
   nightmare: {
     name: 'Nightmare',
     sequenceDisplayDuration: 250, // Extremely fast - brutal
