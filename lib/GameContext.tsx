@@ -364,12 +364,24 @@ export function GameProvider({ children }: { children: ReactNode }) {
   // Set difficulty preset
   const handleSetDifficulty = useCallback((newDifficulty: DifficultyPreset) => {
     setDifficulty(newDifficulty);
+    // Write directly to localStorage (bypass batcher) for immediate persistence
+    // This ensures the game page reads the correct value even if navigation happens quickly
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEYS.DIFFICULTY, newDifficulty);
+    }
+    // Also queue it in the batcher for consistency (in case of other reads)
     localStorageBatcher.setItem(STORAGE_KEYS.DIFFICULTY, newDifficulty);
   }, []);
 
   // Set game mode
   const handleSetGameMode = useCallback((newMode: GameMode) => {
     setGameMode(newMode);
+    // Write directly to localStorage (bypass batcher) for immediate persistence
+    // This ensures the game page reads the correct value even if navigation happens quickly
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEYS.GAME_MODE, newMode);
+    }
+    // Also queue it in the batcher for consistency (in case of other reads)
     localStorageBatcher.setItem(STORAGE_KEYS.GAME_MODE, newMode);
   }, []);
 

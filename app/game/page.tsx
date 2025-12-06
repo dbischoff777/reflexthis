@@ -11,7 +11,9 @@ import { getRandomButtons } from '@/lib/gameUtils';
 import {
   getButtonsToHighlightForDifficulty,
   getHighlightDurationForDifficulty,
+  DifficultyPreset,
 } from '@/lib/difficulty';
+import { GameMode } from '@/lib/gameModes';
 import {
   generateSequence,
   getSequenceLength,
@@ -21,7 +23,6 @@ import {
 import { playSound, setGamePageActive, stopMenuMusic } from '@/lib/soundUtils';
 import { useKeyboardControls } from '@/hooks/useKeyboardControls';
 import { LoadingScreen } from '@/components/LoadingScreen';
-import { ReadyScreen } from '@/components/ReadyScreen';
 import { RetroHudWidgets } from '@/components/RetroHudWidgets';
 // DynamicAmbience removed - effects now handled by 3D BackgroundGrid in GameButton3DWebGL
 import { PerformanceFeedback } from '@/components/PerformanceFeedback';
@@ -66,6 +67,8 @@ export default function GamePage() {
     setLives,
     incrementScore,
     decrementLives,
+    setDifficulty,
+    setGameMode,
     newlyUnlockedAchievements,
     language,
   } = useGameState();
@@ -622,18 +625,37 @@ export default function GamePage() {
     if (isInitialMountRef.current) {
       isInitialMountRef.current = false;
       
+      // Ensure we're using the latest game mode and difficulty from context
+      // The context state should already be updated from the selector, but we
+      // verify it matches localStorage as a fallback to ensure consistency
+      if (typeof window !== 'undefined') {
+        const storedMode = localStorage.getItem('reflexthis_gameMode');
+        const storedDifficulty = localStorage.getItem('reflexthis_difficulty');
+        
+        // If localStorage has different values than context, sync them
+        // This handles the case where state updates haven't propagated yet
+        if (storedMode && ['reflex', 'sequence', 'survival', 'nightmare', 'oddOneOut'].includes(storedMode) && storedMode !== gameMode) {
+          setGameMode(storedMode as GameMode);
+        }
+        if (storedDifficulty && ['easy', 'medium', 'hard', 'nightmare'].includes(storedDifficulty) && storedDifficulty !== difficulty) {
+          setDifficulty(storedDifficulty as DifficultyPreset);
+        }
+      }
+      
       // Reset game first to ensure clean state (sets lives correctly based on game mode)
-      resetGame();
+      // Use a small delay to ensure state updates are applied
+      const initTimer = setTimer(() => {
+        resetGame();
+      }, 0);
       
-      // Show loading screen briefly, then show ready screen
-      const loadingTimer = setTimer(() => {
-        setIsLoading(false);
-        // Ready screen will be shown, game starts when player clicks START
-      }, 1500);
+      // LoadingScreen will handle calling handleReady() when it completes
+      // No need for a separate timer - LoadingScreen takes ~3.3 seconds total
       
-      return () => clearTimer(loadingTimer);
+      return () => {
+        clearTimer(initTimer);
+      };
     }
-  }, [resetGame, setTimer, clearTimer]);
+  }, [resetGame, setTimer, clearTimer, gameMode, difficulty, setGameMode, setDifficulty]);
 
   // Start reflex/nightmare/oddOneOut game when component mounts or game resets (only after ready)
   useEffect(() => {
@@ -1126,15 +1148,6 @@ export default function GamePage() {
       
       {/* Main Game Area */}
       <main className="relative z-10 flex-1 flex items-center justify-center px-2 sm:px-4 md:px-6 py-2 sm:py-4 overflow-hidden">
-        {/* Ready Screen overlay: only leave this once the player starts, while 3D grid is already rendering */}
-        {!isReady && (
-          <div className="absolute inset-0 z-30 flex items-center justify-center bg-background/80">
-            <ReadyScreen
-              onReady={handleReady}
-              gameMode={gameMode}
-            />
-          </div>
-        )}
         {/* Inline mode status + compact help toggle */}
         <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-20 flex flex-col items-center gap-2">
           {/* Sequence status */}

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback, startTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { BuildInfo } from '@/components/BuildInfo';
@@ -552,9 +552,11 @@ function LandingPageContent() {
                 setGameMode(mode);
                 setDifficulty(selectedDifficulty);
                 setShowMode(false);
-                // Navigate to game - state updates are batched by React, but localStorage
-                // is updated synchronously, so game page will read correct values
-                router.push('/game');
+                // Use startTransition to ensure state updates are flushed before navigation
+                // This ensures the game page reads the correct mode/difficulty
+                startTransition(() => {
+                  router.push('/game');
+                });
               }}
               onShowStats={(mode) => {
                 setStatsMode(mode);
