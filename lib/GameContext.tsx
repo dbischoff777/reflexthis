@@ -9,6 +9,7 @@ import { GameMode } from '@/lib/gameModes';
 import type { Language } from '@/lib/i18n';
 import { checkAndUnlockAchievements } from '@/lib/achievements';
 import { localStorageBatcher } from '@/lib/localStorageBatch';
+import { ScoreCalculator, ScoringFactors } from '@/lib/scoring';
 
 export interface ReactionTimeStats {
   current: number | null;
@@ -61,6 +62,7 @@ export interface GameState {
   resetGame: () => void;
   startGame: () => void;
   endGame: () => void;
+  lastScoreBreakdown: ScoringFactors | null;
 }
 
 const GameContext = createContext<GameState | undefined>(undefined);
@@ -109,6 +111,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const gameStartTimeRef = useRef<number | null>(null);
   const achievementClearTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const scoreCalculatorRef = useRef<ScoreCalculator | null>(null);
+  const [lastScoreBreakdown, setLastScoreBreakdown] = useState<ScoringFactors | null>(null);
   const [reactionTimeStats, setReactionTimeStats] = useState<ReactionTimeStats>({
     current: null,
     fastest: null,
@@ -393,7 +397,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setIsPaused(false);
   }, []);
 
-  // Increment score with combo multiplier and track reaction time
+  // Initialize score calculator when difficulty or game mode changes
+  useEffect(() => {
+    if (!scoreCalculatorRef.current) {
+      scoreCalculatorRef.current = new ScoreCalculator(difficulty, gameMode);
+    } else {
+      // Update calculator if difficulty or mode changed
+      scoreCalculatorRef.current = new ScoreCalculator(difficulty, gameMode);
+    }
+  }, [difficulty, gameMode]);
+
+  // Increment score with advanced multi-factor scoring system
   const incrementScore = useCallback((reactionTime: number) => {
     // Update reaction time stats
     setReactionTimeStats((prev) => {
@@ -411,7 +425,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       };
     });
 
-    // Increase combo and update score in one go
+    // Increase combo and calculate score using advanced scoring system
     setCombo((prevCombo) => {
       const newCombo = prevCombo + 1;
       
@@ -421,10 +435,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
         localStorageBatcher.setItem(STORAGE_KEYS.BEST_COMBO, String(newCombo));
       }
       
-      // Calculate score with combo multiplier
-      const comboMultiplier = getComboMultiplier(newCombo);
-      const pointsGained = Math.floor(1 * comboMultiplier);
-      setScore((prev) => prev + pointsGained);
+      // Calculate score using advanced scoring system
+      if (scoreCalculatorRef.current) {
+        const scoringFactors = scoreCalculatorRef.current.calculateScore(reactionTime, true, newCombo);
+        setLastScoreBreakdown(scoringFactors);
+        setScore((prev) => prev + scoringFactors.totalScore);
+      } else {
+        // Fallback to old system if calculator not initialized
+        const comboMultiplier = getComboMultiplier(newCombo);
+        const pointsGained = Math.floor(1 * comboMultiplier);
+        setScore((prev) => prev + pointsGained);
+      }
       
       return newCombo;
     });
@@ -591,6 +612,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setCombo(0);
     setIsGameStarted(true); // Mark that game has started
     setIsPaused(false);
+    setLastScoreBreakdown(null);
     setReactionTimeStats({
       current: null,
       fastest: null,
@@ -598,6 +620,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       average: null,
       allTimes: [],
     });
+    // Reset score calculator
+    if (scoreCalculatorRef.current) {
+      scoreCalculatorRef.current.reset();
+    }
     gameStartTimeRef.current = Date.now(); // Track game start time
     // Music will restart automatically via useEffect when gameOver becomes false and isGameStarted is true
   }, [gameMode]);
@@ -646,6 +672,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     startGame,
     endGame,
     newlyUnlockedAchievements,
+    lastScoreBreakdown,
   }), [
     score,
     lives,
@@ -689,6 +716,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     startGame,
     endGame,
     newlyUnlockedAchievements,
+    lastScoreBreakdown,
   ]);
 
   return (

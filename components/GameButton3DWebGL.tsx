@@ -863,10 +863,15 @@ const GlowTrail = memo(function GlowTrail({
 
 interface CountdownRingProps {
   active: boolean;
-  progress: number; // 0 = full time remaining, 1 = time expired
+  highlightStartTime?: number;
+  highlightDuration: number;
 }
 
-const CountdownRing = memo(function CountdownRing({ active, progress }: CountdownRingProps) {
+const CountdownRing = memo(function CountdownRing({ 
+  active, 
+  highlightStartTime,
+  highlightDuration 
+}: CountdownRingProps) {
   const ringRef = useRef<THREE.Mesh>(null);
   const materialRef = useRef<THREE.ShaderMaterial>(null);
   
@@ -974,6 +979,15 @@ const CountdownRing = memo(function CountdownRing({ active, progress }: Countdow
     if (!materialRef.current) return;
     const mat = shaderMaterial;
     mat.uniforms.uTime.value = state.clock.elapsedTime;
+    
+    // Calculate progress directly from highlightStartTime and highlightDuration
+    // This ensures it updates every frame even if props don't change
+    let progress = 0;
+    if (active && highlightStartTime && highlightDuration > 0) {
+      const elapsed = Date.now() - highlightStartTime;
+      progress = Math.max(0, Math.min(1, elapsed / highlightDuration));
+    }
+    
     mat.uniforms.uProgress.value = progress;
     mat.uniforms.uActive.value = THREE.MathUtils.lerp(
       mat.uniforms.uActive.value,
@@ -1547,6 +1561,7 @@ const ButtonMesh = memo(function ButtonMesh({
   const feedbackStartTime = useRef(0);
   const prevFeedback = useRef<'success' | 'error' | null>(null);
   const prevHighlighted = useRef(false);
+  const prevHighlightStartTime = useRef<number | undefined>(undefined);
   const anticipationPhase = useRef(0); // 0 = none, 0-1 = anticipation in progress
   
   
@@ -1573,11 +1588,23 @@ const ButtonMesh = memo(function ButtonMesh({
     // Time since feedback started (for animations)
     const feedbackElapsed = pressFeedback ? time - feedbackStartTime.current : 0;
     
+    // Reset progress if highlight start time changed (new highlight cycle)
+    if (highlightStartTime !== prevHighlightStartTime.current) {
+      prevHighlightStartTime.current = highlightStartTime;
+      if (!highlighted || !highlightStartTime) {
+        progress.current = 0;
+      }
+    }
+    
     // Calculate progress for highlighted state
-    if (highlighted && highlightStartTime) {
+    if (highlighted && highlightStartTime && highlightDuration > 0) {
       const elapsed = Date.now() - highlightStartTime;
-      progress.current = Math.min(elapsed / highlightDuration, 1);
+      progress.current = Math.min(Math.max(0, elapsed / highlightDuration), 1);
+    } else if (!highlighted) {
+      // Reset progress when not highlighted
+      progress.current = 0;
     } else {
+      // Fade out progress if highlighted but no start time
       progress.current = Math.max(0, progress.current - delta * 4);
     }
     
@@ -2114,7 +2141,8 @@ const ButtonMesh = memo(function ButtonMesh({
       {/* Countdown Ring - clear visual timer showing remaining time */}
       <CountdownRing 
         active={highlighted} 
-        progress={progressRef.current}
+        highlightStartTime={highlightStartTime}
+        highlightDuration={highlightDuration}
       />
       
       {/* Shockwave Effect on press */}

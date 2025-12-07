@@ -1,28 +1,25 @@
 'use client';
 
-import { memo, useMemo } from 'react';
+import { memo, useMemo, useEffect, useState, useRef } from 'react';
 import type { CSSProperties } from 'react';
 import type { DifficultyPreset } from '@/lib/difficulty';
-import type { GameMode } from '@/lib/gameModes';
-import type { ReactionTimeStats } from '@/lib/GameContext';
 import { useGameState } from '@/lib/GameContext';
 import { t } from '@/lib/i18n';
+import type { ScoringFactors } from '@/lib/scoring';
 
 type RetroHudWidgetsProps = {
   score: number;
   highScore: number;
-  combo: number;
   lives: number;
   maxLives: number;
   difficulty: DifficultyPreset;
-  gameMode: GameMode;
-  reactionStats: ReactionTimeStats;
   soundEnabled: boolean;
   musicEnabled: boolean;
   onToggleSound: () => void;
   onToggleMusic: () => void;
   onQuit: () => void;
   onOpenSettings?: () => void;
+  scoreBreakdown?: ScoringFactors | null;
 };
 
 const difficultyAccentMap: Record<DifficultyPreset, string> = {
@@ -32,110 +29,199 @@ const difficultyAccentMap: Record<DifficultyPreset, string> = {
   nightmare: '#ff00ff',
 };
 
-const modeLabelMap: Record<GameMode, string> = {
-  reflex: 'Reflex',
-  sequence: 'Sequence',
-  survival: 'Survival',
-  nightmare: 'Nightmare',
-  oddOneOut: 'Odd One Out',
-};
 
 export const RetroHudWidgets = memo(function RetroHudWidgets({
   score,
   highScore,
-  combo,
   lives,
   maxLives,
   difficulty,
-  gameMode,
-  reactionStats,
   soundEnabled,
   musicEnabled,
   onToggleSound,
   onToggleMusic,
   onQuit,
   onOpenSettings,
+  scoreBreakdown,
 }: RetroHudWidgetsProps) {
   const { language } = useGameState();
+  const [showBreakdown, setShowBreakdown] = useState(false);
+  const [animatedBreakdown, setAnimatedBreakdown] = useState<ScoringFactors | null>(null);
+  const breakdownTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Memoize expensive calculations
-  const { comboIntensity, livesRatio, accent, gearDuration, ledColor, meterColor, formattedScore, formattedHighScore, tierValue } = useMemo(() => {
-    const comboIntensity = Math.min(combo / 15, 1);
+  const { livesRatio, accent, meterColor, formattedScore, formattedHighScore } = useMemo(() => {
     const livesRatio = maxLives > 0 ? Math.max(0, Math.min(1, lives / maxLives)) : 1;
     const accent = difficultyAccentMap[difficulty] ?? '#ffff00';
-    const gearDuration = `${Math.max(1.2, 2.5 - comboIntensity * 1.5)}s`;
     const meterColor = livesRatio > 0.4 ? '#00ffa7' : '#ff005d';
     const formattedScore = score.toString().padStart(6, '0');
     const formattedHighScore = highScore.toString().padStart(6, '0');
-    const tierValue = Math.min(5, Math.max(1, Math.ceil(combo / 10)));
     
     return {
-      comboIntensity,
       livesRatio,
       accent,
-      gearDuration,
-      ledColor: accent,
       meterColor,
       formattedScore,
       formattedHighScore,
-      tierValue,
     };
-  }, [combo, maxLives, lives, difficulty, score, highScore]);
+  }, [maxLives, lives, difficulty, score, highScore]);
 
-  const getReactionLabel = (value: number | null) =>
-    value !== null && value !== undefined ? `${Math.round(value)}ms` : '--';
+  // Handle score breakdown display
+  useEffect(() => {
+    // Clear any existing timeouts
+    if (breakdownTimeoutRef.current) {
+      clearTimeout(breakdownTimeoutRef.current);
+      breakdownTimeoutRef.current = null;
+    }
+
+    let animationTimeouts: NodeJS.Timeout[] = [];
+    let isCancelled = false;
+
+    if (scoreBreakdown && scoreBreakdown.totalScore > 0) {
+      setShowBreakdown(true);
+      
+      // Animate values from 0 to target
+      const duration = 600; // 600ms animation
+      const steps = 20;
+      const stepDuration = duration / steps;
+      let currentStep = 0;
+
+      const animate = () => {
+        if (isCancelled) return;
+        
+        if (currentStep >= steps) {
+          setAnimatedBreakdown(scoreBreakdown);
+          // Hide after showing for 2 seconds
+          breakdownTimeoutRef.current = setTimeout(() => {
+            if (!isCancelled) {
+              setShowBreakdown(false);
+              setAnimatedBreakdown(null);
+            }
+            breakdownTimeoutRef.current = null;
+          }, 2000);
+          return;
+        }
+
+        const progress = currentStep / steps;
+        // Ease-out animation
+        const eased = 1 - Math.pow(1 - progress, 3);
+
+        setAnimatedBreakdown({
+          baseScore: Math.round(scoreBreakdown.baseScore * eased),
+          comboMultiplier: Math.round(scoreBreakdown.comboMultiplier * 10) / 10,
+          accuracyBonus: Math.round(scoreBreakdown.accuracyBonus * eased),
+          consistencyBonus: Math.round(scoreBreakdown.consistencyBonus * eased),
+          difficultyMultiplier: Math.round(scoreBreakdown.difficultyMultiplier * 10) / 10,
+          modeMultiplier: Math.round(scoreBreakdown.modeMultiplier * 10) / 10,
+          totalScore: Math.round(scoreBreakdown.totalScore * eased),
+        });
+
+        currentStep++;
+        const timeoutId = setTimeout(animate, stepDuration);
+        animationTimeouts.push(timeoutId);
+      };
+
+      animate();
+    } else {
+      setShowBreakdown(false);
+      setAnimatedBreakdown(null);
+    }
+
+    // Cleanup function
+    return () => {
+      isCancelled = true;
+      if (breakdownTimeoutRef.current) {
+        clearTimeout(breakdownTimeoutRef.current);
+        breakdownTimeoutRef.current = null;
+      }
+      animationTimeouts.forEach(timeout => clearTimeout(timeout));
+      animationTimeouts = [];
+    };
+  }, [scoreBreakdown]);
 
   return (
     <div className="retro-hud flex flex-nowrap gap-1.5 sm:gap-2 md:gap-3 overflow-x-auto scrollbar-hide mx-auto">
       <div className="flex flex-nowrap gap-1.5 sm:gap-2 md:gap-3 flex-shrink-0">
-        <div className="hud-module min-w-[8rem] sm:min-w-[9rem] md:min-w-[11rem] flex-shrink-0">
+        {/* Score Display - Total and Best */}
+        <div className="hud-module min-w-[7rem] sm:min-w-[8rem] md:min-w-[9rem] flex-shrink-0">
           <span className="hud-label">{t(language, 'hud.score.title')}</span>
           <div className="hud-readout">
             <span className="hud-readout-primary">{formattedScore}</span>
-            <span className="hud-readout-sub">{t(language, 'hud.highScore')} {formattedHighScore}</span>
-          </div>
-        </div>
-
-        <div className="hud-module min-w-[7rem] sm:min-w-[8rem] flex-shrink-0">
-          <span className="hud-label">{t(language, 'hud.mode.title')}</span>
-          <div className="hud-led" style={{ color: ledColor } as CSSProperties}>
-            <span
-              style={
-                {
-                  backgroundColor: ledColor,
-                  filter: 'drop-shadow(0 0 6px rgba(255,255,255,0.8))',
-                } as CSSProperties
-              }
-            />
-            {gameMode === 'reflex' && t(language, 'mode.reflex.name')}
-            {gameMode === 'sequence' && t(language, 'mode.sequence.name')}
-            {gameMode === 'survival' && t(language, 'mode.survival.name')}
-            {gameMode === 'nightmare' && t(language, 'mode.nightmare.name')}
-            {gameMode === 'oddOneOut' && t(language, 'mode.odd.name')}
-          </div>
-          <div className="hud-difficulty">
-            <span className="hud-label text-[0.55rem]">
-              {t(language, 'hud.diff.label')}
+            <span className="hud-readout-sub">
+              {t(language, 'hud.highScore')} {formattedHighScore}
             </span>
-            <span className="hud-difficulty-chip">{difficulty.toUpperCase()}</span>
           </div>
         </div>
 
-        <div className="hud-module min-w-[7rem] sm:min-w-[8rem] flex-shrink-0">
-          <span className="hud-label">{t(language, 'hud.combo.title')}</span>
-          <div
-            className="hud-gear"
-            style={
-              {
-                animation: `hud-gear-spin ${gearDuration} linear infinite`,
-                borderColor: accent,
-              } as CSSProperties
-            }
-          />
-          <span className="text-xs uppercase tracking-wide">
-            {t(language, 'hud.combo.tier')} {tierValue} / {t(language, 'hud.combo.combo')} {combo}
-          </span>
-        </div>
+        {/* Score Breakdown - Detailed breakdown when available */}
+        {showBreakdown && animatedBreakdown && (
+          <div className="hud-module min-w-[8rem] sm:min-w-[9rem] md:min-w-[11rem] flex-shrink-0">
+            <span className="hud-label">{t(language, 'hud.score.title')}</span>
+            <div className="hud-readout">
+              <div className="text-[0.75rem] sm:text-[0.8rem] font-bold mb-1.5" style={{ color: '#00ff9f' }}>
+                +{Math.round(animatedBreakdown.totalScore)}
+              </div>
+              <div className="text-[0.6rem] sm:text-[0.65rem] space-y-0.5" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                <div className="flex justify-between items-center">
+                  <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>Base</span>
+                  <span className="font-semibold" style={{ color: '#ffffff' }}>
+                    {Math.round(animatedBreakdown.baseScore)}
+                  </span>
+                </div>
+                {(Math.round(animatedBreakdown.comboMultiplier * 10) / 10 > 1 || 
+                  Math.round(animatedBreakdown.difficultyMultiplier * 10) / 10 !== 1 || 
+                  Math.round(animatedBreakdown.modeMultiplier * 10) / 10 !== 1) && (
+                  <>
+                    {Math.round(animatedBreakdown.comboMultiplier * 10) / 10 > 1 && (
+                      <div className="flex justify-between items-center">
+                        <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>Combo</span>
+                        <span className="font-semibold" style={{ color: '#00f0ff' }}>
+                          {Math.round(animatedBreakdown.comboMultiplier)}x
+                        </span>
+                      </div>
+                    )}
+                    {Math.round(animatedBreakdown.difficultyMultiplier * 10) / 10 !== 1 && (
+                      <div className="flex justify-between items-center">
+                        <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>Diff</span>
+                        <span className="font-semibold" style={{ color: '#00f0ff' }}>
+                          {Math.round(animatedBreakdown.difficultyMultiplier)}x
+                        </span>
+                      </div>
+                    )}
+                    {Math.round(animatedBreakdown.modeMultiplier * 10) / 10 !== 1 && (
+                      <div className="flex justify-between items-center">
+                        <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>Mode</span>
+                        <span className="font-semibold" style={{ color: '#00f0ff' }}>
+                          {Math.round(animatedBreakdown.modeMultiplier)}x
+                        </span>
+                      </div>
+                    )}
+                  </>
+                )}
+                {(Math.round(animatedBreakdown.accuracyBonus) > 0 || Math.round(animatedBreakdown.consistencyBonus) > 0) && (
+                  <>
+                    {Math.round(animatedBreakdown.accuracyBonus) > 0 && (
+                      <div className="flex justify-between items-center">
+                        <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>Perfect</span>
+                        <span className="font-semibold" style={{ color: '#00ff9f' }}>
+                          +{Math.round(animatedBreakdown.accuracyBonus)}
+                        </span>
+                      </div>
+                    )}
+                    {Math.round(animatedBreakdown.consistencyBonus) > 0 && (
+                      <div className="flex justify-between items-center">
+                        <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>Consist</span>
+                        <span className="font-semibold" style={{ color: '#00ff9f' }}>
+                          +{Math.round(animatedBreakdown.consistencyBonus)}
+                        </span>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="hud-module min-w-[8rem] sm:min-w-[9rem] md:min-w-[12rem] flex-shrink-0">
@@ -157,33 +243,10 @@ export const RetroHudWidgets = memo(function RetroHudWidgets({
         </div>
       </div>
 
-      <div className="hud-module min-w-[9rem] sm:min-w-[11rem] md:min-w-[14rem] flex-shrink-0">
-        <span className="hud-label">{t(language, 'hud.reaction.title')}</span>
-        <div className="hud-reaction-grid">
-          <div>
-            <span className="hud-reaction-label">
-              {t(language, 'hud.reaction.now')}
-            </span>
-            <span className="hud-reaction-value">{getReactionLabel(reactionStats.current)}</span>
-          </div>
-          <div>
-            <span className="hud-reaction-label">
-              {t(language, 'hud.reaction.avg')}
-            </span>
-            <span className="hud-reaction-value">{getReactionLabel(reactionStats.average)}</span>
-          </div>
-          <div>
-            <span className="hud-reaction-label">
-              {t(language, 'hud.reaction.fast')}
-            </span>
-            <span className="hud-reaction-value">{getReactionLabel(reactionStats.fastest)}</span>
-          </div>
-        </div>
-      </div>
-
       <div className="hud-module min-w-[8rem] sm:min-w-[10rem] md:min-w-[13rem] flex-shrink-0">
         <span className="hud-label">{t(language, 'hud.controls.title')}</span>
-        <div className="hud-control-grid">
+        <div className="hud-control-grid-2x2">
+          {/* Top Row: Sound, Music */}
           <button
             className="hud-control-button"
             onClick={onToggleSound}
@@ -208,7 +271,8 @@ export const RetroHudWidgets = memo(function RetroHudWidgets({
             />
             <span className="text-lg leading-none">🎵</span>
           </button>
-          {onOpenSettings && (
+          {/* Bottom Row: Settings, Exit */}
+          {onOpenSettings ? (
             <button
               className="hud-control-button"
               onClick={onOpenSettings}
@@ -218,6 +282,8 @@ export const RetroHudWidgets = memo(function RetroHudWidgets({
               <span className="hud-control-indicator" data-active="false" />
               <span className="text-lg leading-none">⚙</span>
             </button>
+          ) : (
+            <div /> // Placeholder to maintain grid layout
           )}
           <button
             className="hud-control-button danger"
@@ -237,16 +303,12 @@ export const RetroHudWidgets = memo(function RetroHudWidgets({
   return (
     prevProps.score === nextProps.score &&
     prevProps.highScore === nextProps.highScore &&
-    prevProps.combo === nextProps.combo &&
     prevProps.lives === nextProps.lives &&
     prevProps.maxLives === nextProps.maxLives &&
     prevProps.difficulty === nextProps.difficulty &&
-    prevProps.gameMode === nextProps.gameMode &&
     prevProps.soundEnabled === nextProps.soundEnabled &&
     prevProps.musicEnabled === nextProps.musicEnabled &&
-    prevProps.reactionStats.current === nextProps.reactionStats.current &&
-    prevProps.reactionStats.average === nextProps.reactionStats.average &&
-    prevProps.reactionStats.fastest === nextProps.reactionStats.fastest
+    prevProps.scoreBreakdown === nextProps.scoreBreakdown
   );
 });
 

@@ -71,6 +71,7 @@ export default function GamePage() {
     setGameMode,
     newlyUnlockedAchievements,
     language,
+    lastScoreBreakdown,
   } = useGameState();
   
   const maxLives = gameMode === 'survival' ? 1 : 5;
@@ -955,7 +956,6 @@ export default function GamePage() {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [pausedByMenu, setPausedByMenu] = useState(false);
   const [showPauseModal, setShowPauseModal] = useState(false);
-  const [showModeHelp, setShowModeHelp] = useState(false);
 
   const [screenShake, setScreenShake] = useState(false);
 
@@ -1110,20 +1110,18 @@ export default function GamePage() {
       )}
       
       {/* Header */}
-      <header className="relative z-10 p-2 sm:p-3 border-b-4 border-primary bg-card/40 pixel-border overflow-hidden flex justify-center">
+      <header className="relative z-10 p-2 sm:p-3 overflow-hidden flex justify-center">
         <RetroHudWidgets
           score={score}
           highScore={highScore}
-          combo={combo}
           lives={effectiveLives}
           maxLives={maxLives}
           difficulty={difficulty}
-          gameMode={gameMode}
-          reactionStats={reactionTimeStats}
           soundEnabled={soundEnabled}
           musicEnabled={musicEnabled}
           onToggleSound={toggleSound}
           onToggleMusic={toggleMusic}
+          scoreBreakdown={lastScoreBreakdown}
           onQuit={() => {
             // Match ESC behavior: pause first and show confirmation
             if (!gameOver && isReady && !isPaused) {
@@ -1175,80 +1173,6 @@ export default function GamePage() {
             </div>
           )}
 
-          {/* Compact mode pill with ? toggle */}
-          <div 
-            className="flex items-center gap-2 border-2 px-3 py-1 rounded-sm pixel-border text-[12px] sm:text-sm"
-            style={{
-              backgroundColor: 'rgba(0, 58, 99, 0.6)',
-              borderColor: '#3E7CAC',
-            }}
-          >
-            <span className="font-semibold text-foreground uppercase">
-              {gameMode === 'reflex' && 'Reflex'}
-              {gameMode === 'sequence' && 'Sequence'}
-              {gameMode === 'survival' && 'Survival'}
-              {gameMode === 'nightmare' && 'Nightmare'}
-              {gameMode === 'oddOneOut' && 'Odd One Out'}
-            </span>
-            <button
-              type="button"
-              onClick={() => setShowModeHelp((prev) => !prev)}
-              className="ml-1 h-5 w-5 flex items-center justify-center border rounded-sm text-foreground transition-colors"
-              style={{
-                borderColor: '#3E7CAC',
-                backgroundColor: 'rgba(0, 0, 0, 0.3)',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(62, 124, 172, 0.3)';
-                e.currentTarget.style.borderColor = 'rgba(62, 124, 172, 0.7)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.3)';
-                e.currentTarget.style.borderColor = '#3E7CAC';
-              }}
-              aria-label="Toggle mode help"
-            >
-              ?
-            </button>
-          </div>
-
-          {/* Small help popup when toggled */}
-          {showModeHelp && (
-            <div 
-              className="mt-1 border-2 pixel-border px-3 py-2 max-w-xs shadow-lg"
-              style={{
-                backgroundColor: '#003A63',
-                borderColor: '#3E7CAC',
-                boxShadow: '0 0 20px rgba(62,124,172,0.4)',
-              }}
-            >
-              {gameMode === 'reflex' && (
-                <p className="text-[12px] sm:text-sm text-foreground/80 wrap-break-word">
-                  {t(language, 'help.reflex')}
-                </p>
-              )}
-              {gameMode === 'sequence' && (
-                <p className="text-[12px] sm:text-sm text-foreground/80 wrap-break-word">
-                  {t(language, 'help.sequence')}
-                </p>
-              )}
-              {gameMode === 'survival' && (
-                <p className="text-[12px] sm:text-sm text-foreground/80 wrap-break-word">
-                  {t(language, 'help.survival')}
-                </p>
-              )}
-              {gameMode === 'nightmare' && (
-                <p className="text-[12px] sm:text-sm text-foreground/80 wrap-break-word">
-                  {t(language, 'help.nightmare')}
-                </p>
-              )}
-              {gameMode === 'oddOneOut' && (
-                <p className="text-[12px] sm:text-sm text-foreground/80 wrap-break-word">
-                  {t(language, 'help.odd')}
-                </p>
-              )}
-            </div>
-          )}
         </div>
         
         {/* 3D WebGL Button Grid */}
