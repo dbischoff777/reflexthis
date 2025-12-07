@@ -224,6 +224,8 @@ export const RetroHudWidgets = memo(function RetroHudWidgets({
         )}
       </div>
 
+      {/* Combo Display removed - now shown in vertical meter on game area */}
+
       <div className="hud-module min-w-[8rem] sm:min-w-[9rem] md:min-w-[12rem] flex-shrink-0">
         <span className="hud-label">{t(language, 'hud.vitals.title')}</span>
         <div className="hud-meter">

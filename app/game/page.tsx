@@ -27,6 +27,8 @@ import { RetroHudWidgets } from '@/components/RetroHudWidgets';
 // DynamicAmbience removed - effects now handled by 3D BackgroundGrid in GameButton3DWebGL
 import { PerformanceFeedback } from '@/components/PerformanceFeedback';
 import { AchievementNotification } from '@/components/AchievementNotification';
+import { ComboDisplay } from '@/components/ComboDisplay';
+import { VerticalComboMeter } from '@/components/VerticalComboMeter';
 import { getKeybindings, getKeyDisplayName, DEFAULT_KEYBINDINGS } from '@/lib/keybindings';
 import { t } from '@/lib/i18n';
 import { lazy, Suspense } from 'react';
@@ -113,9 +115,9 @@ export default function GamePage() {
   const [fastStreakCount, setFastStreakCount] = useState(0);
   const [fastStreakActive, setFastStreakActive] = useState(false);
   
-  // Detect combo milestones
+  // Detect combo milestones - Expanded list: 5, 10, 15, 20, 25, 30, 40, 50, 75, 100
   useEffect(() => {
-    const milestones = [5, 10, 20, 30, 50];
+    const milestones = [5, 10, 15, 20, 25, 30, 40, 50, 75, 100];
     
     // Check if we crossed a new milestone threshold
     for (const milestone of milestones) {
@@ -129,10 +131,17 @@ export default function GamePage() {
         // Trigger screen flash for combo milestone
         let flashTimer: NodeJS.Timeout | null = null;
         if (screenFlashEnabled) {
-          const flashType = `combo-${milestone}` as 'combo-5' | 'combo-10' | 'combo-20' | 'combo-30' | 'combo-50';
+          // Map milestone to valid flash type (use closest available)
+          let flashType: 'combo-5' | 'combo-10' | 'combo-20' | 'combo-30' | 'combo-50' = 'combo-5';
+          if (milestone >= 50) flashType = 'combo-50';
+          else if (milestone >= 30) flashType = 'combo-30';
+          else if (milestone >= 20) flashType = 'combo-20';
+          else if (milestone >= 10) flashType = 'combo-10';
+          else flashType = 'combo-5';
+          
           setScreenFlash(flashType);
           // Longer duration for higher milestones
-          const flashDuration = milestone >= 30 ? 400 : milestone >= 20 ? 350 : milestone >= 10 ? 300 : 250;
+          const flashDuration = milestone >= 75 ? 500 : milestone >= 50 ? 400 : milestone >= 30 ? 350 : milestone >= 20 ? 300 : milestone >= 10 ? 250 : 200;
           flashTimer = setTimer(() => {
             setScreenFlash(null);
           }, reducedEffects ? flashDuration * 0.5 : flashDuration);
@@ -163,10 +172,11 @@ export default function GamePage() {
   useEffect(() => {
     previousComboRef.current = combo;
   }, [combo]);
-  
+
   useEffect(() => {
     previousScoreRef.current = score;
   }, [score]);
+
   
   // Sequence mode state
   const [sequence, setSequence] = useState<number[]>([]);
@@ -1156,6 +1166,14 @@ export default function GamePage() {
       
       {/* Main Game Area */}
       <main className="relative z-10 flex-1 flex items-center justify-center px-2 sm:px-4 md:px-6 py-2 sm:py-4 overflow-hidden">
+        {/* Vertical Combo Meter - Right Side */}
+        <VerticalComboMeter
+          combo={combo}
+          difficulty={difficulty}
+          reducedEffects={reducedEffects}
+          position="right"
+        />
+        
         {/* Inline mode status + compact help toggle */}
         <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-20 flex flex-col items-center gap-2">
           {/* Sequence status */}
