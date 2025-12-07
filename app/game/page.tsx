@@ -93,6 +93,7 @@ export default function GamePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isReady, setIsReady] = useState(false);
   const [buttonPressFeedback, setButtonPressFeedback] = useState<Record<number, 'correct' | 'incorrect' | null>>({});
+  const [buttonReactionTimes, setButtonReactionTimes] = useState<Record<number, number | null>>({});
   const [oddOneOutTarget, setOddOneOutTarget] = useState<number | null>(null);
   
   // Track previous values for performance feedback
@@ -204,9 +205,10 @@ export default function GamePage() {
         isOddTarget,
         highlightStartTime: validHighlightTime,
         pressFeedback: (feedback === 'correct' ? 'success' : feedback === 'incorrect' ? 'error' : null) as 'success' | 'error' | null,
+        reactionTime: buttonReactionTimes[id] ?? null,
       };
     });
-  }, [highlightedButtons, buttonPressFeedback, highlightStartTimeState, gameMode, oddOneOutTarget, bonusActive, bonusButtonId]);
+  }, [highlightedButtons, buttonPressFeedback, highlightStartTimeState, gameMode, oddOneOutTarget, bonusActive, bonusButtonId, buttonReactionTimes]);
 
   // Clear highlight timer
   const clearHighlightTimer = useCallback(() => {
@@ -351,10 +353,12 @@ export default function GamePage() {
         // Use startTransition for non-urgent UI updates to maintain FPS
         startTransition(() => {
           setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: 'correct' }));
+          setButtonReactionTimes((prev) => ({ ...prev, [buttonId]: reactionTime }));
         });
         setTimer(() => {
           startTransition(() => {
             setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: null }));
+            setButtonReactionTimes((prev) => ({ ...prev, [buttonId]: null }));
           });
         }, 300);
 
@@ -520,9 +524,15 @@ export default function GamePage() {
         setCurrentReactionTime(reactionTime);
 
         // Correct target pressed
-        setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: 'correct' }));
+        startTransition(() => {
+          setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: 'correct' }));
+          setButtonReactionTimes((prev) => ({ ...prev, [buttonId]: reactionTime }));
+        });
         setTimer(() => {
-          setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: null }));
+          startTransition(() => {
+            setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: null }));
+            setButtonReactionTimes((prev) => ({ ...prev, [buttonId]: null }));
+          });
         }, 300);
 
         incrementScore(reactionTime);
@@ -1258,6 +1268,7 @@ export default function GamePage() {
                 score,
                 difficulty,
                 reducedEffects,
+                gameMode,
               }}
               comboMilestone={comboMilestone}
             />

@@ -580,19 +580,31 @@ interface Particle {
 interface ParticleBurstProps {
   trigger: 'success' | 'error' | null;
   position: [number, number, number];
+  reactionTime?: number | null;
+  intensity?: number;
 }
 
 interface ParticleBurstPropsWithQuality extends ParticleBurstProps {
   reducedEffects?: boolean;
 }
 
-const ParticleBurst = memo(function ParticleBurst({ trigger, position, reducedEffects = false }: ParticleBurstPropsWithQuality) {
+const ParticleBurst = memo(function ParticleBurst({ 
+  trigger, 
+  position, 
+  reactionTime = null,
+  intensity: providedIntensity,
+  reducedEffects = false 
+}: ParticleBurstPropsWithQuality) {
   const particlesRef = useRef<Particle[]>([]);
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const prevTrigger = useRef<'success' | 'error' | null>(null);
   
-  // Adaptive particle count based on reducedEffects
-  const PARTICLE_COUNT = reducedEffects ? 8 : 20;
+  // Calculate intensity from reaction time if not provided
+  const intensity = providedIntensity ?? calculateIntensity(reactionTime);
+  
+  // Adaptive particle count based on reducedEffects and intensity
+  const baseCount = reducedEffects ? 8 : 20;
+  const PARTICLE_COUNT = Math.floor(baseCount * intensity);
   const dummy = useMemo(() => new THREE.Object3D(), []);
   const tempColor = useMemo(() => new THREE.Color(), []);
   
@@ -603,14 +615,19 @@ const ParticleBurst = memo(function ParticleBurst({ trigger, position, reducedEf
     // Spawn new particles on trigger change
     if (trigger && trigger !== prevTrigger.current) {
       const isSuccess = trigger === 'success';
+      // Use reaction time-based color for success, error color for errors
       const baseColor = isSuccess 
-        ? new THREE.Color(0.2, 1.0, 0.5) 
+        ? getColorByReactionTime(reactionTime)
         : new THREE.Color(1.0, 0.3, 0.2);
+      
+      // Scale speed and upward velocity based on intensity
+      const speedMultiplier = 0.8 + (intensity * 1.2); // 0.8-2.0
+      const upwardMultiplier = 0.5 + (intensity * 1.0); // 0.5-1.5
       
       for (let i = 0; i < PARTICLE_COUNT; i++) {
         const angle = (i / PARTICLE_COUNT) * Math.PI * 2 + Math.random() * 0.5;
-        const speed = 1.5 + Math.random() * 2;
-        const upward = 0.5 + Math.random() * 1.5;
+        const speed = (1.5 + Math.random() * 2) * speedMultiplier;
+        const upward = (0.5 + Math.random() * 1.5) * upwardMultiplier;
         
         particlesRef.current.push({
           id: Date.now() + i,
@@ -623,7 +640,7 @@ const ParticleBurst = memo(function ParticleBurst({ trigger, position, reducedEf
           life: 1.0,
           maxLife: 0.6 + Math.random() * 0.3,
           color: baseColor.clone().offsetHSL(Math.random() * 0.1 - 0.05, 0, Math.random() * 0.2),
-          size: 0.03 + Math.random() * 0.04,
+          size: (0.03 + Math.random() * 0.04) * (0.8 + intensity * 0.4), // Scale size with intensity
         });
       }
     }
@@ -683,6 +700,160 @@ const ParticleBurst = memo(function ParticleBurst({ trigger, position, reducedEf
         depthWrite={false}
       />
     </instancedMesh>
+  );
+});
+
+// ============================================================================
+// PRESS DEPTH INDICATOR COMPONENT
+// ============================================================================
+
+interface PressDepthIndicatorProps {
+  active: boolean;
+  depth: number; // 0-1, where 1 = maximum depth
+  position: [number, number, number];
+}
+
+const PressDepthIndicator = memo(function PressDepthIndicator({ 
+  active, 
+  depth, 
+  position 
+}: PressDepthIndicatorProps) {
+  const ringRef = useRef<THREE.Mesh>(null);
+  const materialRef = useRef<THREE.MeshBasicMaterial>(null);
+  const startTimeRef = useRef<number | null>(null);
+  
+  useFrame((state, delta) => {
+    if (!ringRef.current || !materialRef.current) return;
+    
+    const ring = ringRef.current;
+    const material = materialRef.current;
+    const time = state.clock.elapsedTime;
+    
+    if (active && startTimeRef.current === null) {
+      startTimeRef.current = time;
+    }
+    
+    if (!active) {
+      startTimeRef.current = null;
+      material.opacity = 0;
+      return;
+    }
+    
+    if (startTimeRef.current === null) return;
+    
+    const elapsed = time - startTimeRef.current;
+    const duration = 0.3; // 300ms animation
+    
+    if (elapsed > duration) {
+      material.opacity = 0;
+      return;
+    }
+    
+    // Animate depth indicator - pulse effect
+    const pulse = Math.sin(time * 10) * 0.1 + 0.9;
+    const scale = 1 + (depth * 0.3 * pulse);
+    ring.scale.set(scale, scale, 1);
+    
+    // Fade out over time
+    const opacity = (1 - elapsed / duration) * depth * 0.6;
+    material.opacity = opacity;
+  });
+  
+  if (!active || depth <= 0) return null;
+  
+  return (
+    <mesh 
+      ref={ringRef} 
+      position={[position[0], position[1], position[2] - depth * 0.1]}
+      rotation={[-Math.PI / 2, 0, 0]}
+    >
+      <ringGeometry args={[BUTTON_SIZE * 0.4, BUTTON_SIZE * 0.5, 32]} />
+      <meshBasicMaterial
+        ref={materialRef}
+        color="#00ffff"
+        transparent
+        opacity={0}
+        blending={THREE.AdditiveBlending}
+        depthWrite={false}
+      />
+    </mesh>
+  );
+});
+
+// ============================================================================
+// GLOW TRAIL COMPONENT (for sequence mode)
+// ============================================================================
+
+interface GlowTrailProps {
+  active: boolean;
+  intensity: number;
+  position: [number, number, number];
+}
+
+const GlowTrail = memo(function GlowTrail({ 
+  active, 
+  intensity, 
+  position 
+}: GlowTrailProps) {
+  const trailRef = useRef<THREE.Mesh>(null);
+  const materialRef = useRef<THREE.MeshBasicMaterial>(null);
+  const startTimeRef = useRef<number | null>(null);
+  
+  useFrame((state, delta) => {
+    if (!trailRef.current || !materialRef.current) return;
+    
+    const trail = trailRef.current;
+    const material = materialRef.current;
+    const time = state.clock.elapsedTime;
+    
+    if (active && startTimeRef.current === null) {
+      startTimeRef.current = time;
+    }
+    
+    if (!active) {
+      startTimeRef.current = null;
+      material.opacity = 0;
+      trail.scale.set(1, 1, 1);
+      return;
+    }
+    
+    if (startTimeRef.current === null) return;
+    
+    const elapsed = time - startTimeRef.current;
+    const duration = 0.5; // 500ms animation
+    
+    if (elapsed > duration) {
+      material.opacity = 0;
+      return;
+    }
+    
+    // Animate trail - expanding ring effect
+    const progress = elapsed / duration;
+    const scale = 1 + progress * 2;
+    trail.scale.set(scale, scale, 1);
+    
+    // Fade out as it expands
+    material.opacity = (1 - progress) * intensity * 0.4;
+  });
+  
+  if (!active || intensity <= 0) return null;
+  
+  return (
+    <mesh 
+      ref={trailRef} 
+      position={[position[0], position[1], position[2] + 0.1]}
+      rotation={[-Math.PI / 2, 0, 0]}
+    >
+      <ringGeometry args={[BUTTON_SIZE * 0.3, BUTTON_SIZE * 0.35, 32]} />
+      <meshBasicMaterial
+        ref={materialRef}
+        color="#00ffff"
+        transparent
+        opacity={0}
+        blending={THREE.AdditiveBlending}
+        depthWrite={false}
+      />
+    </mesh>
   );
 });
 
@@ -1253,6 +1424,63 @@ function lerpColor(
   };
 }
 
+/**
+ * Calculate feedback intensity based on reaction time
+ * Faster reactions (lower ms) = higher intensity (closer to 1.0)
+ * Slower reactions (higher ms) = lower intensity (closer to 0.3)
+ * Perfect reactions (<150ms) = maximum intensity (1.0)
+ */
+function calculateIntensity(reactionTime: number | null): number {
+  if (!reactionTime || reactionTime <= 0) return 0.5; // Default for no reaction time
+  
+  // Perfect reaction (<150ms) = 1.0
+  if (reactionTime < 150) return 1.0;
+  
+  // Excellent reaction (150-200ms) = 0.9-1.0
+  if (reactionTime < 200) {
+    return 0.9 + (0.1 * (1 - (reactionTime - 150) / 50));
+  }
+  
+  // Good reaction (200-350ms) = 0.7-0.9
+  if (reactionTime < 350) {
+    return 0.7 + (0.2 * (1 - (reactionTime - 200) / 150));
+  }
+  
+  // Slow reaction (350-500ms) = 0.5-0.7
+  if (reactionTime < 500) {
+    return 0.5 + (0.2 * (1 - (reactionTime - 350) / 150));
+  }
+  
+  // Very slow reaction (>500ms) = 0.3-0.5
+  return Math.max(0.3, 0.5 - ((reactionTime - 500) / 1000) * 0.2);
+}
+
+/**
+ * Get color based on reaction time performance
+ */
+function getColorByReactionTime(reactionTime: number | null): THREE.Color {
+  if (!reactionTime || reactionTime <= 0) {
+    return new THREE.Color(0.2, 1.0, 0.5); // Default green
+  }
+  
+  if (reactionTime < 150) {
+    // Perfect - bright cyan-green
+    return new THREE.Color(0.0, 1.0, 0.8);
+  } else if (reactionTime < 200) {
+    // Excellent - bright green
+    return new THREE.Color(0.2, 1.0, 0.5);
+  } else if (reactionTime < 350) {
+    // Good - yellow-green
+    return new THREE.Color(0.6, 1.0, 0.3);
+  } else if (reactionTime < 500) {
+    // Slow - yellow
+    return new THREE.Color(1.0, 0.8, 0.2);
+  } else {
+    // Very slow - orange
+    return new THREE.Color(1.0, 0.5, 0.1);
+  }
+}
+
 // ============================================================================
 // 3D BUTTON MESH COMPONENT
 // ============================================================================
@@ -1265,6 +1493,8 @@ interface ButtonMeshProps {
   highlightStartTime?: number;
   highlightDuration: number;
   pressFeedback?: 'success' | 'error' | null;
+  reactionTime?: number | null;
+  gameMode?: string;
   onPress: () => void;
   disabled?: boolean;
   position: [number, number, number];
@@ -1284,6 +1514,8 @@ const ButtonMesh = memo(function ButtonMesh({
   highlightStartTime,
   highlightDuration,
   pressFeedback,
+  reactionTime = null,
+  gameMode,
   onPress,
   disabled,
   position,
@@ -1810,8 +2042,11 @@ const ButtonMesh = memo(function ButtonMesh({
       if (distanceFromWave < 0.5) {
         const waveStrength = 1 - distanceFromWave / 0.5;
         const timeFade = 1 - elapsed / RIPPLE_DURATION;
-        const rippleAmount = waveStrength * timeFade * 0.15;
-        totalRipple += event.type === 'success' ? rippleAmount : -rippleAmount * 0.5;
+        // Scale ripple amount based on intensity (default to 0.5 if not provided)
+        const intensity = event.intensity ?? 0.5;
+        const baseRippleAmount = waveStrength * timeFade * 0.15;
+        const scaledRippleAmount = baseRippleAmount * (0.5 + intensity * 0.5); // Scale from 0.5x to 1.0x
+        totalRipple += event.type === 'success' ? scaledRippleAmount : -scaledRippleAmount * 0.5;
       }
     }
     
@@ -1893,7 +2128,26 @@ const ButtonMesh = memo(function ButtonMesh({
         <ParticleBurst 
           trigger={pressFeedback} 
           position={[0, 0, 0]}
+          reactionTime={reactionTime ?? null}
           reducedEffects={reducedEffects}
+        />
+      )}
+      
+      {/* Press Depth Indicator - shows button depression based on reaction time */}
+      {pressFeedback === 'success' && reactionTime !== null && (
+        <PressDepthIndicator
+          active={pressFeedback === 'success'}
+          depth={calculateIntensity(reactionTime) * 0.2}
+          position={[0, 0, 0]}
+        />
+      )}
+      
+      {/* Glow Trail for sequence mode */}
+      {gameMode === 'sequence' && pressFeedback === 'success' && reactionTime !== null && !reducedEffects && (
+        <GlowTrail
+          active={pressFeedback === 'success'}
+          intensity={calculateIntensity(reactionTime)}
+          position={[0, 0, 0]}
         />
       )}
       
@@ -1977,6 +2231,8 @@ interface GameButtonGridWebGLProps {
     isBonus?: boolean;
     highlightStartTime?: number;
     pressFeedback?: 'success' | 'error' | null;
+    reactionTime?: number | null;
+    isOddTarget?: boolean;
   }>;
   highlightDuration: number;
   onPress: (index: number) => void;
@@ -1992,6 +2248,7 @@ interface GameButtonGridWebGLProps {
     score: number;
     difficulty: string; // DifficultyPreset from game context
     reducedEffects?: boolean;
+    gameMode?: string;
   };
   // Combo milestone for celebration effects (5, 10, 20, 30, 50)
   comboMilestone?: number | null;
@@ -2002,6 +2259,7 @@ interface RippleEvent {
   sourceIndex: number;
   timestamp: number;
   type: 'success' | 'error';
+  intensity?: number; // Reaction time-based intensity (0-1)
 }
 
 // The actual game layout: 3-4-3 (10 buttons total)
@@ -2039,12 +2297,18 @@ export const GameButtonGridWebGL = memo(function GameButtonGridWebGL({
     buttons.forEach(button => {
       const prevFeedback = prevFeedbackRef.current.get(button.index);
       if (button.pressFeedback && button.pressFeedback !== prevFeedback) {
+        // Calculate intensity from reaction time if available
+        const intensity = button.reactionTime !== null && button.reactionTime !== undefined
+          ? calculateIntensity(button.reactionTime)
+          : 0.5; // Default intensity
+        
         setRippleEvents(prev => [
           ...prev,
           {
             sourceIndex: button.index,
             timestamp: Date.now(),
             type: button.pressFeedback!,
+            intensity,
           }
         ]);
       }
@@ -2161,6 +2425,7 @@ export const GameButtonGridWebGL = memo(function GameButtonGridWebGL({
                 isBonus: false,
                 isOddTarget: false,
                 pressFeedback: null,
+                reactionTime: null,
               };
               
               // Get all currently highlighted button indices for arc effects
@@ -2178,6 +2443,8 @@ export const GameButtonGridWebGL = memo(function GameButtonGridWebGL({
                   highlightStartTime={buttonData.highlightStartTime}
                   highlightDuration={highlightDuration}
                   pressFeedback={buttonData.pressFeedback}
+                  reactionTime={buttonData.reactionTime ?? null}
+                  gameMode={gameState?.gameMode}
                   onPress={() => handlePress(index)}
                   disabled={disabled}
                   position={position}
