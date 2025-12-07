@@ -54,6 +54,7 @@ export function getRatingColor(rating: ComboRating): string {
 
 /**
  * Get rating display name with styling info
+ * Returns encouraging words that start with the rating letter
  */
 export function getRatingDisplay(rating: ComboRating): {
   label: string;
@@ -70,8 +71,20 @@ export function getRatingDisplay(rating: ComboRating): {
   else if (rating === 'A+') glowIntensity = 1.5;
   else glowIntensity = 1;
 
+  // Map ratings to encouraging words
+  const ratingLabels: Record<ComboRating, string> = {
+    'D': 'Decent',
+    'C': 'Cool',
+    'B': 'Brilliant',
+    'A': 'Amazing',
+    'A+': 'Ace Plus',
+    'S': 'Superb',
+    'SS': 'Stellar',
+    'SSS': 'Supreme',
+  };
+
   return {
-    label: rating,
+    label: ratingLabels[rating],
     color,
     glowIntensity,
   };

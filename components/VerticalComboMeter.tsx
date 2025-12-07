@@ -32,6 +32,8 @@ export function VerticalComboMeter({
   const [currentRating, setCurrentRating] = useState<ComboRating>('D');
   const [previousRating, setPreviousRating] = useState<ComboRating>('D');
   const [isRatingUpgrading, setIsRatingUpgrading] = useState(false);
+  const [isComboIncreasing, setIsComboIncreasing] = useState(false);
+  const [comboPulse, setComboPulse] = useState(false);
   const previousComboRef = useRef(combo);
 
   // Calculate rating
@@ -47,6 +49,18 @@ export function VerticalComboMeter({
   useEffect(() => {
     if (combo > previousComboRef.current) {
       setDisplayCombo(combo);
+      setIsComboIncreasing(true);
+      setComboPulse(true);
+      
+      // Reset combo increase animation
+      const comboTimer = setTimeout(() => {
+        setIsComboIncreasing(false);
+      }, 400);
+      
+      // Reset pulse animation
+      const pulseTimer = setTimeout(() => {
+        setComboPulse(false);
+      }, 600);
       
       // Check for rating upgrade
       if (rating !== currentRating) {
@@ -55,16 +69,27 @@ export function VerticalComboMeter({
         setIsRatingUpgrading(true);
         
         // Reset upgrade animation after completion
-        const timer = setTimeout(() => {
+        const upgradeTimer = setTimeout(() => {
           setIsRatingUpgrading(false);
-        }, 600);
+        }, 1000);
         
-        return () => clearTimeout(timer);
+        return () => {
+          clearTimeout(comboTimer);
+          clearTimeout(pulseTimer);
+          clearTimeout(upgradeTimer);
+        };
       }
+      
+      return () => {
+        clearTimeout(comboTimer);
+        clearTimeout(pulseTimer);
+      };
     } else if (combo === 0) {
       setDisplayCombo(0);
       setCurrentRating('D');
       setIsRatingUpgrading(false);
+      setIsComboIncreasing(false);
+      setComboPulse(false);
     }
     
     previousComboRef.current = combo;
@@ -85,11 +110,12 @@ export function VerticalComboMeter({
       {/* Rating Badge - Top */}
       <div
         className={cn(
-          'mb-2 px-2 py-1 rounded',
+          'mb-2 px-2 py-1 rounded relative overflow-hidden',
           'text-sm sm:text-base md:text-lg font-bold',
           'border-2 pixel-border',
           'transition-all duration-300',
-          isRatingUpgrading && !reducedEffects && 'rating-upgrade-animation'
+          isRatingUpgrading && !reducedEffects && 'rating-upgrade-animation',
+          isComboIncreasing && !reducedEffects && 'rating-badge-pulse'
         )}
         style={{
           color: ratingDisplay.color,
@@ -99,7 +125,16 @@ export function VerticalComboMeter({
           boxShadow: `0 0 ${ratingDisplay.glowIntensity * 15}px ${ratingDisplay.color}40`,
         }}
       >
-        {ratingDisplay.label}
+        {/* Shimmer effect overlay */}
+        {!reducedEffects && isRatingUpgrading && (
+          <div
+            className="absolute inset-0 rating-shimmer"
+            style={{
+              background: `linear-gradient(90deg, transparent, ${ratingDisplay.color}60, transparent)`,
+            }}
+          />
+        )}
+        <span className="relative z-10">{ratingDisplay.label}</span>
       </div>
 
       {/* Vertical Meter Container */}
@@ -110,17 +145,22 @@ export function VerticalComboMeter({
           'max-h-[600px] min-h-[200px]',
           'border-2 pixel-border rounded',
           'bg-black/40',
-          'overflow-hidden'
+          'overflow-hidden',
+          'transition-all duration-500',
+          comboPulse && !reducedEffects && 'meter-container-pulse',
+          isRatingUpgrading && !reducedEffects && 'meter-container-shake'
         )}
         style={{
           borderColor: ratingDisplay.color + '60',
+          boxShadow: `0 0 ${ratingDisplay.glowIntensity * 20}px ${ratingDisplay.color}30`,
         }}
       >
         {/* Meter Fill */}
         <div
           className={cn(
             'absolute bottom-0 left-0 right-0',
-            'transition-all duration-500 ease-out'
+            'transition-all duration-500 ease-out',
+            isComboIncreasing && !reducedEffects && 'meter-fill-ripple'
           )}
           style={{
             height: `${fillPercentage}%`,
@@ -130,13 +170,24 @@ export function VerticalComboMeter({
         >
           {/* Animated glow effect */}
           {!reducedEffects && (
-            <div
-              className="absolute inset-0 opacity-30"
-              style={{
-                background: `linear-gradient(to top, transparent, ${ratingDisplay.color}60)`,
-                animation: 'meter-glow 2s ease-in-out infinite',
-              }}
-            />
+            <>
+              <div
+                className="absolute inset-0 opacity-30"
+                style={{
+                  background: `linear-gradient(to top, transparent, ${ratingDisplay.color}60)`,
+                  animation: 'meter-glow 2s ease-in-out infinite',
+                }}
+              />
+              {/* Ripple effect at fill level */}
+              {isComboIncreasing && (
+                <div
+                  className="absolute top-0 left-0 right-0 h-2 meter-ripple"
+                  style={{
+                    background: `radial-gradient(ellipse at center, ${ratingDisplay.color}80, transparent)`,
+                  }}
+                />
+              )}
+            </>
           )}
         </div>
 
@@ -146,7 +197,9 @@ export function VerticalComboMeter({
             'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2',
             'text-xl sm:text-2xl md:text-3xl font-bold',
             'drop-shadow-[0_0_8px_currentColor]',
-            'transition-all duration-300'
+            'transition-all duration-300',
+            isComboIncreasing && !reducedEffects && 'combo-number-pop',
+            comboPulse && !reducedEffects && 'combo-number-pulse'
           )}
           style={{
             color: ratingDisplay.color,
