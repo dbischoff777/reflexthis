@@ -1,0 +1,587 @@
+# ReflexThis - UI/UX & Gameplay Enhancement PRD
+
+## Product Overview
+ReflexThis is a cyberpunk-inspired reflex training game built with Next.js, React Three Fiber, and WebGL. This PRD outlines comprehensive UI/UX improvements and gameplay enhancements to elevate the player experience, engagement, and visual polish. Audio enhancements are explicitly excluded from this document.
+
+## Current State Analysis
+
+### Existing Features
+- 5 game modes: Reflex, Sequence, Survival, Nightmare, Odd One Out
+- 4 difficulty levels: Easy, Medium, Hard, Nightmare
+- 3D WebGL button grid with 10 buttons in 3-4-3 layout
+- HUD system displaying score, lives, combo, difficulty, reaction stats
+- Achievement system with notifications
+- Session statistics tracking
+- Visual effects: screen flash, screen shake, combo milestones
+- Accessibility: high contrast mode, reduced effects
+- Internationalization: English and German
+- Keyboard controls with customizable keybindings
+- Responsive design with mobile orientation handling
+- Performance optimizations for 60fps gameplay
+
+### Areas for Enhancement
+1. Visual feedback and polish
+2. Information hierarchy and clarity
+3. Gameplay mechanics depth
+4. Player progression and motivation
+5. Onboarding and guidance
+6. Menu and navigation experience
+
+---
+
+## 1. UI/UX ENHANCEMENTS
+
+### 1.1 Enhanced Visual Feedback System
+
+**1.1.1 Reaction Time Visual Feedback**
+- **Objective**: Provide immediate, intuitive visual feedback for reaction times
+- **Requirements**:
+  - Color-coded reaction time indicators (green for excellent <200ms, yellow for good <350ms, red for slow >500ms)
+  - Animated reaction time display that appears briefly after each button press
+  - Visual meter showing where current reaction time falls on a scale
+  - "Perfect!" indicator for sub-150ms reactions with special animation
+  - Integration with existing PerformanceFeedback component
+
+**1.1.2 Enhanced Button Press Feedback**
+- **Objective**: Make button interactions feel more satisfying and informative
+- **Requirements**:
+  - Expand visual feedback system beyond current success/error states
+  - Add intensity-based feedback (stronger effects for faster reactions)
+  - Implement ripple effects that propagate from pressed buttons
+  - Add particle burst effects on correct presses (scalable based on reaction speed)
+  - Visual "press depth" indicator showing button depression on press
+  - Glow trails following button presses in sequence mode
+
+**1.1.3 Combo System Visual Enhancements**
+- **Objective**: Make combo progression more exciting and motivating
+- **Requirements**:
+  - Enhanced combo counter with pulsing animation based on combo value
+  - Combo multiplier visual indicator showing current multiplier
+  - Combo streak visualization with connecting lines between consecutive hits
+  - Combo milestone celebrations beyond current system (expand to 5, 10, 15, 20, 25, 30, 40, 50, 75, 100)
+  - "Combo break" warning when combo is about to expire (if applicable)
+  - Combo history visualization showing recent streak lengths
+
+**1.1.4 Score Progression Feedback**
+- **Objective**: Make score increases feel rewarding
+- **Requirements**:
+  - Animated score ticker showing points gained from each action
+  - Score multiplier indicators when bonuses apply
+  - Milestone celebrations for score thresholds (1000, 5000, 10000, etc.)
+  - Score breakdown display showing points from reactions, combos, bonuses
+  - Visual indicator when approaching high score
+
+### 1.2 HUD Improvements
+
+**1.2.1 Redesigned HUD Layout**
+- **Objective**: Improve information clarity and visual hierarchy
+- **Requirements**:
+  - Reorganize HUD elements for better readability
+  - Add compact/minimal HUD mode option for distraction-free play
+  - Implement collapsible HUD sections with toggle controls
+  - Better spacing and alignment for different screen sizes
+  - Improved contrast and visibility across all difficulty modes
+  - HUD element highlighting based on game state (e.g., pulse lives when low)
+
+**1.2.2 Enhanced Information Display**
+- **Objective**: Provide more useful information at a glance
+- **Requirements**:
+  - Add accuracy percentage display (hits vs misses)
+  - Show average reaction time in real-time
+  - Display current game duration/timer
+  - Add difficulty progression indicator showing when next level-up occurs
+  - Show remaining time on highlighted buttons (visual countdown)
+  - Display next bonus spawn probability/timer (if applicable)
+
+**1.2.3 Contextual HUD Updates**
+- **Objective**: Make HUD reactive to game events
+- **Requirements**:
+  - HUD color shifts based on game state (calm → intense → critical)
+  - Animated transitions when stats change significantly
+  - Highlight relevant HUD elements during key events (lives pulse on loss, combo highlight on milestone)
+  - Contextual tooltips that appear on hover/click for HUD elements
+  - Expandable detail views for stats on demand
+
+### 1.3 Menu & Navigation Enhancements
+
+**1.3.1 Landing Page Improvements**
+- **Objective**: Create more engaging and informative entry point
+- **Requirements**:
+  - Enhanced hero section with animated 3D button preview
+  - Quick stats summary showing recent performance
+  - Featured game mode highlighting with rotation
+  - Daily challenge preview widget
+  - Improved mode selector with better visual differentiation
+  - Smooth page transitions with loading states
+
+**1.3.2 Ready Screen Enhancement**
+- **Objective**: Better prepare players before gameplay starts
+- **Requirements**:
+  - Interactive tutorial for first-time players
+  - Visual preview of selected game mode mechanics
+  - Keyboard layout with animated key highlights
+  - Difficulty visualization showing what to expect
+  - Countdown animation with smooth transition to game
+  - Option to skip/customize ready screen duration
+
+**1.3.3 Game Over Screen Redesign**
+- **Objective**: Make game over screen informative and motivating
+- **Requirements**:
+  - Enhanced statistics breakdown with visualizations
+  - Comparison to previous best performance
+  - Achievement unlock highlights
+  - Performance graph showing reaction times over game duration
+  - Quick retry button with smooth restart animation
+  - Share score functionality (text/image generation)
+
+**1.3.4 Settings Modal Improvements**
+- **Objective**: Make settings more accessible and organized
+- **Requirements**:
+  - Categorized settings with tabs or sections
+  - Visual previews for visual settings changes
+  - Reset to defaults option per category
+  - Settings search/filter functionality
+  - Export/import settings functionality
+  - Settings presets (e.g., "Performance", "Visual", "Accessibility")
+
+### 1.4 Animation & Transition Enhancements
+
+**1.4.1 Smooth State Transitions**
+- **Objective**: Eliminate jarring state changes
+- **Requirements**:
+  - Fade transitions between game states
+  - Smooth button highlight/unhighlight animations
+  - Page transition animations (menu → game → results)
+  - Modal open/close animations with backdrop
+  - Loading state animations with progress indicators
+
+**1.4.2 Micro-Interactions**
+- **Objective**: Add polish through small, delightful interactions
+- **Requirements**:
+  - Button hover effects throughout the UI
+  - Click ripple effects on UI buttons
+  - Smooth number counting animations for scores/stats
+  - Icon animations on state changes
+  - Success/error state animations for actions
+  - Tooltip fade-in animations
+
+**1.4.3 Performance-First Animations**
+- **Objective**: Maintain 60fps while adding animations
+- **Requirements**:
+  - Use CSS transforms and opacity for animations
+  - Implement will-change hints for animated elements
+  - Use requestAnimationFrame for complex animations
+  - Respect reduced effects setting for all animations
+  - Provide animation intensity slider in settings
+
+### 1.5 Onboarding & Guidance
+
+**1.5.1 First-Time User Experience**
+- **Objective**: Guide new players effectively
+- **Requirements**:
+  - Interactive tutorial overlay system
+  - Step-by-step introduction to game mechanics
+  - Mode-specific tutorials on first play
+  - Progressive disclosure of advanced features
+  - Skip tutorial option (remembered in settings)
+  - Tutorial replay functionality
+
+**1.5.2 In-Game Help System**
+- **Objective**: Provide contextual help when needed
+- **Requirements**:
+  - Expandable help panel accessible during gameplay
+  - Context-sensitive hints (e.g., combo tips when combo is low)
+  - Keyboard shortcut overlay (show on ? key press)
+  - Game mode specific tips in ready screen
+  - Performance tips based on player stats
+
+**1.5.3 Visual Indicators & Affordances**
+- **Objective**: Make game mechanics clear through visual design
+- **Requirements**:
+  - Clear visual distinction between game modes
+  - Obvious interactive elements with hover states
+  - Visual feedback for all player actions
+  - Loading states for all async operations
+  - Error states with clear recovery paths
+
+### 1.6 Responsive Design Enhancements
+
+**1.6.1 Mobile Optimization**
+- **Objective**: Improve mobile experience beyond current state
+- **Requirements**:
+  - Touch-friendly button sizes and spacing
+  - Gesture support for common actions (swipe to retry, pinch to zoom HUD)
+  - Mobile-specific HUD layout with larger text
+  - Optimized 3D rendering for mobile GPUs
+  - Better handling of orientation changes
+  - Mobile-specific settings presets
+
+**1.6.2 Tablet & Large Screen Support**
+- **Objective**: Utilize larger screens effectively
+- **Requirements**:
+  - Multi-column layouts on wide screens
+  - Expanded information displays on large viewports
+  - Optional sidebars for stats/history
+  - Better use of screen real estate for game area
+  - Responsive scaling for all UI elements
+
+**1.6.3 Cross-Resolution Support**
+- **Objective**: Ensure consistent experience across resolutions
+- **Requirements**:
+  - Scale UI elements appropriately for different DPIs
+  - Maintain readability at all screen sizes
+  - Test and optimize for common resolutions (1080p, 1440p, 4K)
+  - Font scaling options in settings
+  - UI density options (compact, normal, spacious)
+
+---
+
+## 2. GAMEPLAY ENHANCEMENTS
+
+### 2.1 Advanced Scoring System
+
+**2.1.1 Multi-Factor Scoring**
+- **Objective**: Reward various skills beyond speed
+- **Requirements**:
+  - Base score from reaction time (existing)
+  - Combo multipliers (existing, enhance)
+  - Accuracy bonuses for consecutive perfect hits
+  - Consistency bonuses for maintaining steady reaction times
+  - Difficulty multipliers based on selected difficulty
+  - Mode-specific scoring adjustments
+
+**2.1.2 Score Breakdown & Transparency**
+- **Objective**: Help players understand scoring
+- **Requirements**:
+  - Post-game score breakdown visualization
+  - Real-time score gain indicators
+  - Explanation of scoring factors in help/tutorial
+  - Score history tracking for analysis
+  - Score predictions (estimated final score based on current pace)
+
+**2.1.3 High Score System Enhancements**
+- **Objective**: Make high scores more meaningful
+- **Requirements**:
+  - Separate high scores per game mode and difficulty
+  - High score leaderboards (local, expandable to online later)
+  - Personal best tracking for various metrics
+  - High score celebrations with special effects
+  - Historical high score graphs
+
+### 2.2 Enhanced Difficulty System
+
+**2.2.1 Dynamic Difficulty Adjustment**
+- **Objective**: Adapt difficulty based on player performance
+- **Requirements**:
+  - Optional adaptive difficulty mode
+  - Gradual difficulty increases based on accuracy
+  - Difficulty suggestions based on performance
+  - Performance-based unlock system for higher difficulties
+  - Difficulty preview mode to try before committing
+
+**2.2.2 Difficulty Progression Visualization**
+- **Objective**: Show players their progression clearly
+- **Requirements**:
+  - Visual difficulty meter showing current level
+  - Progress bar to next difficulty milestone
+  - Difficulty history showing progression over sessions
+  - Achievements for mastering each difficulty level
+  - Difficulty recommendations based on stats
+
+### 2.3 Game Mode Enhancements
+
+**2.3.1 Reflex Mode Improvements**
+- **Objective**: Add depth to basic reflex mode
+- **Requirements**:
+  - Special "speed rounds" with bonus multipliers
+  - Combo challenges requiring specific reaction times
+  - Wave-based difficulty increases
+  - Bonus button variations (double points, time freeze, etc.)
+  - Special rounds with unique mechanics (e.g., all buttons light up, pick correct one)
+
+**2.3.2 Sequence Mode Enhancements**
+- **Objective**: Add variety to memory challenges
+- **Requirements**:
+  - Variable sequence speeds (slow for learning, fast for challenge)
+  - Branching sequences (remember multiple paths)
+  - Sequence preview count option
+  - Practice mode with unlimited retries
+  - Sequence complexity indicators
+
+**2.3.3 Survival Mode Variants**
+- **Objective**: Add replayability to survival mode
+- **Requirements**:
+  - Time-based survival challenges (survive for X seconds)
+  - Score-based survival challenges (reach X points)
+  - Progressive survival (difficulty increases faster)
+  - Survival streak tracking
+  - Daily survival challenges
+
+**2.3.4 Nightmare Mode Enhancements**
+- **Objective**: Make nightmare mode feel appropriately challenging
+- **Requirements**:
+  - Nightmare-specific visual effects
+  - Special nightmare achievements
+  - Nightmare mode leaderboards
+  - Unlock requirements for nightmare mode
+  - Nightmare mode completion tracking
+
+**2.3.5 Odd One Out Refinements**
+- **Objective**: Improve visual clarity and difficulty scaling
+- **Requirements**:
+  - Better visual differentiation between target and distractors
+  - Adjustable cluster sizes based on difficulty
+  - Time bonuses for faster identification
+  - Pattern recognition bonuses
+  - Difficulty-appropriate visual cues
+
+### 2.4 Bonus & Power-Up System
+
+**2.4.1 Enhanced Bonus Mechanics**
+- **Objective**: Make bonuses more engaging and strategic
+- **Requirements**:
+  - Expand bonus button types beyond health restoration
+  - Point multiplier bonuses
+  - Time extension bonuses (for highlighted buttons)
+  - Combo protection (prevents combo loss on next mistake)
+  - Perfect round bonuses (extra points for hitting all buttons correctly)
+
+**2.4.2 Bonus Spawn System**
+- **Objective**: Create strategic bonus opportunities
+- **Requirements**:
+  - Configurable bonus spawn rates
+  - Bonus streak mechanics (more bonuses for maintaining combos)
+  - Rare bonus types with special effects
+  - Bonus preview indicators
+  - Bonus collection animations
+
+**2.4.3 Power-Up Visual Design**
+- **Objective**: Make bonuses visually distinct and exciting
+- **Requirements**:
+  - Unique visual effects for each bonus type
+  - Bonus collection particle effects
+  - Bonus countdown timers when active
+  - Bonus status indicators in HUD
+  - Bonus history tracking
+
+### 2.5 Challenge & Objective System
+
+**2.5.1 Daily Challenges**
+- **Objective**: Provide daily goals to increase engagement
+- **Requirements**:
+  - Unique daily challenge generation
+  - Challenge tracking and completion
+  - Challenge rewards (points, achievements)
+  - Challenge difficulty scaling
+  - Challenge history and statistics
+
+**2.5.2 Achievement System Enhancements**
+- **Objective**: Make achievements more rewarding
+- **Requirements**:
+  - Expand achievement categories
+  - Achievement progress tracking for multi-step achievements
+  - Achievement rarity indicators
+  - Achievement showcase/gallery
+  - Achievement milestones and collections
+
+**2.5.3 Mini-Objectives**
+- **Objective**: Provide short-term goals during gameplay
+- **Requirements**:
+  - Dynamic objectives (e.g., "Hit 5 buttons in under 200ms")
+  - Objective tracking UI
+  - Objective completion rewards
+  - Objective suggestions based on player skill
+  - Objective streak bonuses
+
+### 2.6 Progression & Unlock System
+
+**2.6.1 Player Level System**
+- **Objective**: Provide long-term progression goals
+- **Requirements**:
+  - Experience points (XP) system
+  - Player level with visual indicator
+  - XP rewards for gameplay activities
+  - Level-up celebrations
+  - Level-based unlocks
+
+**2.6.2 Unlockables**
+- **Objective**: Reward continued play
+- **Requirements**:
+  - Unlock new game modes through play
+  - Unlock visual themes/skins
+  - Unlock difficulty levels
+  - Unlock bonus features
+  - Unlock tracking and gallery
+
+**2.6.3 Statistics & Analytics**
+- **Objective**: Help players understand and improve
+- **Requirements**:
+  - Comprehensive statistics dashboard
+  - Performance graphs and charts
+  - Skill assessment and recommendations
+  - Progress tracking over time
+  - Comparative statistics (this session vs. average)
+
+### 2.7 Gameplay Mechanics Refinements
+
+**2.7.1 Timing System Improvements**
+- **Objective**: Make timing feel fair and precise
+- **Requirements**:
+  - Sub-millisecond precision in timing calculations
+  - Input lag compensation
+  - Timing window adjustments for different difficulties
+  - Visual timing feedback improvements
+  - Timing calibration tool
+
+**2.7.2 Button Highlight System Enhancements**
+- **Objective**: Improve visual clarity and timing
+- **Requirements**:
+  - Smoother highlight transitions
+  - Better visual contrast for highlighted buttons
+  - Configurable highlight styles
+  - Highlight prediction indicators
+  - Highlight pattern recognition for advanced players
+
+**2.7.3 Combo System Refinements**
+- **Objective**: Make combos feel more rewarding
+- **Requirements**:
+  - Enhanced combo multiplier scaling
+  - Combo protection mechanisms
+  - Combo streak bonuses
+  - Combo-based unlocks
+  - Combo challenge modes
+
+---
+
+## 3. TECHNICAL REQUIREMENTS
+
+### 3.1 Performance Targets
+- Maintain 60 FPS on target devices
+- <16ms frame time for all UI animations
+- Smooth 60fps gameplay with all effects enabled
+- Graceful degradation for lower-end devices
+- Performance monitoring and metrics
+
+### 3.2 Accessibility Requirements
+- Maintain WCAG AA compliance
+- Keyboard navigation for all features
+- Screen reader support improvements
+- High contrast mode enhancements
+- Reduced effects mode for all new features
+- Configurable animation speeds
+
+### 3.3 Browser & Device Support
+- Maintain current browser support
+- Optimize for common mobile devices
+- Test on various screen sizes and DPIs
+- Ensure compatibility with existing Electron build
+
+### 3.4 Code Quality
+- Follow existing code patterns and architecture
+- Maintain TypeScript type safety
+- Add comprehensive error handling
+- Write maintainable, documented code
+- Performance profiling and optimization
+
+---
+
+## 4. PRIORITIZATION
+
+### Phase 1: Quick Wins (High Impact, Low Effort)
+- Enhanced reaction time visual feedback
+- HUD layout improvements
+- Menu transition animations
+- Score breakdown displays
+- Basic bonus system expansion
+
+### Phase 2: Core Enhancements (High Impact, Medium Effort)
+- Complete HUD redesign
+- Game over screen improvements
+- Enhanced combo visual system
+- Difficulty progression visualization
+- Daily challenges foundation
+
+### Phase 3: Advanced Features (Medium-High Impact, High Effort)
+- Player progression system
+- Comprehensive statistics dashboard
+- Advanced bonus/power-up system
+- Achievement system expansion
+- Full onboarding/tutorial system
+
+### Phase 4: Polish & Refinement (Medium Impact, Medium Effort)
+- Micro-interactions throughout
+- Advanced animations
+- Settings improvements
+- Mobile optimizations
+- Cross-resolution support
+
+---
+
+## 5. SUCCESS METRICS
+
+### Engagement Metrics
+- Increased session duration
+- Higher return rate
+- More game modes played per session
+- Increased achievement unlock rate
+
+### Performance Metrics
+- Maintained 60 FPS
+- Reduced loading times
+- Improved perceived performance
+
+### User Satisfaction
+- Reduced confusion in onboarding
+- Improved understanding of scoring
+- Higher completion rates for challenges
+- Positive feedback on visual improvements
+
+---
+
+## 6. OUT OF SCOPE (Explicitly Excluded)
+- Audio enhancements (sound effects, music)
+- Online multiplayer features
+- Cloud save/sync functionality
+- Social features (sharing, friends)
+- Monetization features
+- Major engine/technology changes
+
+---
+
+## 7. NOTES & CONSIDERATIONS
+
+### Design Philosophy
+- Maintain cyberpunk aesthetic throughout
+- Prioritize clarity and usability
+- Balance visual polish with performance
+- Respect player preferences and accessibility needs
+
+### Implementation Notes
+- All features should respect existing settings (reduced effects, high contrast, etc.)
+- Maintain backward compatibility with save data
+- Consider future expandability for online features
+- Document all new systems thoroughly
+
+### Testing Requirements
+- Test all features across game modes
+- Verify accessibility features work correctly
+- Performance testing on target devices
+- User testing for major UI changes
+
+---
+
+## 8. FUTURE CONSIDERATIONS (Not in This PRD)
+- Online leaderboards
+- Replay system
+- Custom game mode creation
+- Advanced analytics
+- Spectator mode
+- Tournament mode
+
+---
+
+**Document Version**: 1.0
+**Last Updated**: 2024
+**Focus Areas**: UI/UX Improvements, Gameplay Enhancements
+**Excluded**: Audio features
+
