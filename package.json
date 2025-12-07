@@ -85,7 +85,8 @@
         }
       ],
       "icon": "public/logo/ReflexIcon.jpg",
-      "requestedExecutionLevel": "asInvoker"
+      "requestedExecutionLevel": "asInvoker",
+      "verifyUpdateCodeSignature": false
     },
     "mac": {
       "target": [
@@ -127,6 +128,7 @@
       "menuCategory": false,
       "shortcutName": "Reflex This",
       "perMachine": false,
+      "allowElevation": false,
       "deleteAppDataOnUninstall": true,
       "warningsAsErrors": false
     }
