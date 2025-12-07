@@ -1277,12 +1277,30 @@ export default function GamePage() {
           onRestart={() => {
             // Reset the initialization flag so game can be reset properly
             hasInitializedRef.current = false;
-            setIsReady(false); // Show ready screen again
+            // Clear all local game state
+            setSequence([]);
+            setPlayerSequence([]);
+            setIsShowingSequence(false);
+            setIsWaitingForInput(false);
+            setOddOneOutTarget(null);
+            setBonusButtonId(null);
+            setBonusActive(false);
+            setFastStreakCount(0);
+            setFastStreakActive(false);
+            clearHighlightTimer();
+            if (sequenceTimerRef.current) {
+              clearTimer(sequenceTimerRef.current);
+              sequenceTimerRef.current = null;
+            }
+            isProcessingRef.current = false;
+            // Reset game state
             resetGame();
             // Set lives for survival mode immediately after reset
             if (gameMode === 'survival') {
               setLives(1);
             }
+            // Ensure game is ready to start after reset
+            // The game mode effects will automatically start the game when isReady is true
           }}
         />
         </Suspense>
