@@ -11,12 +11,16 @@ import {
   calculateSessionStatistics,
   calculateSessionStatisticsFromSessions,
   getGameSessions,
+  type GameSession,
 } from '@/lib/sessionStats';
 import {
   getMetaProgression,
   getMetaProgressionFromSessions,
   type AchievementProgress,
 } from '@/lib/progression';
+import { ReactionTimeGraph } from '@/components/ReactionTimeGraph';
+import { GameMode } from '@/lib/gameModes';
+import { DifficultyPreset } from '@/lib/difficulty';
 
 interface GameOverModalProps {
   score: number;
@@ -25,43 +29,48 @@ interface GameOverModalProps {
   bestCombo: number;
   reactionTimeStats: ReactionTimeStats;
   onRestart: () => void;
+  gameMode?: GameMode;
+  difficulty?: DifficultyPreset;
 }
 
 function getCoachingTip(
   score: number,
   bestCombo: number,
-  stats: ReactionTimeStats
+  stats: ReactionTimeStats,
+  language: 'en' | 'de'
 ): string | null {
   const hasStats = stats.allTimes.length > 0;
 
   if (!hasStats) {
-    return 'Play a few longer runs to gather more data – your coach will have better tips next time.';
+    return t(language, 'gameover.coach.noData');
   }
 
   const { average, fastest, allTimes } = stats;
 
   if (average !== null && fastest !== null && average - fastest > 200) {
-    return 'Your best reactions are much faster than your average. Focus on staying calm and repeating those great hits consistently.';
+    return t(language, 'gameover.coach.fastVsAverage');
   }
 
   if (bestCombo < 5 && allTimes.length >= 15) {
-    return 'Try to slow down slightly and avoid early key presses. Fewer mistakes will let your combo – and score – climb much higher.';
+    return t(language, 'gameover.coach.lowCombo');
   }
 
   if (score > 0 && average !== null && average > 450) {
-    return 'Work on reacting a bit earlier after each highlight appears. Aim to bring your average reaction time under 400ms.';
+    return t(language, 'gameover.coach.slowReaction');
   }
 
   if (score > 0 && bestCombo >= 10) {
-    return 'You can already hold strong combos. Try pushing for one or two more hits per streak to reach the next level.';
+    return t(language, 'gameover.coach.goodCombo');
   }
 
-  return 'Keep an eye on your combo and avoid rushed inputs. Clean, accurate hits will multiply your score quickly.';
+  return t(language, 'gameover.coach.default');
 }
 
 /**
  * GameOverModal component - Displays game over screen with score and restart options
  */
+type TabType = 'overview' | 'details' | 'achievements';
+
 export function GameOverModal({
   score,
   highScore,
@@ -69,16 +78,26 @@ export function GameOverModal({
   bestCombo,
   reactionTimeStats,
   onRestart,
+  gameMode,
+  difficulty,
 }: GameOverModalProps) {
   const { language } = useGameState();
   const [displayedScore, setDisplayedScore] = useState(0);
   const [isCounting, setIsCounting] = useState(true);
-  const coachingTip = getCoachingTip(score, bestCombo, reactionTimeStats);
+  const [activeTab, setActiveTab] = useState<TabType>('overview');
+  const coachingTip = getCoachingTip(score, bestCombo, reactionTimeStats, language);
   const [metaSummary, setMetaSummary] = useState<{
     rankName: string | null;
     nextRank: string | null;
   }>({ rankName: null, nextRank: null });
   const [newAchievements, setNewAchievements] = useState<AchievementProgress[]>([]);
+  const [previousBest, setPreviousBest] = useState<{
+    score: number;
+    bestCombo: number;
+    averageReaction: number | null;
+    fastestReaction: number | null;
+  } | null>(null);
+  const [gameDuration, setGameDuration] = useState(0);
 
   // Animate score count-up
   useEffect(() => {
@@ -110,9 +129,15 @@ export function GameOverModal({
     return () => clearInterval(timer);
   }, [score]);
 
-  // Load latest rank information and newly unlocked achievements for this Game Over screen
+  // Load latest rank information, newly unlocked achievements, and previous best
   useEffect(() => {
     const sessions = getGameSessions();
+
+    // Get current game session (most recent)
+    const currentSession = sessions.length > 0 ? sessions[sessions.length - 1] : null;
+    if (currentSession) {
+      setGameDuration(currentSession.duration);
+    }
 
     // Meta after this run (all sessions)
     const statsAfter = calculateSessionStatisticsFromSessions(sessions);
@@ -138,13 +163,294 @@ export function GameOverModal({
     );
 
     setNewAchievements(newlyUnlocked);
+
+    // Find previous best performance (excluding current session)
+    if (sessionsBefore.length > 0) {
+      const bestSession = sessionsBefore.reduce((best, session) => {
+        if (session.score > best.score) return session;
+        if (session.score === best.score && (session.bestCombo || 0) > (best.bestCombo || 0)) return session;
+        return best;
+      }, sessionsBefore[0]);
+
+      setPreviousBest({
+        score: bestSession.score,
+        bestCombo: bestSession.bestCombo || 0,
+        averageReaction: bestSession.averageReactionTime,
+        fastestReaction: bestSession.fastestReactionTime,
+      });
+    }
   }, []);
+
+
+  // Tab content components
+  const OverviewTab = () => (
+    <div className="space-y-3">
+      {/* Top row: Score + Stats side by side */}
+      <div className="grid grid-cols-[1.2fr_1fr] gap-3">
+        {/* Score Display */}
+        <div className="text-center py-4 border-4 pixel-border" style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 58, 99, 0.6)' }}>
+          <p className="text-sm text-muted-foreground mb-1">{t(language, 'gameover.finalScore')}</p>
+          <p
+            className={cn(
+              'text-4xl sm:text-5xl font-bold text-foreground text-glow mb-2 transition-all duration-75',
+              isCounting && 'scale-110'
+            )}
+          >
+            {displayedScore.toLocaleString()}
+          </p>
+
+          {/* High Score Indicator */}
+          {isNewHighScore && (
+            <div
+              className={cn(
+                'mt-2 p-2 border-4 pixel-border',
+                'animate-[pulse_1s_ease-in-out_infinite]'
+              )}
+              style={{ backgroundColor: 'rgba(62, 124, 172, 0.3)', borderColor: '#3E7CAC' }}
+            >
+              <p className="text-foreground font-bold text-sm text-glow">
+                {t(language, 'gameover.newHighScore')}
+              </p>
+            </div>
+          )}
+
+          {!isNewHighScore && highScore > 0 && (
+            <div className="mt-2">
+              <p className="text-sm text-muted-foreground">{t(language, 'gameover.highScore')}</p>
+              <p className="text-xl font-semibold text-foreground">{highScore.toLocaleString()}</p>
+            </div>
+          )}
+
+          {metaSummary.rankName && (
+            <div className="mt-2 text-sm text-foreground/80">
+              <p className="font-semibold text-foreground">
+                {t(language, 'gameover.currentRank')} {metaSummary.rankName}
+              </p>
+              {metaSummary.nextRank && (
+                <p className="mt-0.5 text-sm text-foreground/70">
+                  {t(language, 'gameover.nextRank')} <span className="font-semibold">{metaSummary.nextRank}</span>.
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Quick Stats */}
+        {(bestCombo > 0 || reactionTimeStats.allTimes.length > 0) && (
+          <div className="p-3 border-4 pixel-border" style={{ backgroundColor: 'rgba(0, 58, 99, 0.6)', borderColor: '#3E7CAC' }}>
+            <h3 className="text-sm font-semibold text-foreground mb-2">{t(language, 'gameover.stats.title')}</h3>
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              {bestCombo > 0 && (
+              <div>
+                <p className="text-muted-foreground mb-1 text-sm">{t(language, 'gameover.stats.bestCombo')}</p>
+                <p className="text-lg font-bold text-foreground">{bestCombo}x</p>
+              </div>
+            )}
+            {reactionTimeStats.average !== null && (
+              <div>
+                <p className="text-muted-foreground mb-1 text-sm">{t(language, 'gameover.stats.avgReaction')}</p>
+                <p className="text-lg font-bold text-foreground">
+                  {Math.round(reactionTimeStats.average)}ms
+                </p>
+              </div>
+            )}
+            {reactionTimeStats.fastest !== null && (
+              <div>
+                <p className="text-muted-foreground mb-1 text-sm">{t(language, 'gameover.stats.fastest')}</p>
+                <p className="text-lg font-bold text-chart-3">
+                  {Math.round(reactionTimeStats.fastest)}ms
+                </p>
+              </div>
+            )}
+            {reactionTimeStats.allTimes.length > 0 && (
+              <div>
+                <p className="text-muted-foreground mb-1 text-sm">{t(language, 'gameover.stats.totalPresses')}</p>
+                  <p className="text-lg font-bold text-foreground">
+                    {reactionTimeStats.allTimes.length}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Bottom row: Comparison + Coaching side by side */}
+      <div className="grid grid-cols-[1fr_1fr] gap-3">
+        {/* Comparison to Previous Best */}
+        {previousBest && (
+          <div className="p-3 border-4 pixel-border" style={{ backgroundColor: 'rgba(0, 58, 99, 0.6)', borderColor: '#3E7CAC' }}>
+            <h3 className="text-sm font-semibold text-foreground mb-2">{t(language, 'gameover.comparison.title')}</h3>
+            <div className="space-y-2 text-xs">
+              <div>
+                <p className="text-muted-foreground mb-1 text-sm">{t(language, 'gameover.comparison.score')}</p>
+                <div className="flex items-center gap-2">
+                  <p className={cn(
+                    'text-base font-bold',
+                    score > previousBest.score ? 'text-chart-3' : score < previousBest.score ? 'text-chart-5' : 'text-foreground'
+                  )}>
+                    {score > previousBest.score ? '↑' : score < previousBest.score ? '↓' : '='} {score.toLocaleString()}
+                  </p>
+                  <p className="text-muted-foreground text-sm">vs {previousBest.score.toLocaleString()}</p>
+                </div>
+              </div>
+              <div>
+                <p className="text-muted-foreground mb-1 text-sm">{t(language, 'gameover.comparison.combo')}</p>
+                <div className="flex items-center gap-2">
+                  <p className={cn(
+                    'text-base font-bold',
+                    bestCombo > previousBest.bestCombo ? 'text-chart-3' : bestCombo < previousBest.bestCombo ? 'text-chart-5' : 'text-foreground'
+                  )}>
+                    {bestCombo > previousBest.bestCombo ? '↑' : bestCombo < previousBest.bestCombo ? '↓' : '='} {bestCombo}x
+                  </p>
+                  <p className="text-muted-foreground text-sm">vs {previousBest.bestCombo}x</p>
+                </div>
+              </div>
+              {reactionTimeStats.average !== null && previousBest.averageReaction !== null && (
+                <div>
+                  <p className="text-muted-foreground mb-1 text-sm">{t(language, 'gameover.comparison.avgReaction')}</p>
+                  <div className="flex items-center gap-2">
+                    <p className={cn(
+                      'text-base font-bold',
+                      reactionTimeStats.average < previousBest.averageReaction ? 'text-chart-3' : reactionTimeStats.average > previousBest.averageReaction ? 'text-chart-5' : 'text-foreground'
+                    )}>
+                      {reactionTimeStats.average < previousBest.averageReaction ? '↑' : reactionTimeStats.average > previousBest.averageReaction ? '↓' : '='} {Math.round(reactionTimeStats.average)}ms
+                    </p>
+                    <p className="text-muted-foreground text-sm">vs {Math.round(previousBest.averageReaction)}ms</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {coachingTip && (
+          <div className="p-3 border-2 pixel-border" style={{ backgroundColor: 'rgba(0, 58, 99, 0.5)', borderColor: '#3E7CAC' }}>
+            <h3 className="text-xs font-semibold text-foreground mb-2 uppercase tracking-wide">
+              {t(language, 'gameover.coach.title')}
+            </h3>
+            <p className="text-xs text-foreground/80 leading-relaxed">{coachingTip}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const DetailsTab = () => (
+    <div className="space-y-3">
+      {/* Reaction Time Graph */}
+      {reactionTimeStats.allTimes.length > 0 && (
+        <div className="p-3 border-4 pixel-border" style={{ backgroundColor: 'rgba(0, 58, 99, 0.6)', borderColor: '#3E7CAC' }}>
+          <h3 className="text-sm font-semibold text-foreground mb-2">{t(language, 'gameover.details.reactionGraph')}</h3>
+          <ReactionTimeGraph
+            reactionTimes={reactionTimeStats.allTimes}
+            duration={gameDuration}
+          />
+        </div>
+      )}
+
+      {/* Detailed Stats - Side by side */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="p-3 border-4 pixel-border" style={{ backgroundColor: 'rgba(0, 58, 99, 0.6)', borderColor: '#3E7CAC' }}>
+          <h3 className="text-sm font-semibold text-foreground mb-2">{t(language, 'gameover.details.title')}</h3>
+          <div className="space-y-2 text-sm">
+            {gameMode && (
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">{t(language, 'gameover.details.mode')}</span>
+                <span className="font-semibold text-foreground">{t(language, `mode.${gameMode}.name`)}</span>
+              </div>
+            )}
+            {difficulty && (
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">{t(language, 'gameover.details.difficulty')}</span>
+                <span className="font-semibold text-foreground">{t(language, `difficulty.name.${difficulty}`)}</span>
+              </div>
+            )}
+            {gameDuration > 0 && (
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">{t(language, 'gameover.details.duration')}</span>
+                <span className="font-semibold text-foreground">
+                  {Math.floor(gameDuration / 1000)}s
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="p-3 border-4 pixel-border" style={{ backgroundColor: 'rgba(0, 58, 99, 0.6)', borderColor: '#3E7CAC' }}>
+          <h3 className="text-sm font-semibold text-foreground mb-2">Performance</h3>
+          <div className="space-y-2 text-sm">
+            {reactionTimeStats.slowest !== null && (
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">{t(language, 'gameover.details.slowest')}</span>
+                <span className="font-semibold text-chart-5">
+                  {Math.round(reactionTimeStats.slowest)}ms
+                </span>
+              </div>
+            )}
+            {reactionTimeStats.allTimes.length > 0 && (
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">{t(language, 'gameover.details.accuracy')}</span>
+                <span className="font-semibold text-foreground">
+                  {Math.round((reactionTimeStats.allTimes.filter(t => t < 400).length / reactionTimeStats.allTimes.length) * 100)}%
+                </span>
+              </div>
+            )}
+            {reactionTimeStats.average !== null && (
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">{t(language, 'gameover.stats.avgReaction')}</span>
+                <span className="font-semibold text-foreground">
+                  {Math.round(reactionTimeStats.average)}ms
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const AchievementsTab = () => (
+    <div>
+      {newAchievements.length > 0 ? (
+        <div className="p-3 bg-chart-3/10 border-2 border-chart-3 pixel-border">
+          <h3 className="text-sm font-semibold text-chart-3 mb-2 uppercase tracking-wide">
+            {t(language, 'gameover.achievements.new')}
+          </h3>
+          <ul className="space-y-2 text-sm text-foreground/90">
+            {newAchievements.map((a) => (
+              <li key={a.id} className="p-2 border-2 pixel-border" style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 58, 99, 0.3)' }}>
+                <span className="font-semibold text-chart-3">
+                  {(() => {
+                    const key = `achievement.${a.id}.title`;
+                    const translated = t(language, key);
+                    return translated === key ? a.title : translated;
+                  })()}
+                </span>
+                <p className="text-foreground/70 mt-1 leading-relaxed">
+                  {(() => {
+                    const key = `achievement.${a.id}.description`;
+                    const translated = t(language, key);
+                    return translated === key ? a.description : translated;
+                  })()}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : (
+        <div className="p-4 border-4 pixel-border text-center" style={{ backgroundColor: 'rgba(0, 58, 99, 0.6)', borderColor: '#3E7CAC' }}>
+          <p className="text-muted-foreground text-sm">{t(language, 'gameover.achievements.none')}</p>
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 crt-scanlines">
       <div
         className={cn(
-          'relative w-full max-w-2xl border-4 p-6 sm:p-8',
+          'relative w-full max-w-5xl border-4 p-4 sm:p-6',
           'pixel-border',
           'shadow-[0_0_20px_rgba(62,124,172,0.4)]',
           'animate-[fadeIn_0.3s_ease-out,scaleIn_0.3s_ease-out]'
@@ -155,158 +461,79 @@ export function GameOverModal({
         }}
       >
         {/* Header */}
-        <div className="text-center mb-6">
-            <h2
+        <div className="text-center mb-3">
+          <h2
             className={cn(
-              'text-3xl sm:text-4xl font-bold text-foreground text-glow mb-2',
+              'text-2xl sm:text-3xl font-bold text-foreground text-glow mb-1',
               isNewHighScore && 'animate-glitch'
             )}
           >
-            {t(language, 'gameover.title')}
+            {isNewHighScore ? t(language, 'gameover.titleNewHigh') : t(language, 'gameover.title')}
           </h2>
-          <p className="text-muted-foreground text-sm sm:text-base">
+          <p className="text-muted-foreground text-xs sm:text-sm">
             {t(language, 'gameover.subtitle')}
           </p>
         </div>
 
-        {/* Main content: score + details side-by-side on wide screens */}
-        <div className="mb-6 grid gap-6 md:grid-cols-[minmax(0,1.1fr)_minmax(0,1.4fr)] items-start">
-          {/* Score Display */}
-          <div className="text-center py-6 border-y md:border md:rounded-lg md:px-4" style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 58, 99, 0.6)' }}>
-            <p className="text-sm text-muted-foreground mb-2">{t(language, 'gameover.finalScore')}</p>
-            <p
-              className={cn(
-                'text-5xl sm:text-6xl font-bold text-foreground text-glow mb-4 transition-all duration-75',
-                isCounting && 'scale-110'
-              )}
-            >
-              {displayedScore.toLocaleString()}
-            </p>
-
-            {/* High Score Indicator */}
-            {isNewHighScore && (
-              <div
-                className={cn(
-                  'mt-4 p-3 border-4 pixel-border',
-                  'animate-[pulse_1s_ease-in-out_infinite]'
-                )}
-                style={{ backgroundColor: 'rgba(62, 124, 172, 0.3)', borderColor: '#3E7CAC' }}
-              >
-                <p className="text-foreground font-bold text-lg text-glow">
-                  {t(language, 'gameover.newHighScore')}
-                </p>
-              </div>
+        {/* Tabs */}
+        <div className="flex gap-2 mb-3 border-b-2" style={{ borderColor: '#3E7CAC' }}>
+          <button
+            onClick={() => setActiveTab('overview')}
+            className={cn(
+              'px-3 py-1.5 text-xs font-semibold transition-all',
+              activeTab === 'overview'
+                ? 'text-foreground border-b-2'
+                : 'text-muted-foreground hover:text-foreground'
             )}
-
-            {!isNewHighScore && highScore > 0 && (
-              <div className="mt-4">
-                <p className="text-xs text-muted-foreground">{t(language, 'gameover.highScore')}</p>
-                <p className="text-xl font-semibold text-foreground">{highScore}</p>
-              </div>
+            style={activeTab === 'overview' ? { borderColor: '#3E7CAC' } : {}}
+          >
+            {t(language, 'gameover.tab.overview')}
+          </button>
+          <button
+            onClick={() => setActiveTab('details')}
+            className={cn(
+              'px-3 py-1.5 text-xs font-semibold transition-all',
+              activeTab === 'details'
+                ? 'text-foreground border-b-2'
+                : 'text-muted-foreground hover:text-foreground'
             )}
-
-            {metaSummary.rankName && (
-              <div className="mt-4 text-xs text-foreground/80">
-                <p className="font-semibold text-foreground">
-                  {t(language, 'gameover.currentRank')} {metaSummary.rankName}
-                </p>
-                {metaSummary.nextRank && (
-                  <p className="mt-0.5 text-[11px] text-foreground/70">
-                    {t(language, 'gameover.nextRank')} <span className="font-semibold">{metaSummary.nextRank}</span>.
-                  </p>
-                )}
-              </div>
+            style={activeTab === 'details' ? { borderColor: '#3E7CAC' } : {}}
+          >
+            {t(language, 'gameover.tab.details')}
+          </button>
+          <button
+            onClick={() => setActiveTab('achievements')}
+            className={cn(
+              'px-3 py-1.5 text-xs font-semibold transition-all relative',
+              activeTab === 'achievements'
+                ? 'text-foreground border-b-2'
+                : 'text-muted-foreground hover:text-foreground'
             )}
-          </div>
-
-          {/* Right column: stats, coaching tip, achievements */}
-          <div className="space-y-4">
-            {(bestCombo > 0 || reactionTimeStats.allTimes.length > 0) && (
-              <div className="p-4 border-4 pixel-border" style={{ backgroundColor: 'rgba(0, 58, 99, 0.6)', borderColor: '#3E7CAC' }}>
-                <h3 className="text-sm font-semibold text-foreground mb-3">{t(language, 'gameover.stats.title')}</h3>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  {bestCombo > 0 && (
-                    <div>
-                      <p className="text-muted-foreground mb-1">{t(language, 'gameover.stats.bestCombo')}</p>
-                      <p className="text-lg font-bold text-foreground">{bestCombo}x</p>
-                    </div>
-                  )}
-                  {reactionTimeStats.average !== null && (
-                    <div>
-                      <p className="text-muted-foreground mb-1">{t(language, 'gameover.stats.avgReaction')}</p>
-                      <p className="text-lg font-bold text-foreground">
-                        {Math.round(reactionTimeStats.average)}ms
-                      </p>
-                    </div>
-                  )}
-                  {reactionTimeStats.fastest !== null && (
-                    <div>
-                      <p className="text-muted-foreground mb-1">{t(language, 'gameover.stats.fastest')}</p>
-                      <p className="text-lg font-bold text-chart-3">
-                        {Math.round(reactionTimeStats.fastest)}ms
-                      </p>
-                    </div>
-                  )}
-                  {reactionTimeStats.allTimes.length > 0 && (
-                    <div>
-                      <p className="text-muted-foreground mb-1">{t(language, 'gameover.stats.totalPresses')}</p>
-                      <p className="text-lg font-bold text-foreground">
-                        {reactionTimeStats.allTimes.length}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {coachingTip && (
-              <div className="p-4 border-2 pixel-border" style={{ backgroundColor: 'rgba(0, 58, 99, 0.5)', borderColor: '#3E7CAC' }}>
-                <h3 className="text-xs font-semibold text-foreground mb-2 uppercase tracking-wide">
-                  {t(language, 'gameover.coach.title')}
-                </h3>
-                <p className="text-xs text-foreground/80">{coachingTip}</p>
-              </div>
-            )}
-
+            style={activeTab === 'achievements' ? { borderColor: '#3E7CAC' } : {}}
+          >
+            {t(language, 'gameover.tab.achievements')}
             {newAchievements.length > 0 && (
-              <div className="p-4 bg-chart-3/10 border-2 border-chart-3 pixel-border">
-                <h3 className="text-xs font-semibold text-chart-3 mb-2 uppercase tracking-wide">
-                  {t(language, 'gameover.achievements.title')}
-                </h3>
-                <ul className="space-y-1 text-xs text-foreground/90">
-                  {newAchievements.map((a) => (
-                    <li key={a.id}>
-                      <span className="font-semibold text-chart-3">
-                        {(() => {
-                          const key = `achievement.${a.id}.title`;
-                          const translated = t(language, key);
-                          return translated === key ? a.title : translated;
-                        })()}
-                      </span>
-                      <span className="text-foreground/70">
-                        {' '}
-                        –{' '}
-                        {(() => {
-                          const key = `achievement.${a.id}.description`;
-                          const translated = t(language, key);
-                          return translated === key ? a.description : translated;
-                        })()}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-chart-3 rounded-full text-[8px] flex items-center justify-center text-black font-bold">
+                {newAchievements.length}
+              </span>
             )}
-          </div>
+          </button>
+        </div>
+
+        {/* Tab Content */}
+        <div className="mb-4 min-h-[180px]">
+          {activeTab === 'overview' && <OverviewTab />}
+          {activeTab === 'details' && <DetailsTab />}
+          {activeTab === 'achievements' && <AchievementsTab />}
         </div>
 
         {/* Actions */}
-        <div className="flex flex-col gap-3">
-            <button
+        <div className="flex flex-col sm:flex-row gap-3">
+          <button
             onClick={onRestart}
             draggable={false}
             className={cn(
-              'w-full py-3 px-6 border-4 font-bold text-lg',
+              'flex-1 py-3 px-6 border-4 font-bold text-lg',
               'transition-all duration-100 active:scale-95',
               'focus:outline-none focus:ring-2 pixel-border'
             )}
@@ -328,7 +555,7 @@ export function GameOverModal({
           <Link
             href="/"
             className={cn(
-              'w-full py-3 px-6 border-4 font-bold text-base text-center',
+              'flex-1 py-3 px-6 border-4 font-bold text-base text-center',
               'text-foreground transition-all duration-100',
               'focus:outline-none focus:ring-2 pixel-border'
             )}

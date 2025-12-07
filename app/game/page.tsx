@@ -1227,6 +1227,8 @@ export default function GamePage() {
           isNewHighScore={score > highScore && score > 0}
           bestCombo={bestCombo}
           reactionTimeStats={reactionTimeStats}
+          gameMode={gameMode}
+          difficulty={difficulty}
           onRestart={() => {
             // Reset the initialization flag so game can be reset properly
             hasInitializedRef.current = false;
