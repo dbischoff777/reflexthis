@@ -346,8 +346,8 @@ export function SettingsModal({ show, onClose }: SettingsModalProps) {
             <div className="border-2 rounded px-3 py-3 space-y-3" style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 58, 99, 0.35)' }}>
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="font-semibold text-sm sm:text-base">HUD Layout</div>
-                  <div className="text-foreground/70 text-xs sm:text-sm">Choose how the HUD is arranged.</div>
+                  <div className="font-semibold text-sm sm:text-base">{t(language, 'settings.hud.layout')}</div>
+                  <div className="text-foreground/70 text-xs sm:text-sm">{t(language, 'settings.hud.layout.desc')}</div>
                 </div>
                 <div className="inline-flex rounded-md overflow-hidden border" style={{ borderColor: '#3E7CAC' }}>
                   {(['standard', 'compact', 'minimal'] as const).map((layout) => (
@@ -362,7 +362,7 @@ export function SettingsModal({ show, onClose }: SettingsModalProps) {
                       onClick={() => updateHudLayout(layout)}
                       aria-label={`Set HUD layout to ${layout}`}
                     >
-                      {layout === 'standard' ? 'Standard' : layout === 'compact' ? 'Compact' : 'Minimal'}
+                      {t(language, `settings.hud.layout.${layout}`)}
                     </button>
                   ))}
                 </div>
@@ -376,7 +376,7 @@ export function SettingsModal({ show, onClose }: SettingsModalProps) {
                   }}
                   data-layout-preview={hudLayout}
                 >
-                  {['Score', 'Vitals', 'Controls'].map((label) => (
+                  {(['score', 'vitals', 'controls'] as const).map((label) => (
                     <div
                       key={label}
                       className="flex-1 border rounded"
@@ -387,20 +387,16 @@ export function SettingsModal({ show, onClose }: SettingsModalProps) {
                       }}
                     >
                       <div className="font-semibold" style={{ fontSize: previewStyles[hudLayout].container.fontSize }}>
-                        {label}
+                        {t(language, `settings.hud.preview.${label}`)}
                       </div>
                       <div className="text-foreground/70" style={previewStyles[hudLayout].text}>
-                        {label === 'Score'
-                          ? '123456 / HI 234567'
-                          : label === 'Vitals'
-                            ? 'HP 75%'
-                            : 'Sound | Music | Settings | Exit'}
+                        {t(language, `settings.hud.preview.${label}Content`)}
                       </div>
                     </div>
                   ))}
                 </div>
                 <div className="text-[11px] text-foreground/60 mt-2">
-                  Preview only; changes apply to the in-game HUD when closed.
+                  {t(language, 'settings.hud.layout.preview')}
                 </div>
               </div>
               <label className="flex items-start gap-2 cursor-pointer border-2 rounded px-3 py-2 transition-colors" style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 58, 99, 0.5)' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(62, 124, 172, 0.7)'; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#3E7CAC'; }}>
@@ -411,9 +407,9 @@ export function SettingsModal({ show, onClose }: SettingsModalProps) {
                   onChange={(e) => toggleHudHidden(e.target.checked)}
                 />
                 <span>
-                  <span className="font-semibold">Hide HUD in game</span>
+                  <span className="font-semibold">{t(language, 'settings.hud.hide')}</span>
                   <span className="block text-foreground/70">
-                    When enabled, HUD is hidden during gameplay (for screenshots or focus).
+                    {t(language, 'settings.hud.hide.desc')}
                   </span>
                 </span>
               </label>
@@ -481,9 +477,9 @@ export function SettingsModal({ show, onClose }: SettingsModalProps) {
 
               <div className="border-2 rounded px-3 py-2 flex items-center justify-between transition-colors" style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 58, 99, 0.5)' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(62, 124, 172, 0.7)'; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#3E7CAC'; }}>
                 <div>
-                  <div className="font-semibold">Language / Sprache</div>
+                  <div className="font-semibold">{t(language, 'settings.language.label')}</div>
                   <div className="text-foreground/70">
-                    Switch between English and German.
+                    {t(language, 'settings.language.desc')}
                   </div>
                 </div>
                 <select
@@ -491,8 +487,8 @@ export function SettingsModal({ show, onClose }: SettingsModalProps) {
                   value={language}
                   onChange={handleLanguageChange}
                 >
-                  <option value="en">English</option>
-                  <option value="de">Deutsch</option>
+                  <option value="en">{t(language, 'settings.language.en')}</option>
+                  <option value="de">{t(language, 'settings.language.de')}</option>
                 </select>
               </div>
             </div>

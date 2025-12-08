@@ -205,15 +205,15 @@ export const RetroHudWidgets = memo(function RetroHudWidgets({
   if (hudHidden) {
     return (
       <div className="w-full flex justify-end items-center gap-2">
-        <span className="text-xs sm:text-sm text-foreground/70 hidden sm:inline">HUD hidden</span>
+        <span className="text-xs sm:text-sm text-foreground/70 hidden sm:inline">{t(language, 'hud.hidden')}</span>
         <button
           className="hud-control-button"
           onClick={unhideHud}
-          aria-label="Show HUD"
-          title="Show HUD"
+          aria-label={t(language, 'hud.show')}
+          title={t(language, 'hud.show')}
         >
           <span className="hud-control-indicator" data-active="false" />
-          <span className="text-sm leading-none">Show HUD</span>
+          <span className="text-sm leading-none">{t(language, 'hud.show')}</span>
         </button>
       </div>
     );

@@ -13,6 +13,7 @@ const en: TranslationDict = {
   'settings.language.label': 'Language',
   'settings.language.en': 'English',
   'settings.language.de': 'Deutsch',
+  'settings.language.desc': 'Switch between English and German.',
   'settings.mobile.performance': 'Mobile Performance Preset',
   'settings.mobile.performance.desc': 'Lower GPU load: reduces effects, disables shake/flash, limits resolution.',
   'settings.mobile.visual': 'Mobile Visual Balance',
@@ -292,6 +293,22 @@ const en: TranslationDict = {
   'settings.comfort.reducedEffects.desc': 'Use shorter flashes and less motion for a calmer experience.',
   'settings.comfort.highContrast': 'High-contrast flashes',
   'settings.comfort.highContrast.desc': 'Make success and error flashes more pronounced for visibility.',
+  'settings.hud.layout': 'HUD Layout',
+  'settings.hud.layout.desc': 'Choose how the HUD is arranged.',
+  'settings.hud.layout.standard': 'Standard',
+  'settings.hud.layout.compact': 'Compact',
+  'settings.hud.layout.minimal': 'Minimal',
+  'settings.hud.layout.preview': 'Preview only; changes apply to the in-game HUD when closed.',
+  'settings.hud.hide': 'Hide HUD in game',
+  'settings.hud.hide.desc': 'When enabled, HUD is hidden during gameplay (for screenshots or focus).',
+  'settings.hud.preview.score': 'Score',
+  'settings.hud.preview.vitals': 'Vitals',
+  'settings.hud.preview.controls': 'Controls',
+  'settings.hud.preview.scoreContent': '123456 / HI 234567',
+  'settings.hud.preview.vitalsContent': 'HP 75%',
+  'settings.hud.preview.controlsContent': 'Sound | Music | Settings | Exit',
+  'hud.hidden': 'HUD hidden',
+  'hud.show': 'Show HUD',
   'settings.close': 'CLOSE',
 
   // Statistics Modal
@@ -347,6 +364,58 @@ const en: TranslationDict = {
   'ready.tip.default.1': 'Be fast',
   'ready.tip.default.2': 'Stay accurate',
   'ready.tip.default.3': 'Build combos',
+
+  // Tutorial Overlay UI
+  'tutorial.title': 'Quick Tutorial',
+  'tutorial.close': 'Close',
+  'tutorial.skip': 'Skip (remember)',
+  'tutorial.back': 'Back',
+  'tutorial.next': 'Next',
+  'tutorial.start': 'Start Playing',
+  'tutorial.step': 'Step',
+
+  // Tutorial Steps - Reflex
+  'tutorial.reflex.1.title': 'Hit the highlighted button fast',
+  'tutorial.reflex.1.body': 'Only the glowing button is correct. Press it quickly to score and avoid losing a life.',
+  'tutorial.reflex.2.title': 'Speed fuels combo and score',
+  'tutorial.reflex.2.body': 'Faster reactions mean bigger points and stronger combo growth. Keep the streak alive.',
+  'tutorial.reflex.2.callout': 'Perfect (<150ms) hits boost combo and scoring the most.',
+  'tutorial.reflex.3.title': 'Pause or adjust settings anytime',
+  'tutorial.reflex.3.body': 'Use Esc to pause, or tap the HUD settings toggle to tweak audio, visuals, or controls.',
+
+  // Tutorial Steps - Sequence
+  'tutorial.sequence.1.title': 'Watch the sequence carefully',
+  'tutorial.sequence.1.body': 'Buttons light up in order. Just watch until the prompt tells you to repeat.',
+  'tutorial.sequence.2.title': 'Repeat in the same order',
+  'tutorial.sequence.2.body': 'Press the buttons in the exact order shown. Each round adds another button.',
+  'tutorial.sequence.2.callout': 'Tip: Say the pattern aloud or chunk it into pairs.',
+  'tutorial.sequence.3.title': 'Keep calm if you miss',
+  'tutorial.sequence.3.body': 'A mistake ends the round, but you can restart quickly. Short pauses help retain the pattern.',
+
+  // Tutorial Steps - Survival
+  'tutorial.survival.1.title': 'One life, no errors',
+  'tutorial.survival.1.body': 'You only get one life here. Every miss ends the run, so focus on accuracy first.',
+  'tutorial.survival.2.title': 'Stay consistent',
+  'tutorial.survival.2.body': 'Use steady pacing over risky speed. A stable rhythm keeps you alive longer.',
+  'tutorial.survival.3.title': 'Use pause to reset focus',
+  'tutorial.survival.3.body': 'Need a breather? Pause, then jump back in when ready.',
+
+  // Tutorial Steps - Nightmare
+  'tutorial.nightmare.1.title': 'Faster targets and harsher penalties',
+  'tutorial.nightmare.1.body': 'Highlights are quicker and mistakes hurt more. Prioritize correct hits over speed at first.',
+  'tutorial.nightmare.2.title': 'Keep the combo alive',
+  'tutorial.nightmare.2.body': 'Combos drive your score. Even modest streaks matter—avoid breaks.',
+  'tutorial.nightmare.3.title': 'Leverage settings',
+  'tutorial.nightmare.3.body': 'Reduce effects or enable high contrast if visuals feel busy. This mode tests focus.',
+
+  // Tutorial Steps - Odd One Out
+  'tutorial.odd.1.title': 'Find the button that looks wrong',
+  'tutorial.odd.1.body': 'Most buttons match; one is the odd one out. Hit it fast to score.',
+  'tutorial.odd.2.title': 'Differences can be subtle',
+  'tutorial.odd.2.body': 'Watch for color, brightness, or animation differences. They get trickier over time.',
+  'tutorial.odd.2.callout': 'If unsure, pause briefly—rushing can cost a life.',
+  'tutorial.odd.3.title': 'Speed still matters',
+  'tutorial.odd.3.body': 'You have limited time each round. Decide quickly once you spot the odd target.',
 };
 
 const de: TranslationDict = {
@@ -358,6 +427,7 @@ const de: TranslationDict = {
   'settings.language.label': 'Sprache',
   'settings.language.en': 'Englisch',
   'settings.language.de': 'Deutsch',
+  'settings.language.desc': 'Wechsle zwischen Englisch und Deutsch.',
   'settings.mobile.performance': 'Mobile-Performance-Preset',
   'settings.mobile.performance.desc': 'Reduziert Effekte, deaktiviert Shake/Flash und begrenzt die Auflösung für schwächere Geräte.',
   'settings.mobile.visual': 'Mobile-Visuell-Balance',
@@ -635,6 +705,22 @@ const de: TranslationDict = {
   'settings.comfort.reducedEffects.desc': 'Verwende kürzere Blitze und weniger Bewegung für eine ruhigere Erfahrung.',
   'settings.comfort.highContrast': 'Hochkontrast-Blitze',
   'settings.comfort.highContrast.desc': 'Mache Erfolgs- und Fehlerblitze deutlicher für bessere Sichtbarkeit.',
+  'settings.hud.layout': 'HUD-Layout',
+  'settings.hud.layout.desc': 'Wähle, wie das HUD angeordnet wird.',
+  'settings.hud.layout.standard': 'Standard',
+  'settings.hud.layout.compact': 'Kompakt',
+  'settings.hud.layout.minimal': 'Minimal',
+  'settings.hud.layout.preview': 'Nur Vorschau; Änderungen werden auf das HUD im Spiel angewendet, wenn geschlossen.',
+  'settings.hud.hide': 'HUD im Spiel ausblenden',
+  'settings.hud.hide.desc': 'Wenn aktiviert, wird das HUD während des Spiels ausgeblendet (für Screenshots oder Fokus).',
+  'settings.hud.preview.score': 'Punkte',
+  'settings.hud.preview.vitals': 'Vitalwerte',
+  'settings.hud.preview.controls': 'Steuerung',
+  'settings.hud.preview.scoreContent': '123456 / HI 234567',
+  'settings.hud.preview.vitalsContent': 'LP 75%',
+  'settings.hud.preview.controlsContent': 'Sound | Musik | Einstellungen | Beenden',
+  'hud.hidden': 'HUD ausgeblendet',
+  'hud.show': 'HUD anzeigen',
   'settings.close': 'SCHLIESSEN',
 
   // Statistics Modal
@@ -690,6 +776,58 @@ const de: TranslationDict = {
   'ready.tip.default.1': 'Sei schnell',
   'ready.tip.default.2': 'Bleib präzise',
   'ready.tip.default.3': 'Baue Kombos',
+
+  // Tutorial Overlay UI
+  'tutorial.title': 'Schnelles Tutorial',
+  'tutorial.close': 'Schließen',
+  'tutorial.skip': 'Überspringen (merken)',
+  'tutorial.back': 'Zurück',
+  'tutorial.next': 'Weiter',
+  'tutorial.start': 'Spiel starten',
+  'tutorial.step': 'Schritt',
+
+  // Tutorial Steps - Reflex
+  'tutorial.reflex.1.title': 'Triff den markierten Button schnell',
+  'tutorial.reflex.1.body': 'Nur der leuchtende Button ist korrekt. Drücke ihn schnell, um Punkte zu sammeln und kein Leben zu verlieren.',
+  'tutorial.reflex.2.title': 'Geschwindigkeit treibt Kombo und Punkte',
+  'tutorial.reflex.2.body': 'Schnellere Reaktionen bedeuten mehr Punkte und stärkeres Kombo-Wachstum. Halte die Serie am Laufen.',
+  'tutorial.reflex.2.callout': 'Perfekte (<150ms) Treffer steigern Kombo und Punktzahl am meisten.',
+  'tutorial.reflex.3.title': 'Jederzeit pausieren oder Einstellungen anpassen',
+  'tutorial.reflex.3.body': 'Nutze Esc zum Pausieren oder tippe auf das HUD-Einstellungs-Symbol, um Audio, Optik oder Steuerung anzupassen.',
+
+  // Tutorial Steps - Sequence
+  'tutorial.sequence.1.title': 'Beobachte die Sequenz genau',
+  'tutorial.sequence.1.body': 'Buttons leuchten in einer Reihenfolge auf. Beobachte einfach, bis die Aufforderung zum Wiederholen erscheint.',
+  'tutorial.sequence.2.title': 'Wiederhole in derselben Reihenfolge',
+  'tutorial.sequence.2.body': 'Drücke die Buttons in der exakt gezeigten Reihenfolge. Jede Runde fügt einen weiteren Button hinzu.',
+  'tutorial.sequence.2.callout': 'Tipp: Sprich das Muster laut aus oder teile es in Paare auf.',
+  'tutorial.sequence.3.title': 'Bleib ruhig, wenn du einen Fehler machst',
+  'tutorial.sequence.3.body': 'Ein Fehler beendet die Runde, aber du kannst schnell neu starten. Kurze Pausen helfen, das Muster zu behalten.',
+
+  // Tutorial Steps - Survival
+  'tutorial.survival.1.title': 'Ein Leben, keine Fehler',
+  'tutorial.survival.1.body': 'Du hast hier nur ein Leben. Jeder Fehler beendet den Lauf, also konzentriere dich zuerst auf Genauigkeit.',
+  'tutorial.survival.2.title': 'Bleib konstant',
+  'tutorial.survival.2.body': 'Nutze gleichmäßiges Tempo statt riskanter Geschwindigkeit. Ein stabiler Rhythmus hält dich länger am Leben.',
+  'tutorial.survival.3.title': 'Nutze Pause, um den Fokus zurückzusetzen',
+  'tutorial.survival.3.body': 'Brauchst du eine Verschnaufpause? Pausiere, dann springe wieder ein, wenn du bereit bist.',
+
+  // Tutorial Steps - Nightmare
+  'tutorial.nightmare.1.title': 'Schnellere Ziele und härtere Strafen',
+  'tutorial.nightmare.1.body': 'Markierungen sind schneller und Fehler schmerzen mehr. Priorisiere zuerst korrekte Treffer über Geschwindigkeit.',
+  'tutorial.nightmare.2.title': 'Halte die Kombo am Leben',
+  'tutorial.nightmare.2.body': 'Kombos treiben deine Punktzahl. Selbst bescheidene Serien zählen—vermeide Unterbrechungen.',
+  'tutorial.nightmare.3.title': 'Nutze die Einstellungen',
+  'tutorial.nightmare.3.body': 'Reduziere Effekte oder aktiviere hohen Kontrast, wenn die Optik zu überladen wirkt. Dieser Modus testet deinen Fokus.',
+
+  // Tutorial Steps - Odd One Out
+  'tutorial.odd.1.title': 'Finde den Button, der anders aussieht',
+  'tutorial.odd.1.body': 'Die meisten Buttons passen zusammen; einer ist der Außenseiter. Triff ihn schnell, um Punkte zu sammeln.',
+  'tutorial.odd.2.title': 'Unterschiede können subtil sein',
+  'tutorial.odd.2.body': 'Achte auf Farb-, Helligkeits- oder Animationsunterschiede. Sie werden mit der Zeit kniffliger.',
+  'tutorial.odd.2.callout': 'Wenn unsicher, pausiere kurz—Hast kann ein Leben kosten.',
+  'tutorial.odd.3.title': 'Geschwindigkeit zählt immer noch',
+  'tutorial.odd.3.body': 'Du hast begrenzte Zeit pro Runde. Entscheide schnell, sobald du das außergewöhnliche Ziel erkennst.',
 
   // Achievement translations
   'achievement.score_100.title': 'Erste Schritte',
