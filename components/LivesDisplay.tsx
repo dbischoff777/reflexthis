@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo, memo } from 'react';
 import { cn } from '@/lib/utils';
 
 interface LivesDisplayProps {
@@ -9,20 +10,16 @@ interface LivesDisplayProps {
 
 /**
  * LivesDisplay component - Shows remaining lives with pixelated block style
+ * Optimized with React.memo and useMemo to prevent unnecessary re-renders
  */
-export function LivesDisplay({ lives, totalLives = 5 }: LivesDisplayProps) {
-  // For survival mode (1 life), show it differently
-  const isSurvival = totalLives === 1;
+export const LivesDisplay = memo(function LivesDisplay({ lives, totalLives = 5 }: LivesDisplayProps) {
+  // Memoize expensive calculations
+  const isSurvival = useMemo(() => totalLives === 1, [totalLives]);
   
-  return (
-    <div className="flex items-center gap-2">
-      <span className="text-sm sm:text-base text-muted-foreground">
-        {isSurvival ? 'Survival' : 'Lives'}:
-      </span>
-      <div className="flex gap-1">
-        {Array.from({ length: totalLives }).map((_, i) => {
-          const isActive = i < lives;
-          const isLow = (lives <= 2 && isActive) || isSurvival;
+  const lifeBlocks = useMemo(() => {
+    return Array.from({ length: totalLives }).map((_, i) => {
+      const isActive = i < lives;
+      const isLow = (lives <= 2 && isActive) || isSurvival;
           
           return (
             <div
@@ -41,9 +38,18 @@ export function LivesDisplay({ lives, totalLives = 5 }: LivesDisplayProps) {
               aria-label={isActive ? 'Life remaining' : 'Life lost'}
             />
           );
-        })}
+        });
+  }, [totalLives, lives, isSurvival]);
+  
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-sm sm:text-base text-muted-foreground">
+        {isSurvival ? 'Survival' : 'Lives'}:
+      </span>
+      <div className="flex gap-1">
+        {lifeBlocks}
       </div>
     </div>
   );
-}
+});
 

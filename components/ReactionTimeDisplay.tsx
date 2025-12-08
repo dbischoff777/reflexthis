@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo, memo } from 'react';
 import { cn } from '@/lib/utils';
 import { ReactionTimeStats } from '@/lib/GameContext';
 
@@ -9,10 +10,15 @@ interface ReactionTimeDisplayProps {
 
 /**
  * ReactionTimeDisplay component - Shows reaction time statistics
+ * Optimized with React.memo and useMemo to prevent unnecessary re-renders
  */
-export function ReactionTimeDisplay({ stats }: ReactionTimeDisplayProps) {
-  if (stats.allTimes.length === 0) return null;
+export const ReactionTimeDisplay = memo(function ReactionTimeDisplay({ stats }: ReactionTimeDisplayProps) {
+  // Memoize expensive calculations
+  const hasStats = useMemo(() => stats.allTimes.length > 0, [stats.allTimes.length]);
 
+  if (!hasStats) return null;
+
+  // Helper functions (defined outside to avoid recreating on each render)
   const getReactionColor = (time: number | null): string => {
     if (time === null) return 'text-muted-foreground';
     if (time < 300) return 'text-chart-3';
@@ -53,5 +59,5 @@ export function ReactionTimeDisplay({ stats }: ReactionTimeDisplayProps) {
       )}
     </div>
   );
-}
+});
 

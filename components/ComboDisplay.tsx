@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo, memo } from 'react';
 import { cn } from '@/lib/utils';
 import { getComboMultiplier } from '@/lib/gameUtils';
 
@@ -16,30 +16,32 @@ interface ComboDisplayProps {
  * - Smooth pop animation when combo increases
  * - Large, prominent numbers
  * - Strategic placement in HUD
+ * Optimized with React.memo and useMemo to prevent unnecessary re-renders
  */
-export function ComboDisplay({ 
+export const ComboDisplay = memo(function ComboDisplay({ 
   combo, 
   reducedEffects = false,
 }: ComboDisplayProps) {
-  const multiplier = getComboMultiplier(combo);
   const [displayCombo, setDisplayCombo] = useState(combo);
   const [isAnimating, setIsAnimating] = useState(false);
   const previousComboRef = useRef(combo);
 
+  // Memoize expensive calculations
+  const multiplier = useMemo(() => getComboMultiplier(combo), [combo]);
+  
   // Calculate dynamic scale based on combo (capped at 1.4x to avoid distraction)
-  const getComboScale = (comboValue: number): number => {
-    if (comboValue <= 0) return 1;
+  const scale = useMemo(() => {
+    if (combo <= 0) return 1;
     // Scale from 1.0 to 1.4 based on combo, with diminishing returns
     // Formula: 1 + (combo / 100) * 0.4, capped at 1.4
-    return Math.min(1 + (comboValue / 100) * 0.4, 1.4);
-  };
-
-  const scale = getComboScale(combo);
-  const fontSize = combo < 10 
-    ? 'text-2xl sm:text-3xl' 
-    : combo < 50 
-    ? 'text-3xl sm:text-4xl' 
-    : 'text-4xl sm:text-5xl';
+    return Math.min(1 + (combo / 100) * 0.4, 1.4);
+  }, [combo]);
+  
+  const fontSize = useMemo(() => {
+    if (combo < 10) return 'text-2xl sm:text-3xl';
+    if (combo < 50) return 'text-3xl sm:text-4xl';
+    return 'text-4xl sm:text-5xl';
+  }, [combo]);
 
   // Animate when combo increases
   useEffect(() => {
@@ -100,4 +102,4 @@ export function ComboDisplay({
       </div>
     </div>
   );
-}
+});
