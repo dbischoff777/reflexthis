@@ -251,7 +251,7 @@ export function SlideTransition({
 export function ModalTransition({
   show,
   children,
-  duration = 250,
+  duration = 300,
   className,
   unmountOnExit = true,
   onEntered,
@@ -260,14 +260,14 @@ export function ModalTransition({
   return (
     <Transition
       show={show}
-      enter="transition-all ease-out"
+      enter="transition-all duration-300 ease-out"
       enterFrom="opacity-0 scale-95 translate-y-4"
       enterTo="opacity-100 scale-100 translate-y-0"
-      leave="transition-all ease-in"
+      leave="transition-all duration-200 ease-in"
       leaveFrom="opacity-100 scale-100 translate-y-0"
       leaveTo="opacity-0 scale-95 translate-y-4"
       duration={duration}
-      className={className}
+      className={cn('will-change-transform', className)}
       unmountOnExit={unmountOnExit}
       onEntered={onEntered}
       onExited={onExited}
@@ -291,7 +291,7 @@ export function BackdropTransition({
     <FadeTransition
       show={show}
       duration={duration}
-      className={className}
+      className={cn('backdrop-blur-sm', className)}
       unmountOnExit={unmountOnExit}
     >
       {children}

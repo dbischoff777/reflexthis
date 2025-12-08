@@ -202,8 +202,11 @@
     transition-duration: 500ms;
   }
 
-  /* Button hover transitions */
+  /* Enhanced button hover and active transitions */
   .button-hover-smooth {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateZ(0);
+    will-change: transform, opacity, background-color, border-color;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
@@ -703,6 +706,30 @@
     }
   }
 
+  @keyframes fadeOutUp {
+    from {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: translateY(-20px) scale(0.9);
+    }
+  }
+
+  @keyframes ripple {
+    0% {
+      width: 0;
+      height: 0;
+      opacity: 1;
+    }
+    100% {
+      width: 200px;
+      height: 200px;
+      opacity: 0;
+    }
+  }
+
   /* Enhanced fade in with scale */
   @keyframes fadeInScale {
     from {
@@ -957,31 +984,18 @@
 }
 
 .hud-grid {
-  display: grid;
+  display: flex;
+  flex-direction: row;
   gap: 0.75rem;
-  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  flex-wrap: wrap;
 }
 
 .retro-hud[data-layout="compact"] .hud-grid {
   gap: 0.55rem;
-  grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr));
 }
 
 .retro-hud[data-layout="minimal"] .hud-grid {
   gap: 0.4rem;
-  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
-}
-
-@media (min-width: 1440px) {
-  .hud-grid {
-    grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr));
-  }
-  .retro-hud[data-layout="compact"] .hud-grid {
-    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
-  }
-  .retro-hud[data-layout="minimal"] .hud-grid {
-    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
-  }
 }
 
 .retro-hud .hud-label {
@@ -1049,6 +1063,8 @@
   flex-direction: column;
   gap: 0.35rem;
   transition: opacity 0.2s, border-color 0.2s, transform 0.2s;
+  flex: 0 1 auto;
+  min-width: 11rem;
 }
 
 .hud-module-compact {
@@ -1330,17 +1346,31 @@
     text-transform: uppercase;
     background: rgba(0, 58, 99, 0.6);
     color: rgba(255, 255, 255, 0.9);
-    transition: border-color 0.15s, background 0.15s;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateZ(0);
+    will-change: transform, opacity, background-color, border-color;
   }
 
   .hud-control-button:hover {
     border-color: rgba(62, 124, 172, 0.8);
     background: rgba(62, 124, 172, 0.3);
+    transform: translateY(-1px) scale(1.02);
+  }
+
+  .hud-control-button:active {
+    transform: translateY(0) scale(0.98);
+    transition-duration: 0.1s;
   }
 
   .hud-control-button.danger:hover {
     border-color: rgba(255, 0, 93, 0.8);
     background: rgba(255, 0, 93, 0.2);
+    transform: translateY(-1px) scale(1.02);
+  }
+
+  .hud-control-button.danger:active {
+    transform: translateY(0) scale(0.98);
+    transition-duration: 0.1s;
   }
 
   .hud-control-indicator {

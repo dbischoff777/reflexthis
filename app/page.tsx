@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { BuildInfo } from '@/components/BuildInfo';
 import { ModeAndDifficultySelector } from '@/components/ModeAndDifficultySelector';
 import { StatsModal } from '@/components/StatsModal';
+import { RippleButton } from '@/components/RippleButton';
 import { DemoMode } from '@/components/DemoMode';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import { GameButtonGridWebGL } from '@/components/GameButton3DWebGL';
@@ -583,40 +584,40 @@ function LandingPageContent() {
               </span>
             </Link>
 
-            <button
+            <RippleButton
               onClick={() => {
                 setShowSettings(true);
               }}
-              draggable={false}
+              rippleColor="rgba(0, 255, 255, 0.3)"
               style={{
                 borderColor: '#3E7CAC',
                 backgroundColor: '#003A63',
               }}
-              className="inline-flex items-center justify-center flex-1 min-w-0 min-h-[56px] px-2 sm:px-3 py-3 text-xs sm:text-sm font-semibold border-4 text-foreground hover:opacity-90 transition-all duration-100 focus:outline-none focus:ring-2 focus:ring-primary pixel-border whitespace-nowrap overflow-hidden"
+              className="inline-flex items-center justify-center flex-1 min-w-0 min-h-[56px] px-2 sm:px-3 py-3 text-xs sm:text-sm font-semibold border-4 text-foreground hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary pixel-border whitespace-nowrap overflow-hidden"
             >
               <span className="truncate">
                 {t(language, 'landing.settings')}
               </span>
-            </button>
+            </RippleButton>
 
-            <button
+            <RippleButton
               onClick={() => setShowExitConfirm(true)}
-              draggable={false}
+              rippleColor="rgba(255, 0, 0, 0.3)"
               style={{
                 borderColor: '#3E7CAC',
                 backgroundColor: '#003A63',
               }}
-              className="inline-flex items-center justify-center flex-1 min-w-0 min-h-[56px] px-2 sm:px-3 py-3 text-xs sm:text-sm font-semibold border-4 text-foreground hover:opacity-90 transition-all duration-100 focus:outline-none focus:ring-2 focus:ring-primary pixel-border whitespace-nowrap overflow-hidden"
+              className="inline-flex items-center justify-center flex-1 min-w-0 min-h-[56px] px-2 sm:px-3 py-3 text-xs sm:text-sm font-semibold border-4 text-foreground hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary pixel-border whitespace-nowrap overflow-hidden"
             >
               <span className="truncate">
                 {t(language, 'landing.exitGame')}
               </span>
-            </button>
+            </RippleButton>
             
             {/* Music Toggle Button - In button row next to Exit Game */}
-            <button
+            <RippleButton
               onClick={toggleMusic}
-              draggable={false}
+              rippleColor="rgba(0, 255, 255, 0.3)"
               style={{
                 borderColor: '#3E7CAC',
                 backgroundColor: '#003A63',
@@ -634,7 +635,7 @@ function LandingPageContent() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
                 </svg>
               )}
-            </button>
+            </RippleButton>
           </div>
         )}
         </div>

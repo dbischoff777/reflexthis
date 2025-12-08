@@ -34,11 +34,14 @@ export function PageTransition({ children, className }: PageTransitionProps) {
   return (
     <div
       className={cn(
-        'transition-opacity duration-300 ease-in-out',
-        isTransitioning && 'opacity-0',
-        !isTransitioning && 'opacity-100',
+        'transition-all duration-300 ease-in-out',
+        isTransitioning && 'opacity-0 translate-y-2',
+        !isTransitioning && 'opacity-100 translate-y-0',
         className
       )}
+      style={{
+        willChange: isTransitioning ? 'opacity, transform' : 'auto',
+      }}
     >
       {displayChildren}
     </div>
