@@ -186,13 +186,13 @@ export function GameOverModal({
   const OverviewTab = () => (
     <div className="space-y-3">
       {/* Top row: Score + Stats side by side */}
-      <div className="grid grid-cols-[1.2fr_1fr] gap-3">
+      <div className="grid grid-cols-[1fr_1fr] gap-3">
         {/* Score Display */}
         <div className="text-center py-4 border-4 pixel-border" style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 58, 99, 0.6)' }}>
-          <p className="text-sm text-muted-foreground mb-1">{t(language, 'gameover.finalScore')}</p>
+          <p className="text-base sm:text-lg text-muted-foreground mb-2">{t(language, 'gameover.finalScore')}</p>
           <p
             className={cn(
-              'text-4xl sm:text-5xl font-bold text-foreground text-glow mb-2 transition-all duration-75',
+              'text-5xl sm:text-6xl md:text-7xl font-bold text-foreground text-glow mb-3 transition-all duration-75',
               isCounting && 'scale-110'
             )}
           >
@@ -203,12 +203,12 @@ export function GameOverModal({
           {isNewHighScore && (
             <div
               className={cn(
-                'mt-2 p-2 border-4 pixel-border',
+                'mt-2 p-3 border-4 pixel-border',
                 'animate-[pulse_1s_ease-in-out_infinite]'
               )}
               style={{ backgroundColor: 'rgba(62, 124, 172, 0.3)', borderColor: '#3E7CAC' }}
             >
-              <p className="text-foreground font-bold text-sm text-glow">
+              <p className="text-foreground font-bold text-base sm:text-lg text-glow">
                 {t(language, 'gameover.newHighScore')}
               </p>
             </div>
@@ -216,18 +216,18 @@ export function GameOverModal({
 
           {!isNewHighScore && highScore > 0 && (
             <div className="mt-2">
-              <p className="text-sm text-muted-foreground">{t(language, 'gameover.highScore')}</p>
-              <p className="text-xl font-semibold text-foreground">{highScore.toLocaleString()}</p>
+              <p className="text-base sm:text-lg text-muted-foreground">{t(language, 'gameover.highScore')}</p>
+              <p className="text-2xl sm:text-3xl font-semibold text-foreground">{highScore.toLocaleString()}</p>
             </div>
           )}
 
           {metaSummary.rankName && (
-            <div className="mt-2 text-sm text-foreground/80">
+            <div className="mt-3 text-base sm:text-lg text-foreground/80">
               <p className="font-semibold text-foreground">
                 {t(language, 'gameover.currentRank')} {metaSummary.rankName}
               </p>
               {metaSummary.nextRank && (
-                <p className="mt-0.5 text-sm text-foreground/70">
+                <p className="mt-1 text-base text-foreground/70">
                   {t(language, 'gameover.nextRank')} <span className="font-semibold">{metaSummary.nextRank}</span>.
                 </p>
               )}
@@ -237,35 +237,35 @@ export function GameOverModal({
 
         {/* Quick Stats */}
         {(bestCombo > 0 || reactionTimeStats.allTimes.length > 0) && (
-          <div className="p-3 border-4 pixel-border" style={{ backgroundColor: 'rgba(0, 58, 99, 0.6)', borderColor: '#3E7CAC' }}>
-            <h3 className="text-sm font-semibold text-foreground mb-2">{t(language, 'gameover.stats.title')}</h3>
-            <div className="grid grid-cols-2 gap-2 text-sm">
+          <div className="p-4 border-4 pixel-border" style={{ backgroundColor: 'rgba(0, 58, 99, 0.6)', borderColor: '#3E7CAC' }}>
+            <h3 className="text-base sm:text-lg font-semibold text-foreground mb-3">{t(language, 'gameover.stats.title')}</h3>
+            <div className="grid grid-cols-2 gap-3">
               {bestCombo > 0 && (
               <div>
-                <p className="text-muted-foreground mb-1 text-sm">{t(language, 'gameover.stats.bestCombo')}</p>
-                <p className="text-lg font-bold text-foreground">{bestCombo}x</p>
+                <p className="text-muted-foreground mb-2 text-base">{t(language, 'gameover.stats.bestCombo')}</p>
+                <p className="text-2xl sm:text-3xl font-bold text-foreground">{bestCombo}x</p>
               </div>
             )}
             {reactionTimeStats.average !== null && (
               <div>
-                <p className="text-muted-foreground mb-1 text-sm">{t(language, 'gameover.stats.avgReaction')}</p>
-                <p className="text-lg font-bold text-foreground">
+                <p className="text-muted-foreground mb-2 text-base">{t(language, 'gameover.stats.avgReaction')}</p>
+                <p className="text-2xl sm:text-3xl font-bold text-foreground">
                   {Math.round(reactionTimeStats.average)}ms
                 </p>
               </div>
             )}
             {reactionTimeStats.fastest !== null && (
               <div>
-                <p className="text-muted-foreground mb-1 text-sm">{t(language, 'gameover.stats.fastest')}</p>
-                <p className="text-lg font-bold text-chart-3">
+                <p className="text-muted-foreground mb-2 text-base">{t(language, 'gameover.stats.fastest')}</p>
+                <p className="text-2xl sm:text-3xl font-bold text-chart-3">
                   {Math.round(reactionTimeStats.fastest)}ms
                 </p>
               </div>
             )}
             {reactionTimeStats.allTimes.length > 0 && (
               <div>
-                <p className="text-muted-foreground mb-1 text-sm">{t(language, 'gameover.stats.totalPresses')}</p>
-                  <p className="text-lg font-bold text-foreground">
+                <p className="text-muted-foreground mb-2 text-base">{t(language, 'gameover.stats.totalPresses')}</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-foreground">
                     {reactionTimeStats.allTimes.length}
                   </p>
                 </div>
@@ -279,44 +279,44 @@ export function GameOverModal({
       <div className="grid grid-cols-[1fr_1fr] gap-3">
         {/* Comparison to Previous Best */}
         {previousBest && (
-          <div className="p-3 border-4 pixel-border" style={{ backgroundColor: 'rgba(0, 58, 99, 0.6)', borderColor: '#3E7CAC' }}>
-            <h3 className="text-sm font-semibold text-foreground mb-2">{t(language, 'gameover.comparison.title')}</h3>
-            <div className="space-y-2 text-xs">
+          <div className="p-4 border-4 pixel-border" style={{ backgroundColor: 'rgba(0, 58, 99, 0.6)', borderColor: '#3E7CAC' }}>
+            <h3 className="text-base sm:text-lg font-semibold text-foreground mb-3">{t(language, 'gameover.comparison.title')}</h3>
+            <div className="space-y-3">
               <div>
-                <p className="text-muted-foreground mb-1 text-sm">{t(language, 'gameover.comparison.score')}</p>
+                <p className="text-muted-foreground mb-2 text-base">{t(language, 'gameover.comparison.score')}</p>
                 <div className="flex items-center gap-2">
                   <p className={cn(
-                    'text-base font-bold',
+                    'text-xl sm:text-2xl font-bold',
                     score > previousBest.score ? 'text-chart-3' : score < previousBest.score ? 'text-chart-5' : 'text-foreground'
                   )}>
                     {score > previousBest.score ? '↑' : score < previousBest.score ? '↓' : '='} {score.toLocaleString()}
                   </p>
-                  <p className="text-muted-foreground text-sm">vs {previousBest.score.toLocaleString()}</p>
+                  <p className="text-muted-foreground text-base">vs {previousBest.score.toLocaleString()}</p>
                 </div>
               </div>
               <div>
-                <p className="text-muted-foreground mb-1 text-sm">{t(language, 'gameover.comparison.combo')}</p>
+                <p className="text-muted-foreground mb-2 text-base">{t(language, 'gameover.comparison.combo')}</p>
                 <div className="flex items-center gap-2">
                   <p className={cn(
-                    'text-base font-bold',
+                    'text-xl sm:text-2xl font-bold',
                     bestCombo > previousBest.bestCombo ? 'text-chart-3' : bestCombo < previousBest.bestCombo ? 'text-chart-5' : 'text-foreground'
                   )}>
                     {bestCombo > previousBest.bestCombo ? '↑' : bestCombo < previousBest.bestCombo ? '↓' : '='} {bestCombo}x
                   </p>
-                  <p className="text-muted-foreground text-sm">vs {previousBest.bestCombo}x</p>
+                  <p className="text-muted-foreground text-base">vs {previousBest.bestCombo}x</p>
                 </div>
               </div>
               {reactionTimeStats.average !== null && previousBest.averageReaction !== null && (
                 <div>
-                  <p className="text-muted-foreground mb-1 text-sm">{t(language, 'gameover.comparison.avgReaction')}</p>
+                  <p className="text-muted-foreground mb-2 text-base">{t(language, 'gameover.comparison.avgReaction')}</p>
                   <div className="flex items-center gap-2">
                     <p className={cn(
-                      'text-base font-bold',
+                      'text-xl sm:text-2xl font-bold',
                       reactionTimeStats.average < previousBest.averageReaction ? 'text-chart-3' : reactionTimeStats.average > previousBest.averageReaction ? 'text-chart-5' : 'text-foreground'
                     )}>
                       {reactionTimeStats.average < previousBest.averageReaction ? '↑' : reactionTimeStats.average > previousBest.averageReaction ? '↓' : '='} {Math.round(reactionTimeStats.average)}ms
                     </p>
-                    <p className="text-muted-foreground text-sm">vs {Math.round(previousBest.averageReaction)}ms</p>
+                    <p className="text-muted-foreground text-base">vs {Math.round(previousBest.averageReaction)}ms</p>
                   </div>
                 </div>
               )}
@@ -325,11 +325,11 @@ export function GameOverModal({
         )}
 
         {coachingTip && (
-          <div className="p-3 border-2 pixel-border" style={{ backgroundColor: 'rgba(0, 58, 99, 0.5)', borderColor: '#3E7CAC' }}>
-            <h3 className="text-xs font-semibold text-foreground mb-2 uppercase tracking-wide">
+          <div className="p-4 border-2 pixel-border" style={{ backgroundColor: 'rgba(0, 58, 99, 0.5)', borderColor: '#3E7CAC' }}>
+            <h3 className="text-base sm:text-lg font-semibold text-foreground mb-3 uppercase tracking-wide">
               {t(language, 'gameover.coach.title')}
             </h3>
-            <p className="text-xs text-foreground/80 leading-relaxed">{coachingTip}</p>
+            <p className="text-base sm:text-lg text-foreground/80 leading-relaxed">{coachingTip}</p>
           </div>
         )}
       </div>
@@ -340,8 +340,8 @@ export function GameOverModal({
     <div className="space-y-3">
       {/* Reaction Time Graph */}
       {reactionTimeStats.allTimes.length > 0 && (
-        <div className="p-3 border-4 pixel-border" style={{ backgroundColor: 'rgba(0, 58, 99, 0.6)', borderColor: '#3E7CAC' }}>
-          <h3 className="text-sm font-semibold text-foreground mb-2">{t(language, 'gameover.details.reactionGraph')}</h3>
+        <div className="p-4 border-4 pixel-border" style={{ backgroundColor: 'rgba(0, 58, 99, 0.6)', borderColor: '#3E7CAC' }}>
+          <h3 className="text-base sm:text-lg font-semibold text-foreground mb-3">{t(language, 'gameover.details.reactionGraph')}</h3>
           <ReactionTimeGraph
             reactionTimes={reactionTimeStats.allTimes}
             duration={gameDuration}
@@ -351,9 +351,9 @@ export function GameOverModal({
 
       {/* Detailed Stats - Side by side */}
       <div className="grid grid-cols-2 gap-3">
-        <div className="p-3 border-4 pixel-border" style={{ backgroundColor: 'rgba(0, 58, 99, 0.6)', borderColor: '#3E7CAC' }}>
-          <h3 className="text-sm font-semibold text-foreground mb-2">{t(language, 'gameover.details.title')}</h3>
-          <div className="space-y-2 text-sm">
+        <div className="p-4 border-4 pixel-border" style={{ backgroundColor: 'rgba(0, 58, 99, 0.6)', borderColor: '#3E7CAC' }}>
+          <h3 className="text-base sm:text-lg font-semibold text-foreground mb-3">{t(language, 'gameover.details.title')}</h3>
+          <div className="space-y-3 text-base">
             {gameMode && (
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">{t(language, 'gameover.details.mode')}</span>
@@ -377,9 +377,9 @@ export function GameOverModal({
           </div>
         </div>
 
-        <div className="p-3 border-4 pixel-border" style={{ backgroundColor: 'rgba(0, 58, 99, 0.6)', borderColor: '#3E7CAC' }}>
-          <h3 className="text-sm font-semibold text-foreground mb-2">Performance</h3>
-          <div className="space-y-2 text-sm">
+        <div className="p-4 border-4 pixel-border" style={{ backgroundColor: 'rgba(0, 58, 99, 0.6)', borderColor: '#3E7CAC' }}>
+          <h3 className="text-base sm:text-lg font-semibold text-foreground mb-3">Performance</h3>
+          <div className="space-y-3 text-base">
             {reactionTimeStats.slowest !== null && (
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">{t(language, 'gameover.details.slowest')}</span>
@@ -413,21 +413,21 @@ export function GameOverModal({
   const AchievementsTab = () => (
     <div>
       {newAchievements.length > 0 ? (
-        <div className="p-3 bg-chart-3/10 border-2 border-chart-3 pixel-border">
-          <h3 className="text-sm font-semibold text-chart-3 mb-2 uppercase tracking-wide">
+        <div className="p-4 bg-chart-3/10 border-2 border-chart-3 pixel-border">
+          <h3 className="text-base sm:text-lg font-semibold text-chart-3 mb-3 uppercase tracking-wide">
             {t(language, 'gameover.achievements.new')}
           </h3>
-          <ul className="space-y-2 text-sm text-foreground/90">
+          <ul className="space-y-3 text-base text-foreground/90">
             {newAchievements.map((a) => (
-              <li key={a.id} className="p-2 border-2 pixel-border" style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 58, 99, 0.3)' }}>
-                <span className="font-semibold text-chart-3">
+              <li key={a.id} className="p-3 border-2 pixel-border" style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 58, 99, 0.3)' }}>
+                <span className="font-semibold text-chart-3 text-lg">
                   {(() => {
                     const key = `achievement.${a.id}.title`;
                     const translated = t(language, key);
                     return translated === key ? a.title : translated;
                   })()}
                 </span>
-                <p className="text-foreground/70 mt-1 leading-relaxed">
+                <p className="text-foreground/70 mt-2 leading-relaxed text-base">
                   {(() => {
                     const key = `achievement.${a.id}.description`;
                     const translated = t(language, key);
@@ -440,7 +440,7 @@ export function GameOverModal({
         </div>
       ) : (
         <div className="p-4 border-4 pixel-border text-center" style={{ backgroundColor: 'rgba(0, 58, 99, 0.6)', borderColor: '#3E7CAC' }}>
-          <p className="text-muted-foreground text-sm">{t(language, 'gameover.achievements.none')}</p>
+          <p className="text-muted-foreground text-base sm:text-lg">{t(language, 'gameover.achievements.none')}</p>
         </div>
       )}
     </div>
@@ -464,13 +464,13 @@ export function GameOverModal({
         <div className="text-center mb-3">
           <h2
             className={cn(
-              'text-2xl sm:text-3xl font-bold text-foreground text-glow mb-1',
+              'text-4xl sm:text-5xl md:text-6xl font-bold text-foreground text-glow mb-2',
               isNewHighScore && 'animate-glitch'
             )}
           >
             {isNewHighScore ? t(language, 'gameover.titleNewHigh') : t(language, 'gameover.title')}
           </h2>
-          <p className="text-muted-foreground text-xs sm:text-sm">
+          <p className="text-muted-foreground text-base sm:text-lg">
             {t(language, 'gameover.subtitle')}
           </p>
         </div>
@@ -480,7 +480,7 @@ export function GameOverModal({
           <button
             onClick={() => setActiveTab('overview')}
             className={cn(
-              'px-3 py-1.5 text-xs font-semibold transition-all',
+              'px-4 py-2 text-base sm:text-lg font-semibold transition-all',
               activeTab === 'overview'
                 ? 'text-foreground border-b-2'
                 : 'text-muted-foreground hover:text-foreground'
@@ -492,7 +492,7 @@ export function GameOverModal({
           <button
             onClick={() => setActiveTab('details')}
             className={cn(
-              'px-3 py-1.5 text-xs font-semibold transition-all',
+              'px-4 py-2 text-base sm:text-lg font-semibold transition-all',
               activeTab === 'details'
                 ? 'text-foreground border-b-2'
                 : 'text-muted-foreground hover:text-foreground'
@@ -504,7 +504,7 @@ export function GameOverModal({
           <button
             onClick={() => setActiveTab('achievements')}
             className={cn(
-              'px-3 py-1.5 text-xs font-semibold transition-all relative',
+              'px-4 py-2 text-base sm:text-lg font-semibold transition-all relative',
               activeTab === 'achievements'
                 ? 'text-foreground border-b-2'
                 : 'text-muted-foreground hover:text-foreground'
@@ -513,7 +513,7 @@ export function GameOverModal({
           >
             {t(language, 'gameover.tab.achievements')}
             {newAchievements.length > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-chart-3 rounded-full text-[8px] flex items-center justify-center text-black font-bold">
+              <span className="absolute -top-1 -right-1 w-5 h-5 bg-chart-3 rounded-full text-xs flex items-center justify-center text-black font-bold">
                 {newAchievements.length}
               </span>
             )}
@@ -533,7 +533,7 @@ export function GameOverModal({
             onClick={onRestart}
             draggable={false}
             className={cn(
-              'flex-1 py-3 px-6 border-4 font-bold text-lg',
+              'flex-1 py-4 px-6 border-4 font-bold text-xl sm:text-2xl',
               'transition-all duration-100 active:scale-95',
               'focus:outline-none focus:ring-2 pixel-border'
             )}
@@ -555,7 +555,7 @@ export function GameOverModal({
           <Link
             href="/"
             className={cn(
-              'flex-1 py-3 px-6 border-4 font-bold text-base text-center',
+              'flex-1 py-4 px-6 border-4 font-bold text-lg sm:text-xl text-center',
               'text-foreground transition-all duration-100',
               'focus:outline-none focus:ring-2 pixel-border'
             )}
