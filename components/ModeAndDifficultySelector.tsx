@@ -33,8 +33,9 @@ export function ModeAndDifficultySelector({
   const modes: GameMode[] = ['reflex', 'sequence', 'survival', 'nightmare', 'oddOneOut'];
   const [hoveredMode, setHoveredMode] = useState<GameMode | null>(null);
   const [hoveredDifficulty, setHoveredDifficulty] = useState<DifficultyPreset | null>(null);
-  const [localMode, setLocalMode] = useState<GameMode>(selectedMode);
+  const [localMode, setLocalMode] = useState<GameMode | null>(null);
   const [localDifficulty, setLocalDifficulty] = useState<DifficultyPreset>(selectedDifficulty);
+  const [hasMadeSelection, setHasMadeSelection] = useState<boolean>(false);
   
   // Track which section to show - always start with mode selection
   const [showModeSelection, setShowModeSelection] = useState<boolean>(true);
@@ -46,8 +47,9 @@ export function ModeAndDifficultySelector({
     // Only sync if we're not actively in a selection flow
     // This prevents the component from jumping to different sections when props change
     if (showModeSelection) {
-      // Reset to initial state when in mode selection
-      setLocalMode(selectedMode);
+      // Reset to initial state when in mode selection - no mode should be selected
+      setLocalMode(null);
+      setHasMadeSelection(false);
       setLocalDifficulty(selectedDifficulty);
     }
   }, [selectedMode, selectedDifficulty, showModeSelection]);
@@ -66,6 +68,7 @@ export function ModeAndDifficultySelector({
   const handleModeSelect = (mode: GameMode) => {
     if (!disabled) {
       setLocalMode(mode);
+      setHasMadeSelection(true);
       // Auto-select nightmare difficulty if nightmare mode, otherwise default to easy
       if (mode === 'nightmare') {
         setLocalDifficulty('nightmare');
@@ -100,9 +103,9 @@ export function ModeAndDifficultySelector({
     setShowStartButton(false);
     setTimeout(() => {
       setShowModeSelection(true);
-      // Reset local selections to initial prop values to go back to mode selection
-      // Don't call onCancel() as that would navigate away - just reset state
-      setLocalMode(selectedMode);
+      // Reset local selections - no mode should be selected when returning to mode selection
+      setLocalMode(null);
+      setHasMadeSelection(false);
       setLocalDifficulty(selectedDifficulty);
     }, 300);
   };
@@ -115,7 +118,7 @@ export function ModeAndDifficultySelector({
       // Reset difficulty but keep mode - default to easy
       if (localMode === 'nightmare') {
         setLocalDifficulty('nightmare');
-      } else {
+      } else if (localMode) {
         setLocalDifficulty('easy');
       }
     }, 300);
@@ -124,6 +127,8 @@ export function ModeAndDifficultySelector({
   // Get available difficulties based on selected mode
   const difficulties: DifficultyPreset[] = localMode === 'nightmare' 
     ? ['nightmare'] 
+    : localMode
+    ? ['easy', 'medium', 'hard']
     : ['easy', 'medium', 'hard'];
 
   // Get recently played mode and difficulty
@@ -269,7 +274,7 @@ export function ModeAndDifficultySelector({
           <div className="grid grid-cols-3 gap-3 sm:gap-4">
           {modes.map((mode) => {
             const modeInfo = GAME_MODES[mode];
-            const isSelected = localMode === mode;
+            const isSelected = hasMadeSelection && localMode === mode;
             const isHovered = hoveredMode === mode;
             const buttonImage = getButtonImage(mode, isHovered, isSelected);
             const isRecentlyPlayed = recentlyPlayedMode === mode;
@@ -446,7 +451,7 @@ export function ModeAndDifficultySelector({
           </div>
           
           {/* Selected mode indicator */}
-          {localMode && (
+          {localMode && hasMadeSelection && (
             <div className="px-3 py-2 rounded-lg border-2 pixel-border" style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 58, 99, 0.3)' }}>
               <span className="text-xs text-white/80">
                 {t(language, 'mode.select.title')}: <span className="text-primary font-semibold">{getModeName(localMode)}</span>
@@ -570,11 +575,13 @@ export function ModeAndDifficultySelector({
               backgroundColor: '#003A63',
             }}
           >
-            <div className="flex flex-col gap-2 text-sm text-foreground/90">
+              <div className="flex flex-col gap-2 text-sm text-foreground/90">
+              {localMode && (
               <div className="flex items-center justify-between">
                 <span className="font-semibold">{t(language, 'mode.select.title')}:</span>
                 <span className="text-primary font-bold">{getModeName(localMode)}</span>
               </div>
+              )}
               <div className="flex items-center justify-between">
                 <span className="font-semibold">{t(language, 'difficulty.select.title')}:</span>
                 <span className="text-primary font-bold">
@@ -589,7 +596,7 @@ export function ModeAndDifficultySelector({
           
           <button
             onClick={handleStart}
-            disabled={disabled}
+            disabled={disabled || !localMode}
             draggable={false}
             className={cn(
               'w-full min-h-[56px] px-4 py-3 text-base sm:text-lg font-bold',
@@ -598,10 +605,10 @@ export function ModeAndDifficultySelector({
               'active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary',
               'pixel-border whitespace-nowrap',
               'shadow-[0_8px_16px_rgba(0,0,0,0.4)]',
-              disabled && 'opacity-50 cursor-not-allowed'
+              (disabled || !localMode) && 'opacity-50 cursor-not-allowed'
             )}
           >
-            {t(language, 'landing.startGame')} - {getModeName(localMode)}
+            {localMode ? `${t(language, 'landing.startGame')} - ${getModeName(localMode)}` : t(language, 'landing.startGame')}
           </button>
         </div>
       </SlideTransition>
