@@ -5,6 +5,7 @@
 import React, { useRef, useState, useMemo, useCallback, memo, Suspense, useEffect } from 'react';
 import { Canvas, useFrame, ThreeEvent } from '@react-three/fiber';
 import { RoundedBox, Environment, Text, Float } from '@react-three/drei';
+import { WebGLPerformanceDashboard } from '@/components/WebGLPerformanceDashboard';
 import { 
   EffectComposer, 
   Bloom, 
@@ -15,6 +16,13 @@ import {
 import { ToneMappingMode, BlendFunction } from 'postprocessing';
 import * as THREE from 'three';
 import { triggerHaptic } from '@/lib/hapticUtils';
+import { 
+  getSharedParticlePool, 
+  type PooledParticle, 
+  shaderCache,
+  isInFrustum,
+  calculateLOD,
+} from '@/lib/webglOptimizations';
 
 // ============================================================================
 // DYNAMIC BLOOM COMPONENT (responds to combo milestones)
@@ -193,9 +201,9 @@ const CameraShake = memo(function CameraShake({ errorEvents, comboMilestone }: C
 const ReflectionSurface = memo(function ReflectionSurface() {
   const materialRef = useRef<THREE.ShaderMaterial>(null);
   
-  // Enhanced shader for cyberpunk grid reflection effect
+  // Enhanced shader for cyberpunk grid reflection effect (cached)
   const shaderMaterial = useMemo(() => {
-    return new THREE.ShaderMaterial({
+    return shaderCache.getOrCreate('reflection-surface', () => new THREE.ShaderMaterial({
       uniforms: {
         uTime: { value: 0 },
         uColor1: { value: new THREE.Color(0x0a0a18) },
@@ -244,7 +252,7 @@ const ReflectionSurface = memo(function ReflectionSurface() {
       transparent: true,
       side: THREE.DoubleSide,
       depthWrite: false,
-    });
+    }));
   }, []);
   
   useFrame((state) => {
@@ -293,7 +301,7 @@ const BackgroundGrid = memo(function BackgroundGrid({ gameState, highlightedCoun
   const prevMilestoneRef = useRef<number | null>(null);
   
   const shaderMaterial = useMemo(() => {
-    return new THREE.ShaderMaterial({
+    return shaderCache.getOrCreate('background-grid', () => new THREE.ShaderMaterial({
       uniforms: {
         uTime: { value: 0 },
         uColor1: { value: new THREE.Color(0x050510) },
@@ -447,7 +455,7 @@ const BackgroundGrid = memo(function BackgroundGrid({ gameState, highlightedCoun
       transparent: true,
       side: THREE.FrontSide,
       depthWrite: false,
-    });
+    }));
   }, []);
   
   useFrame((state) => {
@@ -564,18 +572,8 @@ const BackgroundGrid = memo(function BackgroundGrid({ gameState, highlightedCoun
 });
 
 // ============================================================================
-// PARTICLE BURST COMPONENT
+// PARTICLE BURST COMPONENT (Optimized with Object Pooling)
 // ============================================================================
-
-interface Particle {
-  id: number;
-  position: THREE.Vector3;
-  velocity: THREE.Vector3;
-  life: number;
-  maxLife: number;
-  color: THREE.Color;
-  size: number;
-}
 
 interface ParticleBurstProps {
   trigger: 'success' | 'error' | null;
@@ -595,9 +593,10 @@ const ParticleBurst = memo(function ParticleBurst({
   intensity: providedIntensity,
   reducedEffects = false 
 }: ParticleBurstPropsWithQuality) {
-  const particlesRef = useRef<Particle[]>([]);
+  const particlesRef = useRef<PooledParticle[]>([]);
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const prevTrigger = useRef<'success' | 'error' | null>(null);
+  const particlePool = useMemo(() => getSharedParticlePool(), []);
   
   // Calculate intensity from reaction time if not provided
   const intensity = providedIntensity ?? calculateIntensity(reactionTime);
@@ -607,6 +606,16 @@ const ParticleBurst = memo(function ParticleBurst({
   const PARTICLE_COUNT = Math.floor(baseCount * intensity);
   const dummy = useMemo(() => new THREE.Object3D(), []);
   const tempColor = useMemo(() => new THREE.Color(), []);
+  
+  // Cleanup: release all particles when component unmounts
+  useEffect(() => {
+    return () => {
+      particlesRef.current.forEach(particle => {
+        particlePool.release(particle);
+      });
+      particlesRef.current = [];
+    };
+  }, [particlePool]);
   
   // Spawn particles when trigger changes
   useFrame((state, delta) => {
@@ -620,60 +629,80 @@ const ParticleBurst = memo(function ParticleBurst({
         ? getColorByReactionTime(reactionTime)
         : new THREE.Color(1.0, 0.3, 0.2);
       
+      // Release old particles back to pool
+      particlesRef.current.forEach(particle => {
+        particlePool.release(particle);
+      });
+      particlesRef.current = [];
+      
       // Scale speed and upward velocity based on intensity
       const speedMultiplier = 0.8 + (intensity * 1.2); // 0.8-2.0
       const upwardMultiplier = 0.5 + (intensity * 1.0); // 0.5-1.5
       
+      // Acquire particles from pool
       for (let i = 0; i < PARTICLE_COUNT; i++) {
+        const particle = particlePool.acquire();
         const angle = (i / PARTICLE_COUNT) * Math.PI * 2 + Math.random() * 0.5;
         const speed = (1.5 + Math.random() * 2) * speedMultiplier;
         const upward = (0.5 + Math.random() * 1.5) * upwardMultiplier;
         
-        particlesRef.current.push({
-          id: Date.now() + i,
-          position: new THREE.Vector3(position[0], position[1], position[2] + 0.3),
-          velocity: new THREE.Vector3(
-            Math.cos(angle) * speed,
-            Math.sin(angle) * speed * 0.5 + upward,
-            Math.random() * 0.5
-          ),
-          life: 1.0,
-          maxLife: 0.6 + Math.random() * 0.3,
-          color: baseColor.clone().offsetHSL(Math.random() * 0.1 - 0.05, 0, Math.random() * 0.2),
-          size: (0.03 + Math.random() * 0.04) * (0.8 + intensity * 0.4), // Scale size with intensity
-        });
+        // Initialize particle properties (reusing pooled objects)
+        particle.position.set(position[0], position[1], position[2] + 0.3);
+        particle.velocity.set(
+          Math.cos(angle) * speed,
+          Math.sin(angle) * speed * 0.5 + upward,
+          Math.random() * 0.5
+        );
+        particle.life = 1.0;
+        particle.maxLife = 0.6 + Math.random() * 0.3;
+        particle.color.copy(baseColor);
+        particle.color.offsetHSL(Math.random() * 0.1 - 0.05, 0, Math.random() * 0.2);
+        particle.size = (0.03 + Math.random() * 0.04) * (0.8 + intensity * 0.4);
+        
+        particlesRef.current.push(particle);
       }
     }
     prevTrigger.current = trigger;
     
     // Update existing particles
     const gravity = -4;
-    particlesRef.current = particlesRef.current.filter((particle, i) => {
+    const activeParticles: PooledParticle[] = [];
+    
+    particlesRef.current.forEach((particle, i) => {
       particle.life -= delta / particle.maxLife;
       
-      if (particle.life <= 0) return false;
+      if (particle.life <= 0) {
+        // Return dead particle to pool
+        particlePool.release(particle);
+        return;
+      }
       
-      // Physics
+      // Physics (reuse existing vectors, no cloning)
       particle.velocity.y += gravity * delta;
-      particle.position.add(particle.velocity.clone().multiplyScalar(delta));
+      particle.position.x += particle.velocity.x * delta;
+      particle.position.y += particle.velocity.y * delta;
+      particle.position.z += particle.velocity.z * delta;
       
       // Update instance
       dummy.position.copy(particle.position);
       const scale = particle.size * particle.life;
       dummy.scale.set(scale, scale, scale);
       dummy.updateMatrix();
-      meshRef.current!.setMatrixAt(i, dummy.matrix);
+      meshRef.current!.setMatrixAt(activeParticles.length, dummy.matrix);
       
       // Update color with fade
       tempColor.copy(particle.color);
       tempColor.multiplyScalar(particle.life);
-      meshRef.current!.setColorAt(i, tempColor);
+      meshRef.current!.setColorAt(activeParticles.length, tempColor);
       
-      return true;
+      activeParticles.push(particle);
     });
     
+    // Update particles array
+    particlesRef.current = activeParticles;
+    
     // Hide unused instances
-    for (let i = particlesRef.current.length; i < PARTICLE_COUNT * 2; i++) {
+    for (let i = activeParticles.length; i < PARTICLE_COUNT * 2; i++) {
       dummy.position.set(0, -100, 0);
       dummy.scale.set(0, 0, 0);
       dummy.updateMatrix();
@@ -876,7 +905,7 @@ const CountdownRing = memo(function CountdownRing({
   const materialRef = useRef<THREE.ShaderMaterial>(null);
   
   const shaderMaterial = useMemo(() => {
-    return new THREE.ShaderMaterial({
+    return shaderCache.getOrCreate('countdown-ring', () => new THREE.ShaderMaterial({
       uniforms: {
         uTime: { value: 0 },
         uProgress: { value: 0 },
@@ -972,7 +1001,7 @@ const CountdownRing = memo(function CountdownRing({
       side: THREE.DoubleSide,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
-    });
+    }), true); // Clone for per-instance uniforms
   }, []);
   
   useFrame((state) => {
@@ -1026,7 +1055,7 @@ const Shockwave = memo(function Shockwave({ trigger, position }: ShockwaveProps)
   const isActive = useRef(false);
   
   const shaderMaterial = useMemo(() => {
-    return new THREE.ShaderMaterial({
+    return shaderCache.getOrCreate('shockwave', () => new THREE.ShaderMaterial({
       uniforms: {
         uTime: { value: 0 },
         uProgress: { value: 0 },
@@ -1065,7 +1094,7 @@ const Shockwave = memo(function Shockwave({ trigger, position }: ShockwaveProps)
       side: THREE.DoubleSide,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
-    });
+    }), true); // Clone for per-instance uniforms
   }, []);
   
   useFrame((state) => {
@@ -1543,6 +1572,7 @@ const ButtonMesh = memo(function ButtonMesh({
   const meshRef = useRef<THREE.Mesh>(null);
   const materialRef = useRef<THREE.MeshPhysicalMaterial>(null);
   const textRef = useRef<THREE.Mesh>(null);
+  const groupRef = useRef<THREE.Group>(null);
   const rippleOffset = useRef(0);
   
   // Track current urgency color for child components
@@ -1552,6 +1582,8 @@ const ButtonMesh = memo(function ButtonMesh({
   
   const [hovered, setHovered] = useState(false);
   const [pressed, setPressed] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
+  const [lodLevel, setLodLevel] = useState(0);
   
   // Animation state
   const targetDepth = useRef(BASE_DEPTH);
@@ -1564,10 +1596,35 @@ const ButtonMesh = memo(function ButtonMesh({
   const prevHighlightStartTime = useRef<number | undefined>(undefined);
   const anticipationPhase = useRef(0); // 0 = none, 0-1 = anticipation in progress
   
-  
+  // Frustum culling and LOD check (throttled to every 10 frames)
+  const cullCheckFrame = useRef(0);
   
   // Smooth animation using useFrame
   useFrame((state, delta) => {
+    // Frustum culling and LOD check (every 10 frames for performance)
+    if (cullCheckFrame.current % 10 === 0 && groupRef.current) {
+      const visible = isInFrustum(groupRef.current, state.camera);
+      setIsVisible(visible);
+      
+      if (visible) {
+        const buttonPosition = new THREE.Vector3(...position);
+        const lod = calculateLOD(buttonPosition, state.camera);
+        setLodLevel(lod);
+      }
+    }
+    cullCheckFrame.current++;
+    
+    // Skip rendering if not visible
+    if (!isVisible && !highlighted) {
+      if (groupRef.current) {
+        groupRef.current.visible = false;
+      }
+      return;
+    }
+    
+    if (groupRef.current) {
+      groupRef.current.visible = true;
+    }
     if (!meshRef.current || !materialRef.current) return;
     
     const mesh = meshRef.current;
@@ -2123,46 +2180,50 @@ const ButtonMesh = memo(function ButtonMesh({
   }, [highlighted, highlightedButtons, buttonIndex]);
   
   return (
-    <group position={position}>
-      {/* Floating Particles around highlighted buttons */}
-      <FloatingParticles 
-        active={highlighted} 
-        color={urgencyColorRef.current}
-        position={[0, 0, 0]}
-      />
+    <group ref={groupRef} position={position} frustumCulled={true}>
+      {/* Floating Particles around highlighted buttons - LOD: only show at close distance */}
+      {lodLevel <= 1 && (
+        <FloatingParticles 
+          active={highlighted} 
+          color={urgencyColorRef.current}
+          position={[0, 0, 0]}
+        />
+      )}
       
-      {/* Energy Core (inner glow) */}
-      <EnergyCore 
-        active={highlighted} 
-        progress={progressRef.current}
-        color={urgencyColorRef.current}
-      />
+      {/* Energy Core (inner glow) - LOD: only show at close distance */}
+      {lodLevel <= 1 && (
+        <EnergyCore 
+          active={highlighted} 
+          progress={progressRef.current}
+          color={urgencyColorRef.current}
+        />
+      )}
       
-      {/* Countdown Ring - clear visual timer showing remaining time */}
+      {/* Countdown Ring - clear visual timer showing remaining time - Always show when highlighted */}
       <CountdownRing 
         active={highlighted} 
         highlightStartTime={highlightStartTime}
         highlightDuration={highlightDuration}
       />
       
-      {/* Shockwave Effect on press */}
+      {/* Shockwave Effect on press - Always show */}
       <Shockwave 
         trigger={pressFeedback} 
         position={[0, 0, 0]} 
       />
       
-      {/* Particle Burst Effect */}
-      {!reducedEffects && (
+      {/* Particle Burst Effect - LOD: reduce particles at distance */}
+      {!reducedEffects && lodLevel <= 2 && (
         <ParticleBurst 
           trigger={pressFeedback} 
           position={[0, 0, 0]}
           reactionTime={reactionTime ?? null}
-          reducedEffects={reducedEffects}
+          reducedEffects={reducedEffects || lodLevel > 1}
         />
       )}
       
-      {/* Press Depth Indicator - shows button depression based on reaction time */}
-      {pressFeedback === 'success' && reactionTime !== null && (
+      {/* Press Depth Indicator - LOD: only show at close distance */}
+      {pressFeedback === 'success' && reactionTime !== null && lodLevel <= 1 && (
         <PressDepthIndicator
           active={pressFeedback === 'success'}
           depth={calculateIntensity(reactionTime) * 0.2}
@@ -2170,8 +2231,8 @@ const ButtonMesh = memo(function ButtonMesh({
         />
       )}
       
-      {/* Glow Trail for sequence mode */}
-      {gameMode === 'sequence' && pressFeedback === 'success' && reactionTime !== null && !reducedEffects && (
+      {/* Glow Trail for sequence mode - LOD: only show at close distance */}
+      {gameMode === 'sequence' && pressFeedback === 'success' && reactionTime !== null && !reducedEffects && lodLevel <= 1 && (
         <GlowTrail
           active={pressFeedback === 'success'}
           intensity={calculateIntensity(reactionTime)}
@@ -2179,8 +2240,8 @@ const ButtonMesh = memo(function ButtonMesh({
         />
       )}
       
-      {/* Electric Arcs to other highlighted buttons */}
-      {connectedHighlightedButtons.map(targetIdx => {
+      {/* Electric Arcs to other highlighted buttons - LOD: only show at close distance */}
+      {lodLevel <= 1 && connectedHighlightedButtons.map(targetIdx => {
         const targetButton = allButtonPositions.find(b => b.index === targetIdx);
         if (!targetButton) return null;
         return (
@@ -2416,6 +2477,11 @@ export const GameButtonGridWebGL = memo(function GameButtonGridWebGL({
         style={{ background: 'transparent' }}
       >
         <Suspense fallback={null}>
+          {/* Performance Dashboard (dev mode only) */}
+          {process.env.NODE_ENV === 'development' && (
+            <WebGLPerformanceDashboard enabled={true} position="top-right" />
+          )}
+          
           {/* Ambient fill light - slightly brighter for better visibility */}
           <ambientLight intensity={0.4} color="#8899cc" />
           

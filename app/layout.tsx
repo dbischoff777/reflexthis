@@ -3,6 +3,8 @@ import localFont from "next/font/local";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import "./globals.css";
+// Ensure drei is imported early to register components with R3F
+import '@react-three/drei';
 import { ErrorBoundaryWrapper } from "@/components/ErrorBoundaryWrapper";
 import { CRTOverlay } from "@/components/CRTOverlay";
 import { InteractionPrevention } from "@/components/InteractionPrevention";

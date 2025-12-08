@@ -9,6 +9,7 @@ import 'postprocessing';
 declare module '@react-three/fiber' {
   interface ThreeElements {
     // All standard Three.js elements are automatically available
+    // drei components are handled by their own type definitions and r3f-extensions.ts
   }
 }
 
