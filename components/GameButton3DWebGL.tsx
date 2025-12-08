@@ -22,6 +22,8 @@ import {
   shaderCache,
   isInFrustum,
   calculateLOD,
+  getLODRadius,
+  getLODSegments,
 } from '@/lib/webglOptimizations';
 
 // ============================================================================
@@ -2263,8 +2265,8 @@ const ButtonMesh = memo(function ButtonMesh({
       <RoundedBox
         ref={meshRef}
         args={[BUTTON_SIZE, BUTTON_SIZE, BASE_DEPTH]}
-        radius={0.08}
-        smoothness={8}
+        radius={lodLevel > 2 ? getLODRadius(0.08, lodLevel) : 0.08}
+        smoothness={lodLevel > 1 ? Math.max(4, 8 - lodLevel * 2) : 8}
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}
         onPointerEnter={handlePointerEnter}

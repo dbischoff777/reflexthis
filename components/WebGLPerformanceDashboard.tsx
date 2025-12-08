@@ -115,6 +115,20 @@ export function WebGLPerformanceDashboard({
           <span className="text-white">{metrics.triangles.toLocaleString()}</span>
         </div>
 
+        {metrics.points !== undefined && metrics.points > 0 && (
+          <div className="flex justify-between">
+            <span className="text-gray-400">Points:</span>
+            <span className="text-white">{metrics.points.toLocaleString()}</span>
+          </div>
+        )}
+
+        {metrics.lines !== undefined && metrics.lines > 0 && (
+          <div className="flex justify-between">
+            <span className="text-gray-400">Lines:</span>
+            <span className="text-white">{metrics.lines.toLocaleString()}</span>
+          </div>
+        )}
+
         <div className="mt-2 pt-2 border-t border-cyan-500/20">
           <div className="text-cyan-400 text-xs mb-1">Memory:</div>
           <div className="flex justify-between pl-2">
