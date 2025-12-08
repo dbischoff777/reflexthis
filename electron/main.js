@@ -9,6 +9,8 @@ let mainWindow;
 let nextServer;
 let serverReady = false;
 let appLoaded = false; // Track if app has successfully loaded
+let retryCount = 0; // Track retry attempts for failed loads
+let loadAppFunction = null; // Store the loadApp function for retry
 
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 const SERVER_PORT = 3000;
@@ -78,13 +80,48 @@ function createWindow() {
     }
     
     logToFile(`Loading app from: ${SERVER_URL}`);
+    logToFile(`Server ready status: ${serverReady}`);
+    
+    // Only load if server is ready
+    if (!serverReady && !isDev) {
+      logToFile('Server not ready yet, waiting before load...');
+      // Wait a bit more and retry
+      setTimeout(() => {
+        if (serverReady) {
+          logToFile('Server is now ready, loading app...');
+          loadApp();
+        } else {
+          logToFile('Server still not ready, will retry on connection...');
+          // Will retry via did-fail-load handler
+        }
+      }, 1000);
+      return;
+    }
+    
     mainWindow.loadURL(SERVER_URL).catch((error) => {
       logToFile(`ERROR: Failed to load app: ${error.message}`);
-      // Show error in window with log file location
-      const errorHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Connection Error</title></head><body style="font-family: Arial; padding: 20px; background: #1a1a1a; color: #fff;"><h1>Error Loading App</h1><p><strong>Error:</strong> ${error.message}</p><p><strong>Log file location:</strong></p><p style="background: #2a2a2a; padding: 10px; border-radius: 4px; font-family: monospace; word-break: break-all;">${logFile}</p><p>Please check the log file for detailed error information.</p></body></html>`;
-      mainWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(errorHtml)}`);
+      // Use a simpler error display that doesn't rely on data URLs
+      mainWindow.webContents.executeJavaScript(`
+        document.body.innerHTML = \`
+          <div style="font-family: Arial; padding: 20px; background: #1a1a1a; color: #fff; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <h1>Error Loading App</h1>
+            <p><strong>Error:</strong> ${error.message}</p>
+            <p><strong>Log file location:</strong></p>
+            <p style="background: #2a2a2a; padding: 10px; border-radius: 4px; font-family: monospace; word-break: break-all;">${logFile}</p>
+            <p>Please check the log file for detailed error information.</p>
+            <p>Retrying in 3 seconds...</p>
+          </div>
+        \`;
+        setTimeout(() => { window.location.reload(); }, 3000);
+      `).catch(() => {
+        // If executeJavaScript fails, try basic HTML
+        logToFile('Failed to execute error display script');
+      });
     });
   };
+  
+  // Store loadApp function for use in server ready handlers
+  loadAppFunction = loadApp;
 
   // Track successful page load
   mainWindow.webContents.on('did-finish-load', () => {
@@ -95,6 +132,8 @@ function createWindow() {
   });
 
   // Monitor for navigation errors (only retry if not already loaded)
+  const MAX_RETRIES = 10;
+  
   mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL, isMainFrame) => {
     // Only handle main frame errors and only if app hasn't loaded yet
     if (!isMainFrame || appLoaded) {
@@ -105,23 +144,52 @@ function createWindow() {
       errorCode,
       errorDescription,
       validatedURL,
-      isMainFrame
+      isMainFrame,
+      retryCount
     })}`);
     
-    if (errorCode === -105 || errorCode === -106 || errorCode === -102) {
+    // Handle various connection errors
+    if (errorCode === -105 || errorCode === -106 || errorCode === -102 || errorCode === -2) {
+      retryCount++;
+      
+      if (retryCount > MAX_RETRIES) {
+        logToFile(`Max retries (${MAX_RETRIES}) reached. Showing error.`);
+        mainWindow.webContents.executeJavaScript(`
+          document.body.innerHTML = \`
+            <div style="font-family: Arial; padding: 20px; background: #1a1a1a; color: #fff; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+              <h1>Connection Error</h1>
+              <p>The Next.js server is not responding after ${MAX_RETRIES} attempts.</p>
+              <p><strong>Error Code:</strong> ${errorCode}</p>
+              <p><strong>Description:</strong> ${errorDescription}</p>
+              <p><strong>Log file location:</strong></p>
+              <p style="background: #2a2a2a; padding: 10px; border-radius: 4px; font-family: monospace; word-break: break-all;">${logFile}</p>
+              <p>Please check the log file to see why the server failed to start.</p>
+              <p>You can try closing and reopening the application.</p>
+            </div>
+          \`;
+        `).catch(() => {
+          logToFile('Failed to display error message');
+        });
+        return;
+      }
+      
       // Network error - server not ready
-      logToFile('Server not ready yet, retrying...');
-      setTimeout(() => {
-        // Only retry if app hasn't loaded and server is ready
-        if (!appLoaded && serverReady) {
+      logToFile(`Server not ready yet, retrying... (attempt ${retryCount}/${MAX_RETRIES})`);
+      
+      // Check if server is ready, then retry
+      const checkAndRetry = () => {
+        if (serverReady) {
           logToFile('Server is ready, retrying load...');
-          loadApp();
-        } else if (!appLoaded && !serverReady) {
-          logToFile('Server still not ready, showing error...');
-          const errorHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Connection Refused</title></head><body style="font-family: Arial; padding: 20px; background: #1a1a1a; color: #fff;"><h1>Connection Refused</h1><p>The Next.js server is not responding.</p><p><strong>Error Code:</strong> ${errorCode}</p><p><strong>Description:</strong> ${errorDescription}</p><p><strong>Log file location:</strong></p><p style="background: #2a2a2a; padding: 10px; border-radius: 4px; font-family: monospace; word-break: break-all;">${logFile}</p><p>Please check the log file to see why the server failed to start.</p></body></html>`;
-          mainWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(errorHtml)}`);
+          setTimeout(() => loadApp(), 500);
+        } else {
+          // Wait a bit longer and check again
+          logToFile('Server still not ready, waiting...');
+          setTimeout(checkAndRetry, 1000);
         }
-      }, 2000);
+      };
+      
+      // Start checking after a short delay
+      setTimeout(checkAndRetry, 1000);
     }
   });
 
@@ -139,42 +207,61 @@ function createWindow() {
 }
 
 // Check if server is ready by making HTTP request
-function checkServerReady(callback, maxAttempts = 30) {
+function checkServerReady(callback, maxAttempts = 60) {
   let attempts = 0;
   
   const check = () => {
     attempts++;
-    const req = http.get(SERVER_URL, (res) => {
+    logToFile(`Checking server readiness (attempt ${attempts}/${maxAttempts})...`);
+    
+    const req = http.get(SERVER_URL, { timeout: 2000 }, (res) => {
       if (res.statusCode === 200 || res.statusCode === 404) {
         // Server is responding (404 is ok, means server is up)
-        console.log('Server is ready!');
-        serverReady = true;
+        logToFile('Server is ready! HTTP response received.');
+        if (!serverReady) {
+          serverReady = true;
+          // If window exists but hasn't loaded, trigger a retry
+          if (mainWindow && !appLoaded && loadAppFunction) {
+            logToFile('Server became ready via HTTP check, triggering app load...');
+            setTimeout(() => {
+              if (mainWindow && !appLoaded && loadAppFunction) {
+                loadAppFunction();
+              }
+            }, 500);
+          }
+        }
         callback();
       } else {
+        logToFile(`Server responded with status ${res.statusCode}, retrying...`);
         if (attempts < maxAttempts) {
           setTimeout(check, 500);
         } else {
-          console.error('Server did not become ready in time');
+          logToFile('Server did not become ready in time');
           callback(); // Try anyway
         }
       }
     });
     
     req.on('error', (err) => {
+      logToFile(`Server check error (attempt ${attempts}): ${err.message}`);
       if (attempts < maxAttempts) {
-        setTimeout(check, 500);
+        // Exponential backoff for first few attempts, then constant
+        const delay = attempts < 5 ? 500 * attempts : 1000;
+        setTimeout(check, delay);
       } else {
-        console.error('Server check failed after max attempts:', err.message);
+        logToFile('Server check failed after max attempts');
         callback(); // Try anyway
       }
     });
     
-    req.setTimeout(1000, () => {
+    req.setTimeout(2000, () => {
       req.destroy();
+      logToFile(`Server check timeout (attempt ${attempts})`);
       if (attempts < maxAttempts) {
-        setTimeout(check, 500);
+        const delay = attempts < 5 ? 500 * attempts : 1000;
+        setTimeout(check, delay);
       } else {
-        console.error('Server check timed out after max attempts');
+        logToFile('Server check timed out after max attempts');
         callback(); // Try anyway
       }
     });
@@ -437,7 +524,18 @@ function startNextServer() {
         output.includes('started') ||
         output.match(/ready.*started/i)) {
       logToFile('Server ready detected from stdout!');
-      serverReady = true;
+      if (!serverReady) {
+        serverReady = true;
+        // If window exists but hasn't loaded, trigger a retry
+        if (mainWindow && !appLoaded && loadAppFunction) {
+          logToFile('Server became ready, triggering app load...');
+          setTimeout(() => {
+            if (mainWindow && !appLoaded && loadAppFunction) {
+              loadAppFunction();
+            }
+          }, 500);
+        }
+      }
     }
   });
 
@@ -452,7 +550,18 @@ function startNextServer() {
         output.includes('started') ||
         output.match(/ready.*started/i)) {
       logToFile('Server ready detected from stderr!');
-      serverReady = true;
+      if (!serverReady) {
+        serverReady = true;
+        // If window exists but hasn't loaded, trigger a retry
+        if (mainWindow && !appLoaded && loadAppFunction) {
+          logToFile('Server became ready, triggering app load...');
+          setTimeout(() => {
+            if (mainWindow && !appLoaded && loadAppFunction) {
+              loadAppFunction();
+            }
+          }, 500);
+        }
+      }
     }
     // Check for actual errors
     if (output.includes('Error') || output.includes('error') || output.includes('ENOENT') || output.includes('Cannot find')) {
@@ -495,13 +604,21 @@ function startNextServer() {
 app.whenReady().then(() => {
   logToFile('App is ready, starting server...');
   appLoaded = false; // Reset loaded flag
+  serverReady = false; // Reset server ready flag
+  retryCount = 0; // Reset retry count
+  
+  // Start the server first
   startNextServer();
   
-  // Wait a bit for the server to start
+  // Wait longer on first startup to allow server to initialize
+  // This is especially important after installation when files might be scanned
+  const initialDelay = isDev ? 1000 : 5000; // Increased from 3000 to 5000
+  
   setTimeout(() => {
     logToFile('Creating window...');
+    logToFile(`Server ready status before window creation: ${serverReady}`);
     createWindow();
-  }, isDev ? 1000 : 3000);
+  }, initialDelay);
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
