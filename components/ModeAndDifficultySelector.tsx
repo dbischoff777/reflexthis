@@ -312,7 +312,7 @@ export function ModeAndDifficultySelector({
                   : "text-white/80"
               )}>
                 {localDifficulty === 'nightmare' 
-                  ? t(language, 'mode.nightmare.name') + ' ' + t(language, 'difficulty.only')
+                  ? t(language, 'difficulty.only') + ' ' + t(language, 'mode.nightmare.name')
                   : t(language, 'difficulty.select.title')
                 }
               </span>
@@ -337,7 +337,7 @@ export function ModeAndDifficultySelector({
               <p className="text-sm font-semibold text-foreground mb-2">{getDifficultyDescription(localDifficulty)}</p>
               {localDifficulty === 'nightmare' ? (
                 <p className="text-xs text-red-300 font-semibold mb-1">
-                  ⚠️ {t(language, 'mode.nightmare.name')} {t(language, 'difficulty.only')}
+                  ⚠️ {t(language, 'difficulty.only')} {t(language, 'mode.nightmare.name')}
                 </p>
               ) : null}
               <p className="text-xs text-foreground/80">{t(language, 'difficulty.cycle.hint')}</p>
