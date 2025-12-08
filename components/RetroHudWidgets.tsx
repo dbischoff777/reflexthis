@@ -345,7 +345,7 @@ export const RetroHudWidgets = memo(function RetroHudWidgets({
                 }
               />
             </div>
-            <div className="flex justify-between text-[0.65rem] uppercase tracking-wide mt-1">
+            <div className="flex justify-between text-[0.85rem] uppercase tracking-wide mt-1">
               <span>
                 <AnimatedNumber
                   value={lives}
