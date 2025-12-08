@@ -9,7 +9,7 @@
         "testStrategy": "1. Unit tests for reaction time categorization logic\n2. Visual tests to verify correct color coding\n3. Performance tests to ensure animations maintain 60fps\n4. Integration tests with button press events\n5. Accessibility tests to verify compatibility with high contrast mode\n6. Test with reduced effects setting enabled\n7. Test across all game modes to ensure consistent behavior\n8. Test on various screen sizes to verify scaling",
         "priority": "high",
         "dependencies": [],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -20,7 +20,7 @@
         "testStrategy": "1. User testing with eye-tracking to verify improved information hierarchy\n2. A/B testing of different layouts to determine optimal configuration\n3. Responsive design tests across various screen sizes\n4. Accessibility testing for contrast and readability\n5. Performance testing to ensure HUD rendering doesn't impact frame rate\n6. Integration tests with game state changes to verify contextual highlighting\n7. Test collapsible functionality and state persistence\n8. Verify compatibility with existing game modes",
         "priority": "high",
         "dependencies": [],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -125,7 +125,7 @@
         "dependencies": [
           "12"
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       }
     ],

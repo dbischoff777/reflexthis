@@ -53,6 +53,11 @@ export function SettingsModal({ show, onClose }: SettingsModalProps) {
     setHighContrastMode,
   } = useGameState();
 
+  const [hudLayout, setHudLayout] = useState<'standard' | 'compact' | 'minimal'>(() => {
+    if (typeof window === 'undefined') return 'standard';
+    return (window.localStorage.getItem('rt_hud_layout') as 'standard' | 'compact' | 'minimal') || 'standard';
+  });
+
   const applyMobilePerformancePreset = () => {
     setReducedEffects(true);
     setScreenShakeEnabled(false);
@@ -69,6 +74,45 @@ export function SettingsModal({ show, onClose }: SettingsModalProps) {
     setReducedEffects(false);
     setScreenShakeEnabled(true);
     setScreenFlashEnabled(true);
+  };
+
+  const updateHudLayout = (layout: 'standard' | 'compact' | 'minimal') => {
+    setHudLayout(layout);
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('rt_hud_layout', layout);
+      window.dispatchEvent(new Event('rt_hud_layout_change'));
+    }
+  };
+
+  const [hudHidden, setHudHidden] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return window.localStorage.getItem('rt_hud_hidden') === 'true';
+  });
+
+  const toggleHudHidden = (hidden: boolean) => {
+    setHudHidden(hidden);
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('rt_hud_hidden', hidden ? 'true' : 'false');
+      window.dispatchEvent(new Event('rt_hud_visibility_change'));
+    }
+  };
+
+  const previewStyles: Record<typeof hudLayout, { container: React.CSSProperties; card: React.CSSProperties; text: React.CSSProperties }> = {
+    standard: {
+      container: { gap: '0.5rem', fontSize: '0.95rem' },
+      card: { padding: '0.5rem', minWidth: '6.5rem' },
+      text: { fontSize: '0.8rem' },
+    },
+    compact: {
+      container: { gap: '0.4rem', fontSize: '0.9rem' },
+      card: { padding: '0.4rem', minWidth: '6rem' },
+      text: { fontSize: '0.75rem' },
+    },
+    minimal: {
+      container: { gap: '0.3rem', fontSize: '0.85rem' },
+      card: { padding: '0.32rem', minWidth: '5.5rem' },
+      text: { fontSize: '0.7rem' },
+    },
   };
 
   const handleSoundVolumeChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -298,6 +342,81 @@ export function SettingsModal({ show, onClose }: SettingsModalProps) {
                 <div className="text-sm sm:text-base">{t(language, 'settings.mobile.reset')}</div>
                 <div className="text-foreground/70 mt-1">{t(language, 'settings.mobile.reset.desc')}</div>
               </button>
+            </div>
+            <div className="border-2 rounded px-3 py-3 space-y-3" style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 58, 99, 0.35)' }}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-semibold text-sm sm:text-base">HUD Layout</div>
+                  <div className="text-foreground/70 text-xs sm:text-sm">Choose how the HUD is arranged.</div>
+                </div>
+                <div className="inline-flex rounded-md overflow-hidden border" style={{ borderColor: '#3E7CAC' }}>
+                  {(['standard', 'compact', 'minimal'] as const).map((layout) => (
+                    <button
+                      key={layout}
+                      type="button"
+                      className="px-2 sm:px-3 py-1 text-xs sm:text-sm font-semibold transition-colors"
+                      style={{
+                        backgroundColor: hudLayout === layout ? 'rgba(62, 124, 172, 0.6)' : 'rgba(0, 58, 99, 0.5)',
+                        color: '#e8f4ff',
+                      }}
+                      onClick={() => updateHudLayout(layout)}
+                      aria-label={`Set HUD layout to ${layout}`}
+                    >
+                      {layout === 'standard' ? 'Standard' : layout === 'compact' ? 'Compact' : 'Minimal'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="rounded border px-3 py-2 bg-black/40" style={{ borderColor: '#3E7CAC' }}>
+                <div
+                  className="flex text-xs sm:text-sm"
+                  style={{
+                    gap: previewStyles[hudLayout].container.gap,
+                    fontSize: previewStyles[hudLayout].container.fontSize,
+                  }}
+                  data-layout-preview={hudLayout}
+                >
+                  {['Score', 'Vitals', 'Controls'].map((label) => (
+                    <div
+                      key={label}
+                      className="flex-1 border rounded"
+                      style={{
+                        borderColor: '#3E7CAC',
+                        padding: previewStyles[hudLayout].card.padding,
+                        minWidth: previewStyles[hudLayout].card.minWidth,
+                      }}
+                    >
+                      <div className="font-semibold" style={{ fontSize: previewStyles[hudLayout].container.fontSize }}>
+                        {label}
+                      </div>
+                      <div className="text-foreground/70" style={previewStyles[hudLayout].text}>
+                        {label === 'Score'
+                          ? '123456 / HI 234567'
+                          : label === 'Vitals'
+                            ? 'HP 75%'
+                            : 'Sound | Music | Settings | Exit'}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="text-[11px] text-foreground/60 mt-2">
+                  Preview only; changes apply to the in-game HUD when closed.
+                </div>
+              </div>
+              <label className="flex items-start gap-2 cursor-pointer border-2 rounded px-3 py-2 transition-colors" style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 58, 99, 0.5)' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(62, 124, 172, 0.7)'; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#3E7CAC'; }}>
+                <input
+                  type="checkbox"
+                  className="mt-0.5 accent-primary"
+                  checked={hudHidden}
+                  onChange={(e) => toggleHudHidden(e.target.checked)}
+                />
+                <span>
+                  <span className="font-semibold">Hide HUD in game</span>
+                  <span className="block text-foreground/70">
+                    When enabled, HUD is hidden during gameplay (for screenshots or focus).
+                  </span>
+                </span>
+              </label>
             </div>
             <div className="flex flex-col gap-3 text-xs sm:text-sm">
               <label className="flex items-start gap-2 cursor-pointer border-2 rounded px-3 py-2 transition-colors" style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 58, 99, 0.5)' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(62, 124, 172, 0.7)'; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#3E7CAC'; }}>

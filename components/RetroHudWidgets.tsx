@@ -22,6 +22,9 @@ type RetroHudWidgetsProps = {
   scoreBreakdown?: ScoringFactors | null;
 };
 
+type LayoutMode = 'standard' | 'compact' | 'minimal';
+type SectionId = 'score' | 'vitals' | 'controls';
+
 const difficultyAccentMap: Record<DifficultyPreset, string> = {
   easy: '#00ff9f',
   medium: '#00f0ff',
@@ -48,6 +51,13 @@ export const RetroHudWidgets = memo(function RetroHudWidgets({
   const [showBreakdown, setShowBreakdown] = useState(false);
   const [animatedBreakdown, setAnimatedBreakdown] = useState<ScoringFactors | null>(null);
   const breakdownTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [layoutMode, setLayoutMode] = useState<LayoutMode>('standard');
+  const [hudHidden, setHudHidden] = useState(false);
+  const collapsed: Record<SectionId, boolean> = {
+    score: false,
+    vitals: false,
+    controls: false,
+  };
   
   // Memoize expensive calculations
   const { livesRatio, accent, meterColor, formattedScore, formattedHighScore } = useMemo(() => {
@@ -139,164 +149,270 @@ export const RetroHudWidgets = memo(function RetroHudWidgets({
     };
   }, [scoreBreakdown]);
 
-  return (
-    <div className="retro-hud flex flex-nowrap gap-1.5 sm:gap-2 md:gap-3 overflow-x-auto scrollbar-hide mx-auto">
-      <div className="flex flex-nowrap gap-1.5 sm:gap-2 md:gap-3 flex-shrink-0">
-        {/* Score Display - Total and Best */}
-        <div className="hud-module min-w-[7rem] sm:min-w-[8rem] md:min-w-[9rem] flex-shrink-0">
-          <span className="hud-label">{t(language, 'hud.score.title')}</span>
-          <div className="hud-readout">
-            <span className="hud-readout-primary">{formattedScore}</span>
-            <span className="hud-readout-sub">
-              {t(language, 'hud.highScore')} {formattedHighScore}
-            </span>
-          </div>
-        </div>
+  // Persist layout preferences (simple localStorage)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const applyFromStorage = () => {
+      const savedLayout = window.localStorage.getItem('rt_hud_layout') as LayoutMode | null;
+      const savedHidden = window.localStorage.getItem('rt_hud_hidden');
+      if (savedLayout) setLayoutMode(savedLayout);
+      setHudHidden(savedHidden === 'true');
+    };
 
-        {/* Score Breakdown - Detailed breakdown when available */}
-        {showBreakdown && animatedBreakdown && (
-          <div className="hud-module min-w-[8rem] sm:min-w-[9rem] md:min-w-[11rem] flex-shrink-0">
+    applyFromStorage();
+
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === 'rt_hud_layout' || e.key === 'rt_hud_hidden') {
+        applyFromStorage();
+      }
+    };
+    const handleCustom = () => applyFromStorage();
+
+    window.addEventListener('storage', handleStorage);
+    window.addEventListener('rt_hud_layout_change', handleCustom as EventListener);
+    window.addEventListener('rt_hud_visibility_change', handleCustom as EventListener);
+
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('rt_hud_layout_change', handleCustom as EventListener);
+      window.removeEventListener('rt_hud_visibility_change', handleCustom as EventListener);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem('rt_hud_layout', layoutMode);
+    window.localStorage.setItem('rt_hud_hidden', hudHidden ? 'true' : 'false');
+  }, [layoutMode, hudHidden]);
+
+  const moduleClass = (_id: SectionId, extra?: string) => {
+    const classes = ['hud-module'];
+    if (layoutMode === 'compact') classes.push('hud-module-compact');
+    if (layoutMode === 'minimal') classes.push('hud-module-minimal');
+    if (extra) classes.push(extra);
+    return classes.join(' ');
+  };
+
+  const unhideHud = () => {
+    setHudHidden(false);
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('rt_hud_hidden', 'false');
+      window.dispatchEvent(new Event('rt_hud_visibility_change'));
+    }
+  };
+
+  // When HUD is hidden, surface a quick toggle to bring it back
+  if (hudHidden) {
+    return (
+      <div className="w-full flex justify-end items-center gap-2">
+        <span className="text-xs sm:text-sm text-foreground/70 hidden sm:inline">HUD hidden</span>
+        <button
+          className="hud-control-button"
+          onClick={unhideHud}
+          aria-label="Show HUD"
+          title="Show HUD"
+        >
+          <span className="hud-control-indicator" data-active="false" />
+          <span className="text-sm leading-none">Show HUD</span>
+        </button>
+      </div>
+    );
+  }
+
+  // Temporarily disable in-HUD score breakdown display
+  const allowBreakdown = false;
+  const renderControlsCompact = layoutMode === 'minimal';
+
+  return (
+    <div
+      className="retro-hud"
+      data-layout={layoutMode}
+      data-alert={livesRatio < 0.35 ? 'low-health' : undefined}
+    >
+      <div className="hud-grid">
+        {/* Score Display - Total and Best */}
+        <section className={moduleClass('score')}>
+          <header className="hud-section-header">
             <span className="hud-label">{t(language, 'hud.score.title')}</span>
+            <div className="hud-section-tools">
+              {allowBreakdown && showBreakdown && animatedBreakdown && (
+                <span className="hud-badge subtle">+{Math.round(animatedBreakdown.totalScore)}</span>
+              )}
+            </div>
+          </header>
+
+          <div className="hud-section-body">
             <div className="hud-readout">
-              <div className="text-[0.75rem] sm:text-[0.8rem] font-bold mb-1.5" style={{ color: '#00ff9f' }}>
-                +{Math.round(animatedBreakdown.totalScore)}
-              </div>
-              <div className="text-[0.6rem] sm:text-[0.65rem] space-y-0.5" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                <div className="flex justify-between items-center">
-                  <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>Base</span>
-                  <span className="font-semibold" style={{ color: '#ffffff' }}>
-                    {Math.round(animatedBreakdown.baseScore)}
-                  </span>
+              <span className="hud-readout-primary">{formattedScore}</span>
+              <span className="hud-readout-sub">
+                {t(language, 'hud.highScore')} {formattedHighScore}
+              </span>
+            </div>
+
+            {allowBreakdown && showBreakdown && animatedBreakdown && (
+              <div className="hud-breakdown">
+                <div className="hud-breakdown-row">
+                  <span>Base</span>
+                  <span>{Math.round(animatedBreakdown.baseScore)}</span>
                 </div>
-                {(Math.round(animatedBreakdown.comboMultiplier * 10) / 10 > 1 || 
-                  Math.round(animatedBreakdown.difficultyMultiplier * 10) / 10 !== 1 || 
+                {(Math.round(animatedBreakdown.comboMultiplier * 10) / 10 > 1 ||
+                  Math.round(animatedBreakdown.difficultyMultiplier * 10) / 10 !== 1 ||
                   Math.round(animatedBreakdown.modeMultiplier * 10) / 10 !== 1) && (
                   <>
                     {Math.round(animatedBreakdown.comboMultiplier * 10) / 10 > 1 && (
-                      <div className="flex justify-between items-center">
-                        <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>Combo</span>
-                        <span className="font-semibold" style={{ color: '#00f0ff' }}>
-                          {Math.round(animatedBreakdown.comboMultiplier)}x
-                        </span>
+                      <div className="hud-breakdown-row">
+                        <span>Combo</span>
+                        <span>{Math.round(animatedBreakdown.comboMultiplier)}x</span>
                       </div>
                     )}
                     {Math.round(animatedBreakdown.difficultyMultiplier * 10) / 10 !== 1 && (
-                      <div className="flex justify-between items-center">
-                        <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>Diff</span>
-                        <span className="font-semibold" style={{ color: '#00f0ff' }}>
-                          {Math.round(animatedBreakdown.difficultyMultiplier)}x
-                        </span>
+                      <div className="hud-breakdown-row">
+                        <span>Diff</span>
+                        <span>{Math.round(animatedBreakdown.difficultyMultiplier)}x</span>
                       </div>
                     )}
                     {Math.round(animatedBreakdown.modeMultiplier * 10) / 10 !== 1 && (
-                      <div className="flex justify-between items-center">
-                        <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>Mode</span>
-                        <span className="font-semibold" style={{ color: '#00f0ff' }}>
-                          {Math.round(animatedBreakdown.modeMultiplier)}x
-                        </span>
+                      <div className="hud-breakdown-row">
+                        <span>Mode</span>
+                        <span>{Math.round(animatedBreakdown.modeMultiplier)}x</span>
                       </div>
                     )}
                   </>
                 )}
-                {(Math.round(animatedBreakdown.accuracyBonus) > 0 || Math.round(animatedBreakdown.consistencyBonus) > 0) && (
+                {(Math.round(animatedBreakdown.accuracyBonus) > 0 ||
+                  Math.round(animatedBreakdown.consistencyBonus) > 0) && (
                   <>
                     {Math.round(animatedBreakdown.accuracyBonus) > 0 && (
-                      <div className="flex justify-between items-center">
-                        <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>Perfect</span>
-                        <span className="font-semibold" style={{ color: '#00ff9f' }}>
-                          +{Math.round(animatedBreakdown.accuracyBonus)}
-                        </span>
+                      <div className="hud-breakdown-row">
+                        <span>Perfect</span>
+                        <span>+{Math.round(animatedBreakdown.accuracyBonus)}</span>
                       </div>
                     )}
                     {Math.round(animatedBreakdown.consistencyBonus) > 0 && (
-                      <div className="flex justify-between items-center">
-                        <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>Consist</span>
-                        <span className="font-semibold" style={{ color: '#00ff9f' }}>
-                          +{Math.round(animatedBreakdown.consistencyBonus)}
-                        </span>
+                      <div className="hud-breakdown-row">
+                        <span>Consist</span>
+                        <span>+{Math.round(animatedBreakdown.consistencyBonus)}</span>
                       </div>
                     )}
                   </>
                 )}
               </div>
+            )}
+          </div>
+        </section>
+
+        {/* Vitals */}
+        <section
+          className={moduleClass(
+            'vitals',
+            livesRatio < 0.35 ? 'hud-emphasis danger' : livesRatio < 0.6 ? 'hud-emphasis warn' : ''
+          )}
+        >
+          <header className="hud-section-header">
+            <span className="hud-label">{t(language, 'hud.vitals.title')}</span>
+            <div className="hud-section-tools">
+              <span className="hud-badge subtle">{(livesRatio * 100).toFixed(0)}%</span>
+            </div>
+          </header>
+
+          <div className="hud-section-body">
+            <div className="hud-meter">
+              <div
+                className="hud-meter-fill"
+                style={
+                  {
+                    width: `${livesRatio * 100}%`,
+                    background: `linear-gradient(90deg, ${meterColor}, ${accent})`,
+                  } as CSSProperties
+                }
+              />
+            </div>
+            <div className="flex justify-between text-[0.65rem] uppercase tracking-wide mt-1">
+              <span>
+                {lives} / {maxLives || 1} {t(language, 'hud.lives')}
+              </span>
+              <span>
+                {t(language, 'hud.hp')} {(livesRatio * 100).toFixed(0)}%
+              </span>
             </div>
           </div>
-        )}
-      </div>
+        </section>
 
-      {/* Combo Display removed - now shown in vertical meter on game area */}
-
-      <div className="hud-module min-w-[8rem] sm:min-w-[9rem] md:min-w-[12rem] flex-shrink-0">
-        <span className="hud-label">{t(language, 'hud.vitals.title')}</span>
-        <div className="hud-meter">
-          <div
-            className="hud-meter-fill"
-            style={
-              {
-                width: `${livesRatio * 100}%`,
-                background: `linear-gradient(90deg, ${meterColor}, ${accent})`,
-              } as CSSProperties
-            }
-          />
-        </div>
-        <div className="flex justify-between text-[0.65rem] uppercase tracking-wide mt-1">
-          <span>{lives} / {maxLives || 1} {t(language, 'hud.lives')}</span>
-          <span>{t(language, 'hud.hp')} {(livesRatio * 100).toFixed(0)}%</span>
-        </div>
-      </div>
-
-      <div className="hud-module min-w-[8rem] sm:min-w-[10rem] md:min-w-[13rem] flex-shrink-0">
-        <span className="hud-label">{t(language, 'hud.controls.title')}</span>
-        <div className="hud-control-grid-2x2">
-          {/* Top Row: Sound, Music */}
-          <button
-            className="hud-control-button"
-            onClick={onToggleSound}
-            draggable={false}
-            aria-label={soundEnabled ? 'Disable sound' : 'Enable sound'}
-          >
-            <span
-              className="hud-control-indicator"
-              data-active={soundEnabled ? 'true' : 'false'}
-            />
-            <span className="text-lg leading-none">🔊</span>
-          </button>
-          <button
-            className="hud-control-button"
-            onClick={onToggleMusic}
-            draggable={false}
-            aria-label={musicEnabled ? 'Disable music' : 'Enable music'}
-          >
-            <span
-              className="hud-control-indicator"
-              data-active={musicEnabled ? 'true' : 'false'}
-            />
-            <span className="text-lg leading-none">🎵</span>
-          </button>
-          {/* Bottom Row: Settings, Exit */}
-          {onOpenSettings ? (
-            <button
-              className="hud-control-button"
-              onClick={onOpenSettings}
-              draggable={false}
-              aria-label="Open settings"
-            >
-              <span className="hud-control-indicator" data-active="false" />
-              <span className="text-lg leading-none">⚙</span>
-            </button>
-          ) : (
-            <div /> // Placeholder to maintain grid layout
+        {/* Controls */}
+        <section
+          className={moduleClass(
+            'controls',
+            (!soundEnabled || !musicEnabled) && !collapsed.controls ? 'hud-emphasis info' : ''
           )}
-          <button
-            className="hud-control-button danger"
-            onClick={onQuit}
-            draggable={false}
-            aria-label="Quit game"
-          >
-            <span className="hud-control-indicator" data-active="true" />
-            <span>{t(language, 'hud.controls.exit')}</span>
-          </button>
-        </div>
+        >
+          {!collapsed.controls && (
+            <div className="hud-section-body">
+              {renderControlsCompact ? (
+                <div className="flex gap-2 text-sm">
+                  <button className="hud-control-button" onClick={onToggleSound} aria-label="Toggle sound" data-active={soundEnabled}>
+                    🔊
+                  </button>
+                  <button className="hud-control-button" onClick={onToggleMusic} aria-label="Toggle music" data-active={musicEnabled}>
+                    🎵
+                  </button>
+                  {onOpenSettings && (
+                    <button className="hud-control-button" onClick={onOpenSettings} aria-label="Open settings">
+                      ⚙
+                    </button>
+                  )}
+                  <button className="hud-control-button danger" onClick={onQuit} aria-label="Quit game">
+                    ✕
+                  </button>
+                </div>
+              ) : (
+                <div className="hud-control-grid-2x2">
+                  <button
+                    className="hud-control-button"
+                    onClick={onToggleSound}
+                    draggable={false}
+                    aria-label={soundEnabled ? 'Disable sound' : 'Enable sound'}
+                    data-active={soundEnabled}
+                  >
+                    <span className="hud-control-indicator" data-active={soundEnabled ? 'true' : 'false'} />
+                    <span className="text-lg leading-none">🔊</span>
+                  </button>
+                  <button
+                    className="hud-control-button"
+                    onClick={onToggleMusic}
+                    draggable={false}
+                    aria-label={musicEnabled ? 'Disable music' : 'Enable music'}
+                    data-active={musicEnabled}
+                  >
+                    <span className="hud-control-indicator" data-active={musicEnabled ? 'true' : 'false'} />
+                    <span className="text-lg leading-none">🎵</span>
+                  </button>
+                  {onOpenSettings ? (
+                    <button
+                      className="hud-control-button"
+                      onClick={onOpenSettings}
+                      draggable={false}
+                      aria-label="Open settings"
+                    >
+                      <span className="hud-control-indicator" data-active="false" />
+                      <span className="text-lg leading-none">⚙</span>
+                    </button>
+                  ) : (
+                    <div />
+                  )}
+                  <button
+                    className="hud-control-button danger"
+                    onClick={onQuit}
+                    draggable={false}
+                    aria-label="Quit game"
+                  >
+                    <span className="hud-control-indicator" data-active="true" />
+                    <span>{t(language, 'hud.controls.exit')}</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </section>
       </div>
     </div>
   );
