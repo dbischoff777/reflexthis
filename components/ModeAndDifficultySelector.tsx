@@ -32,12 +32,7 @@ export function ModeAndDifficultySelector({
   const modes: GameMode[] = ['reflex', 'sequence', 'survival', 'nightmare', 'oddOneOut'];
   const [hoveredMode, setHoveredMode] = useState<GameMode | null>(null);
   const [hoveredDifficulty, setHoveredDifficulty] = useState<DifficultyPreset | null>(null);
-  const [localDifficulty, setLocalDifficulty] = useState<DifficultyPreset>(selectedDifficulty);
-
-  // Sync local difficulty with props when they change
-  useEffect(() => {
-    setLocalDifficulty(selectedDifficulty);
-  }, [selectedDifficulty]);
+  const [localDifficulty, setLocalDifficulty] = useState<DifficultyPreset>('easy');
 
   // Handle mode selection - start immediately with selected difficulty
   const handleModeSelect = (mode: GameMode) => {

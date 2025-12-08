@@ -129,7 +129,7 @@ export function useDeviceProfile() {
     root.dataset.device = deviceInfo.isMobile ? 'mobile' : deviceInfo.isTablet ? 'tablet' : 'desktop';
     root.dataset.orientation = deviceInfo.isLandscape ? 'landscape' : 'portrait';
 
-    const hudFontMultiplier = deviceInfo.isMobile ? 1.08 : deviceInfo.isTablet ? 1.05 : 1;
+    const hudFontMultiplier = deviceInfo.isMobile ? 1.28 : deviceInfo.isTablet ? 1.25 : 1.2;
     const gameAreaScale = deviceInfo.isMobile ? 1.06 : deviceInfo.isTablet ? 1.03 : 1;
 
     root.style.setProperty('--hud-font-multiplier', hudFontMultiplier.toString());
