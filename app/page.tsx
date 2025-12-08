@@ -577,7 +577,7 @@ function LandingPageContent() {
                 e.preventDefault();
                 setShowMode(true);
               }}
-              className="group relative inline-flex items-center justify-center flex-1 min-w-0 min-h-[56px] px-2 sm:px-3 py-3 text-xs sm:text-sm font-bold border-4 border-primary bg-primary text-primary-foreground transition-all duration-100 hover:border-secondary hover:bg-secondary active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary pixel-border whitespace-nowrap overflow-hidden"
+              className="group relative inline-flex items-center justify-center flex-1 min-w-0 min-h-[56px] px-2 sm:px-3 py-3 text-xs sm:text-sm font-bold border-4 border-primary bg-primary text-white transition-all duration-100 hover:border-primary hover:bg-primary/80 active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary pixel-border whitespace-nowrap overflow-hidden"
             >
               <span className="relative z-10 truncate">
                 {t(language, 'landing.selectMode')}
@@ -593,7 +593,15 @@ function LandingPageContent() {
                 borderColor: '#3E7CAC',
                 backgroundColor: '#003A63',
               }}
-              className="inline-flex items-center justify-center flex-1 min-w-0 min-h-[56px] px-2 sm:px-3 py-3 text-xs sm:text-sm font-semibold border-4 text-foreground hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary pixel-border whitespace-nowrap overflow-hidden"
+              className="inline-flex items-center justify-center flex-1 min-w-0 min-h-[56px] px-2 sm:px-3 py-3 text-xs sm:text-sm font-semibold border-4 text-foreground transition-all duration-100 focus:outline-none focus:ring-2 focus:ring-primary pixel-border whitespace-nowrap overflow-hidden"
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = '#00ffff';
+                e.currentTarget.style.backgroundColor = 'rgba(0, 255, 255, 0.2)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = '#3E7CAC';
+                e.currentTarget.style.backgroundColor = '#003A63';
+              }}
             >
               <span className="truncate">
                 {t(language, 'landing.settings')}
@@ -607,7 +615,15 @@ function LandingPageContent() {
                 borderColor: '#3E7CAC',
                 backgroundColor: '#003A63',
               }}
-              className="inline-flex items-center justify-center flex-1 min-w-0 min-h-[56px] px-2 sm:px-3 py-3 text-xs sm:text-sm font-semibold border-4 text-foreground hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary pixel-border whitespace-nowrap overflow-hidden"
+              className="inline-flex items-center justify-center flex-1 min-w-0 min-h-[56px] px-2 sm:px-3 py-3 text-xs sm:text-sm font-semibold border-4 text-foreground transition-all duration-100 focus:outline-none focus:ring-2 focus:ring-primary pixel-border whitespace-nowrap overflow-hidden"
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = '#00ffff';
+                e.currentTarget.style.backgroundColor = 'rgba(0, 255, 255, 0.2)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = '#3E7CAC';
+                e.currentTarget.style.backgroundColor = '#003A63';
+              }}
             >
               <span className="truncate">
                 {t(language, 'landing.exitGame')}
@@ -622,7 +638,15 @@ function LandingPageContent() {
                 borderColor: '#3E7CAC',
                 backgroundColor: '#003A63',
               }}
-              className="inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 border-4 text-foreground hover:opacity-90 transition-all duration-100 focus:outline-none focus:ring-2 focus:ring-primary pixel-border"
+              className="inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 border-4 text-foreground transition-all duration-100 focus:outline-none focus:ring-2 focus:ring-primary pixel-border"
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = '#00ffff';
+                e.currentTarget.style.backgroundColor = 'rgba(0, 255, 255, 0.2)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = '#3E7CAC';
+                e.currentTarget.style.backgroundColor = '#003A63';
+              }}
               aria-label={musicEnabled ? 'Mute music' : 'Unmute music'}
             >
               {musicEnabled ? (

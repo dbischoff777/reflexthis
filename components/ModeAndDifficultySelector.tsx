@@ -593,8 +593,8 @@ export function ModeAndDifficultySelector({
             draggable={false}
             className={cn(
               'w-full min-h-[56px] px-4 py-3 text-base sm:text-lg font-bold',
-              'border-4 border-primary bg-primary text-primary-foreground',
-              'transition-all duration-100 hover:border-secondary hover:bg-secondary',
+              'border-4 border-primary bg-primary text-white',
+              'transition-all duration-100 hover:border-primary hover:bg-primary/80',
               'active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary',
               'pixel-border whitespace-nowrap',
               'shadow-[0_8px_16px_rgba(0,0,0,0.4)]',
