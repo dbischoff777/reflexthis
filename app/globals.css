@@ -920,21 +920,49 @@
   }
   
   
-  .retro-hud {
-    image-rendering: pixelated;
-    width: max-content;
-    max-width: 100%;
-    margin-left: auto;
-    margin-right: auto;
-    overflow-x: auto;
-    overflow-y: hidden;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
+:root {
+  --hud-font-multiplier: 1;
+  --game-area-scale: 1;
+}
 
-  .retro-hud::-webkit-scrollbar {
-    display: none;
-  }
+:root[data-device="tablet"] {
+  --hud-font-multiplier: 1.05;
+  --game-area-scale: 1.03;
+}
+
+:root[data-device="mobile"] {
+  --hud-font-multiplier: 1.08;
+  --game-area-scale: 1.06;
+}
+
+.retro-hud {
+  image-rendering: pixelated;
+  width: max-content;
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  font-size: calc(1rem * var(--hud-font-multiplier));
+}
+
+.retro-hud .hud-label {
+  font-size: calc(0.7rem * var(--hud-font-multiplier));
+}
+
+.retro-hud .hud-readout-primary {
+  font-size: calc(1.35rem * var(--hud-font-multiplier));
+}
+
+.retro-hud .hud-readout-sub {
+  font-size: calc(0.85rem * var(--hud-font-multiplier));
+}
+
+.retro-hud::-webkit-scrollbar {
+  display: none;
+}
 
   .scrollbar-hide {
     scrollbar-width: none;

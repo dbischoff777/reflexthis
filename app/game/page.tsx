@@ -33,6 +33,8 @@ import { getKeybindings, getKeyDisplayName, DEFAULT_KEYBINDINGS } from '@/lib/ke
 import { t } from '@/lib/i18n';
 import { lazy, Suspense } from 'react';
 import { useTimer } from '@/hooks/useTimer';
+import { useDeviceProfile } from '@/hooks/useDeviceProfile';
+import { MobileGestures } from '@/components/MobileGestures';
 
 // Lazy load heavy modal components
 const GameOverModal = lazy(() => import('@/components/GameOverModal').then(m => ({ default: m.GameOverModal })));
@@ -114,6 +116,8 @@ export default function GamePage() {
   const [bonusHighlightDuration, setBonusHighlightDuration] = useState<number | null>(null);
   const [fastStreakCount, setFastStreakCount] = useState(0);
   const [fastStreakActive, setFastStreakActive] = useState(false);
+
+  const { deviceInfo, quality } = useDeviceProfile();
   
   // Detect combo milestones - Expanded list: 5, 10, 15, 20, 25, 30, 40, 50, 75, 100
   useEffect(() => {
@@ -177,50 +181,6 @@ export default function GamePage() {
     previousScoreRef.current = score;
   }, [score]);
 
-  
-  // Sequence mode state
-  const [sequence, setSequence] = useState<number[]>([]);
-  const [playerSequence, setPlayerSequence] = useState<number[]>([]);
-  const [isShowingSequence, setIsShowingSequence] = useState(false);
-  const [isWaitingForInput, setIsWaitingForInput] = useState(false);
-  const sequenceTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Memoized keybinding map for control hints - only recalculates when keybindings change
-  const keybindingHints: Record<number, string> = useMemo(() => {
-    const bindings =
-      typeof window === 'undefined' ? DEFAULT_KEYBINDINGS : getKeybindings();
-    const result: Record<number, string> = {};
-    for (let i = 1; i <= 10; i++) {
-      result[i] = getKeyDisplayName(bindings[i]);
-    }
-    return result;
-  }, []); // Empty deps since keybindings are stored in localStorage and we want to recalc on mount
-
-  // Memoized button data for 3D grid to prevent unnecessary re-renders
-  // Only recalculates when button states actually change
-  const buttonGridData = useMemo(() => {
-    return Array.from({ length: 10 }, (_, i) => {
-      const id = i + 1;
-      const feedback = buttonPressFeedback[id];
-      const isHighlighted = highlightedButtons.includes(id);
-      const isOddTarget = gameMode === 'oddOneOut' && oddOneOutTarget === id;
-      // Only pass highlightStartTime when we have both a highlighted button AND a valid timestamp
-      // This prevents undefined from being used in arithmetic (Date.now() - highlightStartTime)
-      const validHighlightTime = isHighlighted && highlightStartTimeState !== null
-        ? highlightStartTimeState
-        : undefined;
-      return {
-        index: id,
-        highlighted: isHighlighted,
-        isBonus: bonusActive && bonusButtonId === id,
-        isOddTarget,
-        highlightStartTime: validHighlightTime,
-        pressFeedback: (feedback === 'correct' ? 'success' : feedback === 'incorrect' ? 'error' : null) as 'success' | 'error' | null,
-        reactionTime: buttonReactionTimes[id] ?? null,
-      };
-    });
-  }, [highlightedButtons, buttonPressFeedback, highlightStartTimeState, gameMode, oddOneOutTarget, bonusActive, bonusButtonId, buttonReactionTimes]);
-
   // Clear highlight timer
   const clearHighlightTimer = useCallback(() => {
     if (timerRef.current) {
@@ -233,10 +193,27 @@ export default function GamePage() {
     }
   }, [clearTimer]);
 
-  // Keep a ref of the paused state for use in callbacks/timers
-  useEffect(() => {
-    isPausedRef.current = isPaused;
-  }, [isPaused]);
+  // Helper to pause game and clear all active timers/highlights
+  const pauseGameAndClearState = useCallback(() => {
+    // Mark paused synchronously for any callbacks/timers that rely on the ref
+    isPausedRef.current = true;
+    pauseGame();
+    clearHighlightTimer();
+    if (nextHighlightTimerRef.current) {
+      clearTimeout(nextHighlightTimerRef.current);
+      nextHighlightTimerRef.current = null;
+    }
+    if (sequenceTimerRef.current) {
+      clearTimeout(sequenceTimerRef.current);
+      sequenceTimerRef.current = null;
+    }
+    setHighlightedButtons([]);
+    currentHighlightedRef.current = [];
+    highlightStartTimeRef.current = null;
+    setHighlightStartTimeState(null);
+    setHighlightDuration(0);
+    isProcessingRef.current = false;
+  }, [pauseGame, clearHighlightTimer, setHighlightedButtons]);
 
   // Highlight new buttons
   const highlightNewButtons = useCallback(function highlightNewButtonsInternal() {
@@ -339,6 +316,85 @@ export default function GamePage() {
       }
     }, duration);
   }, [score, difficulty, lives, isReady, setHighlightedButtons, decrementLives, clearHighlightTimer, soundEnabled, gameMode]);
+
+  const restartForMobile = useCallback(() => {
+    pauseGameAndClearState();
+    resetGame();
+    setIsReady(true);
+    startGame();
+  }, [pauseGameAndClearState, resetGame, startGame]);
+
+  const togglePauseForMobile = useCallback(() => {
+    if (!isReady || gameOver) return;
+    if (isPaused) {
+      setShowPauseModal(false);
+      isPausedRef.current = false;
+      resumeGame();
+      if (!gameOver && highlightedButtons.length === 0 && !isProcessingRef.current) {
+        highlightNewButtons();
+      }
+    } else {
+      pauseGameAndClearState();
+      setShowPauseModal(true);
+    }
+  }, [
+    gameOver,
+    highlightNewButtons,
+    highlightedButtons.length,
+    isPaused,
+    isReady,
+    pauseGameAndClearState,
+    resumeGame,
+  ]);
+
+  
+  // Sequence mode state
+  const [sequence, setSequence] = useState<number[]>([]);
+  const [playerSequence, setPlayerSequence] = useState<number[]>([]);
+  const [isShowingSequence, setIsShowingSequence] = useState(false);
+  const [isWaitingForInput, setIsWaitingForInput] = useState(false);
+  const sequenceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Memoized keybinding map for control hints - only recalculates when keybindings change
+  const keybindingHints: Record<number, string> = useMemo(() => {
+    const bindings =
+      typeof window === 'undefined' ? DEFAULT_KEYBINDINGS : getKeybindings();
+    const result: Record<number, string> = {};
+    for (let i = 1; i <= 10; i++) {
+      result[i] = getKeyDisplayName(bindings[i]);
+    }
+    return result;
+  }, []); // Empty deps since keybindings are stored in localStorage and we want to recalc on mount
+
+  // Memoized button data for 3D grid to prevent unnecessary re-renders
+  // Only recalculates when button states actually change
+  const buttonGridData = useMemo(() => {
+    return Array.from({ length: 10 }, (_, i) => {
+      const id = i + 1;
+      const feedback = buttonPressFeedback[id];
+      const isHighlighted = highlightedButtons.includes(id);
+      const isOddTarget = gameMode === 'oddOneOut' && oddOneOutTarget === id;
+      // Only pass highlightStartTime when we have both a highlighted button AND a valid timestamp
+      // This prevents undefined from being used in arithmetic (Date.now() - highlightStartTime)
+      const validHighlightTime = isHighlighted && highlightStartTimeState !== null
+        ? highlightStartTimeState
+        : undefined;
+      return {
+        index: id,
+        highlighted: isHighlighted,
+        isBonus: bonusActive && bonusButtonId === id,
+        isOddTarget,
+        highlightStartTime: validHighlightTime,
+        pressFeedback: (feedback === 'correct' ? 'success' : feedback === 'incorrect' ? 'error' : null) as 'success' | 'error' | null,
+        reactionTime: buttonReactionTimes[id] ?? null,
+      };
+    });
+  }, [highlightedButtons, buttonPressFeedback, highlightStartTimeState, gameMode, oddOneOutTarget, bonusActive, bonusButtonId, buttonReactionTimes]);
+
+  // Keep a ref of the paused state for use in callbacks/timers
+  useEffect(() => {
+    isPausedRef.current = isPaused;
+  }, [isPaused]);
 
   // Handle button press (Reflex / Survival / Nightmare modes)
   const handleReflexButtonPress = useCallback(
@@ -1028,28 +1084,6 @@ export default function GamePage() {
     };
   }, []);
 
-  // Helper to pause game and clear all active timers/highlights
-  const pauseGameAndClearState = useCallback(() => {
-    // Mark paused synchronously for any callbacks/timers that rely on the ref
-    isPausedRef.current = true;
-    pauseGame();
-    clearHighlightTimer();
-    if (nextHighlightTimerRef.current) {
-      clearTimeout(nextHighlightTimerRef.current);
-      nextHighlightTimerRef.current = null;
-    }
-    if (sequenceTimerRef.current) {
-      clearTimeout(sequenceTimerRef.current);
-      sequenceTimerRef.current = null;
-    }
-    setHighlightedButtons([]);
-    currentHighlightedRef.current = [];
-    highlightStartTimeRef.current = null;
-    setHighlightStartTimeState(null);
-    setHighlightDuration(0);
-    isProcessingRef.current = false;
-  }, [pauseGame, clearHighlightTimer, setHighlightedButtons]);
-
   // Global ESC handler to pause game and show pause confirmation
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -1094,6 +1128,12 @@ export default function GamePage() {
 
   return (
     <>
+      <MobileGestures
+        enabled={deviceInfo.touchEnabled && deviceInfo.isMobile}
+        onSwipeUp={restartForMobile}
+        onSwipeDown={togglePauseForMobile}
+        onSwipeLeft={() => setShowSettingsModal(true)}
+      />
       <AchievementNotification achievementIds={newlyUnlockedAchievements} />
       <OrientationHandler />
       {isLoading ? (
@@ -1195,7 +1235,14 @@ export default function GamePage() {
         
         {/* 3D WebGL Button Grid */}
         <div className="w-full max-w-4xl">
-          <div className="w-full h-[60vh] min-h-[280px] max-h-[720px]">
+          <div
+            className="w-full game-area-3d"
+            style={{
+              height: deviceInfo.isMobile ? '68vh' : '60vh',
+              minHeight: deviceInfo.isMobile ? '320px' : '280px',
+              maxHeight: deviceInfo.isMobile ? '780px' : '720px',
+            }}
+          >
             <GameButtonGridWebGL
               buttons={buttonGridData}
               highlightDuration={highlightDuration}
@@ -1213,6 +1260,13 @@ export default function GamePage() {
                 gameMode,
               }}
               comboMilestone={comboMilestone}
+              performance={{
+                maxDpr: quality.maxDpr,
+                renderScale: quality.renderScale,
+                gridScale: quality.gridScale,
+                disablePostprocessing: quality.disablePostprocessing,
+                powerPreference: quality.powerPreference,
+              }}
             />
           </div>
         </div>

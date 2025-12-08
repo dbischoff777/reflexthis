@@ -2280,6 +2280,13 @@ interface GameButtonGridWebGLProps {
   };
   // Combo milestone for celebration effects (5, 10, 20, 30, 50)
   comboMilestone?: number | null;
+  performance?: {
+    maxDpr?: number;
+    renderScale?: number;
+    gridScale?: number;
+    disablePostprocessing?: boolean;
+    powerPreference?: WebGLPowerPreference;
+  };
 }
 
 // Ripple event for cross-button communication
@@ -2306,6 +2313,7 @@ export const GameButtonGridWebGL = memo(function GameButtonGridWebGL({
   showLabels = true,
   gameState,
   comboMilestone,
+  performance,
 }: GameButtonGridWebGLProps) {
   const lastPressTime = useRef<number>(0);
   const [rippleEvents, setRippleEvents] = useState<RippleEvent[]>([]);
@@ -2382,20 +2390,26 @@ export const GameButtonGridWebGL = memo(function GameButtonGridWebGL({
     return positions;
   }, []);
   
+  const maxDpr = performance?.maxDpr ?? 2;
+  const gridScale = performance?.gridScale ?? 1;
+  const renderScale = performance?.renderScale ?? 1;
+  const disablePostprocessing = gameState?.reducedEffects || performance?.disablePostprocessing;
+  const powerPreference = performance?.powerPreference ?? 'high-performance';
+
   return (
     <div className="w-full h-full relative">
       <Canvas
         camera={{
-          position: [0, 0.2, 6.5],  // Closer view for larger buttons
+          position: [0, 0.2, 6.5 * renderScale],  // Adjusted based on device render scale
           fov: 38,  // Wider FOV to see all buttons clearly
           near: 0.1,
           far: 100,
         }}
-        dpr={[1, 2]}
+        dpr={[1, maxDpr]}
         gl={{
           antialias: true,
           alpha: true,
-          powerPreference: 'high-performance',
+          powerPreference,
           toneMapping: THREE.ACESFilmicToneMapping,
           toneMappingExposure: 1.2,
         }}
@@ -2445,7 +2459,7 @@ export const GameButtonGridWebGL = memo(function GameButtonGridWebGL({
           <ReflectionSurface />
           
           {/* Button grid - 3-4-3 layout matching actual game */}
-          <group rotation={[0.1, 0, 0]} position={[0, 0, 0]}>
+          <group rotation={[0.1, 0, 0]} position={[0, 0, 0]} scale={[gridScale, gridScale, gridScale]}>
             {buttonPositions.map(({ index, position }) => {
               const buttonData = buttons.find(b => b.index === index) || {
                 index,
@@ -2489,8 +2503,8 @@ export const GameButtonGridWebGL = memo(function GameButtonGridWebGL({
           
           
           {/* Post-processing effects - adaptive quality based on reducedEffects */}
-          {!gameState?.reducedEffects && (
-            <EffectComposer multisampling={4}>
+          {!disablePostprocessing && (
+            <EffectComposer multisampling={disablePostprocessing ? 0 : 4}>
               {/* Dynamic Bloom - responds to combo milestones */}
               <DynamicBloom comboMilestone={comboMilestone} baseIntensity={0.7} />
               

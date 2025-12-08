@@ -53,6 +53,24 @@ export function SettingsModal({ show, onClose }: SettingsModalProps) {
     setHighContrastMode,
   } = useGameState();
 
+  const applyMobilePerformancePreset = () => {
+    setReducedEffects(true);
+    setScreenShakeEnabled(false);
+    setScreenFlashEnabled(false);
+  };
+
+  const applyMobileVisualPreset = () => {
+    setReducedEffects(true);
+    setScreenShakeEnabled(true);
+    setScreenFlashEnabled(false);
+  };
+
+  const restoreDesktopDefaults = () => {
+    setReducedEffects(false);
+    setScreenShakeEnabled(true);
+    setScreenFlashEnabled(true);
+  };
+
   const handleSoundVolumeChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = Number(e.target.value) / 100;
     setSoundVolume(value);
@@ -252,6 +270,35 @@ export function SettingsModal({ show, onClose }: SettingsModalProps) {
 
         {activeTab === 'comfort' && (
           <section className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm">
+              <button
+                type="button"
+                className="w-full px-3 py-3 border-2 rounded text-left transition-colors font-semibold"
+                style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 58, 99, 0.5)' }}
+                onClick={applyMobilePerformancePreset}
+              >
+                <div className="text-sm sm:text-base">{t(language, 'settings.mobile.performance')}</div>
+                <div className="text-foreground/70 mt-1">{t(language, 'settings.mobile.performance.desc')}</div>
+              </button>
+              <button
+                type="button"
+                className="w-full px-3 py-3 border-2 rounded text-left transition-colors font-semibold"
+                style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 58, 99, 0.5)' }}
+                onClick={applyMobileVisualPreset}
+              >
+                <div className="text-sm sm:text-base">{t(language, 'settings.mobile.visual')}</div>
+                <div className="text-foreground/70 mt-1">{t(language, 'settings.mobile.visual.desc')}</div>
+              </button>
+              <button
+                type="button"
+                className="w-full px-3 py-3 border-2 rounded text-left transition-colors font-semibold sm:col-span-2"
+                style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 58, 99, 0.5)' }}
+                onClick={restoreDesktopDefaults}
+              >
+                <div className="text-sm sm:text-base">{t(language, 'settings.mobile.reset')}</div>
+                <div className="text-foreground/70 mt-1">{t(language, 'settings.mobile.reset.desc')}</div>
+              </button>
+            </div>
             <div className="flex flex-col gap-3 text-xs sm:text-sm">
               <label className="flex items-start gap-2 cursor-pointer border-2 rounded px-3 py-2 transition-colors" style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 58, 99, 0.5)' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(62, 124, 172, 0.7)'; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#3E7CAC'; }}>
                 <input

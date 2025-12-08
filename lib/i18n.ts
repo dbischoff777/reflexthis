@@ -13,6 +13,12 @@ const en: TranslationDict = {
   'settings.language.label': 'Language',
   'settings.language.en': 'English',
   'settings.language.de': 'Deutsch',
+  'settings.mobile.performance': 'Mobile Performance Preset',
+  'settings.mobile.performance.desc': 'Lower GPU load: reduces effects, disables shake/flash, limits resolution.',
+  'settings.mobile.visual': 'Mobile Visual Balance',
+  'settings.mobile.visual.desc': 'Keep visuals while limiting resolution and post-processing on mobile devices.',
+  'settings.mobile.reset': 'Restore Default Visuals',
+  'settings.mobile.reset.desc': 'Re-enable effects after using mobile presets.',
 
   // Ready screen
   'ready.reflex.desc': 'Hit glowing buttons fast.',
@@ -352,6 +358,12 @@ const de: TranslationDict = {
   'settings.language.label': 'Sprache',
   'settings.language.en': 'Englisch',
   'settings.language.de': 'Deutsch',
+  'settings.mobile.performance': 'Mobile-Performance-Preset',
+  'settings.mobile.performance.desc': 'Reduziert Effekte, deaktiviert Shake/Flash und begrenzt die Auflösung für schwächere Geräte.',
+  'settings.mobile.visual': 'Mobile-Visuell-Balance',
+  'settings.mobile.visual.desc': 'Behält die Optik, begrenzt aber Auflösung und Post-Processing auf mobilen Geräten.',
+  'settings.mobile.reset': 'Desktop-Standard wiederherstellen',
+  'settings.mobile.reset.desc': 'Effekte und Desktop-Optik nach Mobil-Presets wieder aktivieren.',
 
   // Ready screen
   'ready.reflex.desc': 'Triff leuchtende Buttons so schnell wie möglich.',
