@@ -5,7 +5,6 @@
 import React, { useRef, useState, useMemo, useCallback, memo, Suspense, useEffect } from 'react';
 import { Canvas, useFrame, ThreeEvent } from '@react-three/fiber';
 import { RoundedBox, Environment, Text, Float } from '@react-three/drei';
-import { WebGLPerformanceDashboard } from '@/components/WebGLPerformanceDashboard';
 import { 
   EffectComposer, 
   Bloom, 
@@ -2479,11 +2478,6 @@ export const GameButtonGridWebGL = memo(function GameButtonGridWebGL({
         style={{ background: 'transparent' }}
       >
         <Suspense fallback={null}>
-          {/* Performance Dashboard (dev mode only) */}
-          {process.env.NODE_ENV === 'development' && (
-            <WebGLPerformanceDashboard enabled={true} position="top-right" />
-          )}
-          
           {/* Ambient fill light - slightly brighter for better visibility */}
           <ambientLight intensity={0.4} color="#8899cc" />
           

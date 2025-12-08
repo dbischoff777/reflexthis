@@ -604,10 +604,15 @@ export default function GamePage() {
         setCurrentReactionTime(reactionTime);
 
         // Correct button pressed - show feedback and particles
-        // Use startTransition for non-urgent UI updates to maintain FPS
-        startTransition(() => {
+        // Use requestAnimationFrame for immediate visual feedback to minimize latency
+        requestAnimationFrame(() => {
           setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: 'correct' }));
           setButtonReactionTimes((prev) => ({ ...prev, [buttonId]: reactionTime }));
+          
+          // Record visual feedback timestamp for latency monitoring
+          if (latencyMonitor) {
+            latencyMonitor.recordFeedback(buttonId);
+          }
         });
         setTimer(() => {
           startTransition(() => {
@@ -694,8 +699,14 @@ export default function GamePage() {
         }
       } else {
         // Wrong button pressed - show feedback, screen shake, and error particles
-        startTransition(() => {
+        // Use requestAnimationFrame for immediate visual feedback
+        requestAnimationFrame(() => {
           setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: 'incorrect' }));
+          
+          // Record visual feedback timestamp for latency monitoring
+          if (latencyMonitor) {
+            latencyMonitor.recordFeedback(buttonId);
+          }
         });
         setTimer(() => {
           startTransition(() => {
@@ -815,7 +826,14 @@ export default function GamePage() {
         }, 700);
       } else {
         // Any wrong press (non-highlighted or non-target highlight) is a mistake
-        setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: 'incorrect' }));
+        requestAnimationFrame(() => {
+          setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: 'incorrect' }));
+          
+          // Record visual feedback timestamp for latency monitoring
+          if (latencyMonitor) {
+            latencyMonitor.recordFeedback(buttonId);
+          }
+        });
         setTimer(() => {
           setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: null }));
         }, 300);
@@ -1095,7 +1113,14 @@ export default function GamePage() {
           }, 1000);
         } else {
           // Wrong sequence - show feedback for wrong button
-          setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: 'incorrect' }));
+          requestAnimationFrame(() => {
+            setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: 'incorrect' }));
+            
+            // Record visual feedback timestamp for latency monitoring
+            if (latencyMonitor) {
+              latencyMonitor.recordFeedback(buttonId);
+            }
+          });
           setTimer(() => {
             setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: null }));
           }, 300);
@@ -1127,7 +1152,14 @@ export default function GamePage() {
         // Check if current input is correct so far
         if (newPlayerSequence[newPlayerSequence.length - 1] !== sequence[newPlayerSequence.length - 1]) {
           // Wrong button pressed - show feedback
-          setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: 'incorrect' }));
+          requestAnimationFrame(() => {
+            setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: 'incorrect' }));
+            
+            // Record visual feedback timestamp for latency monitoring
+            if (latencyMonitor) {
+              latencyMonitor.recordFeedback(buttonId);
+            }
+          });
           setTimer(() => {
             setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: null }));
           }, 300);
@@ -1214,7 +1246,7 @@ export default function GamePage() {
   // Keyboard controls - enabled when game is active, ready, not paused, and not showing sequence
   const keyboardEnabled = !gameOver && isReady && !isPaused && (gameMode !== 'sequence' || isWaitingForInput);
   const buttonHandler = getButtonHandler();
-  useKeyboardControls(buttonHandler, keyboardEnabled);
+  const { latencyMonitor } = useKeyboardControls(buttonHandler, keyboardEnabled, true, true);
 
   // Settings modal state
   const [showSettingsModal, setShowSettingsModal] = useState(false);
