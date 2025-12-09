@@ -107,22 +107,23 @@ export function VerticalComboMeter({
         position === 'left' ? 'left-2 sm:left-4 md:left-6' : 'right-2 sm:right-4 md:right-6'
       )}
     >
-      {/* Rating Badge - Top */}
+      {/* Rating Badge - Top - Enhanced visibility */}
       <div
         className={cn(
-          'mb-2 px-2 py-1 rounded relative overflow-hidden',
-          'text-sm sm:text-base md:text-lg font-bold',
-          'border-2 pixel-border',
+          'mb-2 px-3 py-1.5 rounded relative overflow-hidden',
+          'text-base sm:text-lg md:text-xl font-bold',
+          'border-3 pixel-border',
           'transition-all duration-300',
           isRatingUpgrading && !reducedEffects && 'rating-upgrade-animation',
           isComboIncreasing && !reducedEffects && 'rating-badge-pulse'
         )}
         style={{
           color: ratingDisplay.color,
-          backgroundColor: `${ratingDisplay.color}20`,
+          backgroundColor: `${ratingDisplay.color}35`,
           borderColor: ratingDisplay.color,
-          textShadow: `0 0 ${ratingDisplay.glowIntensity * 10}px ${ratingDisplay.color}`,
-          boxShadow: `0 0 ${ratingDisplay.glowIntensity * 15}px ${ratingDisplay.color}40`,
+          textShadow: `0 0 ${ratingDisplay.glowIntensity * 12}px ${ratingDisplay.color}, 2px 2px 0 rgba(0,0,0,0.9)`,
+          boxShadow: `0 0 ${ratingDisplay.glowIntensity * 20}px ${ratingDisplay.color}60, 0 2px 8px rgba(0,0,0,0.6)`,
+          backdropFilter: 'blur(4px)',
         }}
       >
         {/* Shimmer effect overlay */}
@@ -191,21 +192,22 @@ export function VerticalComboMeter({
           )}
         </div>
 
-        {/* Combo Number - Centered in meter */}
+        {/* Combo Number - Centered in meter - Enhanced visibility */}
         <div
           className={cn(
             'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2',
-            'text-xl sm:text-2xl md:text-3xl font-bold',
-            'drop-shadow-[0_0_8px_currentColor]',
+            'text-2xl sm:text-3xl md:text-4xl font-bold',
+            'drop-shadow-[0_0_12px_currentColor]',
             'transition-all duration-300',
             isComboIncreasing && !reducedEffects && 'combo-number-pop',
             comboPulse && !reducedEffects && 'combo-number-pulse'
           )}
           style={{
             color: ratingDisplay.color,
-            textShadow: `0 0 10px ${ratingDisplay.color}, 0 0 20px ${ratingDisplay.color}80, 2px 2px 0 rgba(0,0,0,0.9)`,
+            textShadow: `0 0 12px ${ratingDisplay.color}, 0 0 24px ${ratingDisplay.color}90, 0 0 36px ${ratingDisplay.color}60, 3px 3px 0 rgba(0,0,0,0.95)`,
             fontFamily: 'var(--font-mono)',
             letterSpacing: '0.1em',
+            fontWeight: 800,
           }}
         >
           {displayCombo}

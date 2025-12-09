@@ -351,7 +351,7 @@ export const PerformanceFeedback = memo(function PerformanceFeedback({
 
   return (
     <div className="fixed inset-0 pointer-events-none z-50">
-      <div className="absolute top-24 sm:top-28 md:top-32 left-1/2 transform -translate-x-1/2 flex items-center justify-center">
+      <div className="absolute top-20 sm:top-24 md:top-28 left-1/2 transform -translate-x-1/2 flex items-center justify-center">
         <FeedbackPopup 
           key={currentMessage.id} 
           message={currentMessage} 
@@ -416,19 +416,20 @@ function FeedbackPopup({ message }: FeedbackPopupProps) {
     >
       <div
         className={cn(
-          'pixel-border px-4 py-2 sm:px-6 sm:py-3',
+          'pixel-border px-5 py-3 sm:px-7 sm:py-4',
           'font-bold text-center',
           'text-glow',
           getSizeClass(),
           'border-4',
-          'shadow-[0_0_20px_currentColor,0_0_40px_currentColor,0_0_60px_currentColor]'
+          'shadow-[0_0_25px_currentColor,0_0_50px_currentColor,0_0_75px_currentColor,0_4px_12px_rgba(0,0,0,0.8)]'
         )}
         style={{
           color: message.color,
           borderColor: message.color,
-          backgroundColor: 'rgba(0, 0, 0, 0.9)',
+          backgroundColor: 'rgba(0, 0, 0, 0.95)',
           imageRendering: 'pixelated' as any,
-          textShadow: `0 0 10px ${message.color}, 0 0 20px ${message.color}, 2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000`,
+          textShadow: `0 0 12px ${message.color}, 0 0 24px ${message.color}, 0 0 36px ${message.color}80, 3px 3px 0 #000, -3px -3px 0 #000, 3px -3px 0 #000, -3px 3px 0 #000`,
+          backdropFilter: 'blur(4px)',
         }}
       >
         {message.message}

@@ -1517,8 +1517,8 @@ export default function GamePage() {
       )}>
       {/* Background Video */}
       {!reducedEffects && <BackgroundVideo />}
-      {/* Dark overlay for better text readability */}
-      <div className={`fixed inset-0 z-[1] ${reducedEffects ? 'bg-black/60' : 'bg-black/40'}`} aria-hidden="true" />
+      {/* Dark overlay for better text readability - increased opacity for better contrast */}
+      <div className={`fixed inset-0 z-[1] ${reducedEffects ? 'bg-black/70' : 'bg-black/55'}`} aria-hidden="true" />
       
       {/* Screen Flash Effect */}
       {screenFlash && screenFlashEnabled && (
@@ -1584,17 +1584,17 @@ export default function GamePage() {
           position="right"
         />
         
-        {/* Inline mode status */}
+        {/* Inline mode status - Enhanced visibility */}
         <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-20 flex flex-col items-center gap-2">
           {/* Sequence status */}
           {gameMode === 'sequence' && (
-            <div className="bg-card border-4 border-primary pixel-border px-4 py-2">
+            <div className="bg-card/95 border-4 border-primary pixel-border px-5 py-3 shadow-[0_0_20px_rgba(0,255,255,0.6)]">
               {isShowingSequence ? (
-                <div className="text-xs sm:text-sm font-bold text-primary">
+                <div className="text-sm sm:text-base md:text-lg font-bold text-primary text-glow">
                   {t(language, 'ready.sequence.watch')}
                 </div>
               ) : isWaitingForInput ? (
-                <div className="text-xs sm:text-sm font-bold text-secondary">
+                <div className="text-sm sm:text-base md:text-lg font-bold text-secondary text-glow">
                   {t(language, 'ready.sequence.repeat')} {playerSequence.length}/{sequence.length}
                 </div>
               ) : null}
@@ -1602,14 +1602,14 @@ export default function GamePage() {
           )}
         </div>
         
-        {/* 3D WebGL Button Grid */}
-        <div className="w-full max-w-6xl mx-auto px-2 sm:px-4">
+        {/* 3D WebGL Button Grid - Larger, more prominent */}
+        <div className="w-full max-w-7xl mx-auto px-2 sm:px-4">
           <div
             className="w-full game-area-3d relative mx-auto"
             style={{
-              height: deviceInfo.isMobile ? '72vh' : '68vh',
-              minHeight: deviceInfo.isMobile ? '360px' : '400px',
-              maxHeight: deviceInfo.isMobile ? '820px' : '900px',
+              height: deviceInfo.isMobile ? '75vh' : '72vh',
+              minHeight: deviceInfo.isMobile ? '400px' : '480px',
+              maxHeight: deviceInfo.isMobile ? '900px' : '1000px',
               maxWidth: '100%',
               aspectRatio: '16 / 9',
             }}

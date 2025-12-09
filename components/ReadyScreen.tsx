@@ -87,53 +87,63 @@ export function ReadyScreen({ onReady, gameMode }: ReadyScreenProps) {
     
     return (
       <div className="space-y-6 sm:space-y-8 max-w-3xl mx-auto text-center">
-        {/* Title + Mode */}
-        <div className="space-y-3">
-          <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold text-primary text-glow">
+        {/* Title + Mode - Enhanced visibility */}
+        <div className="space-y-4">
+          <h1 className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-bold text-primary text-glow">
             {getModeName()}
           </h1>
-          <p className="text-xl sm:text-2xl text-muted-foreground">
+          <p className="text-2xl sm:text-3xl md:text-4xl text-foreground font-semibold" style={{
+            textShadow: '0 2px 4px rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 255, 255, 0.4)',
+          }}>
             {getModeDescription()}
           </p>
         </div>
 
-        {/* Mode-specific tips - concise and essential */}
-        <div className="flex flex-wrap justify-center gap-3 sm:gap-4 text-base sm:text-lg">
+        {/* Mode-specific tips - concise and essential - Enhanced visibility */}
+        <div className="flex flex-wrap justify-center gap-3 sm:gap-4 text-lg sm:text-xl md:text-2xl">
           {tips.map((tip, idx) => (
             <div
               key={idx}
               className={cn(
-                'flex items-center gap-2 px-3 py-1.5 bg-card/60 border-2 rounded',
+                'flex items-center gap-3 px-4 py-2.5 bg-card/85 border-3 rounded shadow-[0_0_15px_rgba(0,255,255,0.3)]',
                 tip.color
               )}
+              style={{
+                textShadow: '0 1px 2px rgba(0, 0, 0, 0.9)',
+                backdropFilter: 'blur(4px)',
+              }}
             >
-              <span className="font-bold">{tip.icon}</span>
-              <span>{tip.text}</span>
+              <span className="font-bold text-2xl">{tip.icon}</span>
+              <span className="font-semibold">{tip.text}</span>
             </div>
           ))}
         </div>
 
-        {/* Keyboard layout - compact */}
-        <div className="inline-block bg-card/40 border-2 border-border rounded-xl px-6 py-5">
-          <div className="flex flex-col items-center gap-2">
-            <div className="flex gap-2">
-              <kbd className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center border border-border bg-background/80 text-base sm:text-lg font-semibold rounded-md">Q</kbd>
-              <kbd className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center border border-border bg-background/80 text-base sm:text-lg font-semibold rounded-md">W</kbd>
-              <kbd className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center border border-border bg-background/80 text-base sm:text-lg font-semibold rounded-md">E</kbd>
+        {/* Keyboard layout - Enhanced visibility */}
+        <div className="inline-block bg-card/75 border-3 border-border rounded-xl px-8 py-6 shadow-[0_0_20px_rgba(0,255,255,0.3)]" style={{
+          backdropFilter: 'blur(4px)',
+        }}>
+          <div className="flex flex-col items-center gap-3">
+            <div className="flex gap-2.5">
+              <kbd className="w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center border-2 border-border bg-background/90 text-lg sm:text-xl font-bold rounded-md shadow-[0_2px_4px_rgba(0,0,0,0.6)]" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.8)' }}>Q</kbd>
+              <kbd className="w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center border-2 border-border bg-background/90 text-lg sm:text-xl font-bold rounded-md shadow-[0_2px_4px_rgba(0,0,0,0.6)]" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.8)' }}>W</kbd>
+              <kbd className="w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center border-2 border-border bg-background/90 text-lg sm:text-xl font-bold rounded-md shadow-[0_2px_4px_rgba(0,0,0,0.6)]" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.8)' }}>E</kbd>
             </div>
-            <div className="flex gap-2">
-              <kbd className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center border border-border bg-background/80 text-base sm:text-lg font-semibold rounded-md">A</kbd>
-              <kbd className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center border border-border bg-background/80 text-base sm:text-lg font-semibold rounded-md">S</kbd>
-              <kbd className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center border border-border bg-background/80 text-base sm:text-lg font-semibold rounded-md">D</kbd>
-              <kbd className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center border border-border bg-background/80 text-base sm:text-lg font-semibold rounded-md">F</kbd>
+            <div className="flex gap-2.5">
+              <kbd className="w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center border-2 border-border bg-background/90 text-lg sm:text-xl font-bold rounded-md shadow-[0_2px_4px_rgba(0,0,0,0.6)]" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.8)' }}>A</kbd>
+              <kbd className="w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center border-2 border-border bg-background/90 text-lg sm:text-xl font-bold rounded-md shadow-[0_2px_4px_rgba(0,0,0,0.6)]" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.8)' }}>S</kbd>
+              <kbd className="w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center border-2 border-border bg-background/90 text-lg sm:text-xl font-bold rounded-md shadow-[0_2px_4px_rgba(0,0,0,0.6)]" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.8)' }}>D</kbd>
+              <kbd className="w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center border-2 border-border bg-background/90 text-lg sm:text-xl font-bold rounded-md shadow-[0_2px_4px_rgba(0,0,0,0.6)]" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.8)' }}>F</kbd>
             </div>
-            <div className="flex gap-2">
-              <kbd className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center border border-border bg-background/80 text-base sm:text-lg font-semibold rounded-md">Y</kbd>
-              <kbd className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center border border-border bg-background/80 text-base sm:text-lg font-semibold rounded-md">X</kbd>
-              <kbd className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center border border-border bg-background/80 text-base sm:text-lg font-semibold rounded-md">C</kbd>
+            <div className="flex gap-2.5">
+              <kbd className="w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center border-2 border-border bg-background/90 text-lg sm:text-xl font-bold rounded-md shadow-[0_2px_4px_rgba(0,0,0,0.6)]" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.8)' }}>Y</kbd>
+              <kbd className="w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center border-2 border-border bg-background/90 text-lg sm:text-xl font-bold rounded-md shadow-[0_2px_4px_rgba(0,0,0,0.6)]" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.8)' }}>X</kbd>
+              <kbd className="w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center border-2 border-border bg-background/90 text-lg sm:text-xl font-bold rounded-md shadow-[0_2px_4px_rgba(0,0,0,0.6)]" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.8)' }}>C</kbd>
             </div>
           </div>
-          <p className="mt-3 text-sm text-muted-foreground">
+          <p className="mt-4 text-base sm:text-lg text-foreground font-medium" style={{
+            textShadow: '0 1px 2px rgba(0, 0, 0, 0.8)',
+          }}>
             {t(language, 'ready.customize')}
           </p>
         </div>
