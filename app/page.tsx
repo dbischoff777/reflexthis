@@ -756,20 +756,20 @@ function LandingPageContent() {
         {/* Center content area */}
         <div className="flex flex-col items-center justify-center flex-1 w-full">
           {/* Hero Section - Matches demo mode width for symmetry */}
-          <div className="mb-6 sm:mb-8 space-y-4 sm:space-y-6 w-full max-w-md mx-auto">
+          <div className="mb-6 sm:mb-8 space-y-4 sm:space-y-6 w-full max-w-2xl mx-auto">
           {/* Subtitle above title */}
-          <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl text-muted-foreground max-w-2xl mx-auto">
             {t(language, 'landing.subtitle')}
           </p>
           {/* Main title */}
-          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-primary text-glow mb-2 sm:mb-4 tracking-tight px-4 sm:px-6 py-2 sm:py-3 block w-full border-3 sm:border-4 border-primary rounded-lg">
+          <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-bold text-primary text-glow mb-2 sm:mb-4 tracking-tight px-4 sm:px-6 py-2 sm:py-3 block w-full border-3 sm:border-4 border-primary rounded-lg">
             {t(language, 'landing.title')}
           </h1>
         </div>
         
         {/* Demo Mode - only show once the demo canvas has mounted */}
         {!showMode && !showStats && (
-          <div className={`mb-6 w-full max-w-md mx-auto transition-opacity duration-300 ${demoReady ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+          <div className={`mb-6 w-full max-w-2xl mx-auto transition-opacity duration-300 ${demoReady ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
             <DemoMode onReady={() => setDemoReady(true)} />
           </div>
         )}
@@ -789,7 +789,7 @@ function LandingPageContent() {
 
         {/* Combined Mode and Difficulty Selector */}
         {showMode && !showStats && (
-          <div className="mb-6 w-full max-w-md mx-auto">
+          <div className="mb-6 w-full max-w-2xl mx-auto">
             <ModeAndDifficultySelector
               selectedMode={gameMode}
               selectedDifficulty={difficulty}
@@ -815,14 +815,14 @@ function LandingPageContent() {
         
         {/* Action Buttons - Directly beneath demo/mode selector, match demo mode width */}
         {!showMode && !showStats && (
-          <div className="flex flex-row gap-2 sm:gap-3 items-center justify-center w-full max-w-md mx-auto">
+          <div className="flex flex-row gap-2 sm:gap-3 items-center justify-center w-full max-w-2xl mx-auto">
             <Link 
               href="/game"
               onClick={(e) => {
                 e.preventDefault();
                 setShowMode(true);
               }}
-              className="group relative inline-flex items-center justify-center flex-1 min-w-0 min-h-[56px] px-2 sm:px-3 py-3 text-xs sm:text-sm font-bold border-4 border-primary bg-primary text-white transition-all duration-100 hover:border-primary hover:bg-primary/80 active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary pixel-border whitespace-nowrap overflow-hidden"
+              className="group relative inline-flex items-center justify-center flex-1 min-w-0 min-h-[64px] sm:min-h-[72px] px-3 sm:px-4 py-3 sm:py-4 text-sm sm:text-base md:text-lg font-bold border-4 border-primary bg-primary text-white transition-all duration-100 hover:border-primary hover:bg-primary/80 active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary pixel-border whitespace-nowrap overflow-hidden"
             >
               <span className="relative z-10 truncate">
                 {t(language, 'landing.selectMode')}
@@ -838,7 +838,7 @@ function LandingPageContent() {
                 borderColor: '#3E7CAC',
                 backgroundColor: '#003A63',
               }}
-              className="inline-flex items-center justify-center flex-1 min-w-0 min-h-[56px] px-2 sm:px-3 py-3 text-xs sm:text-sm font-semibold border-4 text-foreground transition-all duration-100 focus:outline-none focus:ring-2 focus:ring-primary pixel-border whitespace-nowrap overflow-hidden"
+              className="inline-flex items-center justify-center flex-1 min-w-0 min-h-[64px] sm:min-h-[72px] px-3 sm:px-4 py-3 sm:py-4 text-sm sm:text-base md:text-lg font-semibold border-4 text-foreground transition-all duration-100 focus:outline-none focus:ring-2 focus:ring-primary pixel-border whitespace-nowrap overflow-hidden"
               onMouseEnter={(e) => {
                 e.currentTarget.style.borderColor = '#00ffff';
                 e.currentTarget.style.backgroundColor = 'rgba(0, 255, 255, 0.2)';
@@ -860,7 +860,7 @@ function LandingPageContent() {
                 borderColor: '#3E7CAC',
                 backgroundColor: '#003A63',
               }}
-              className="inline-flex items-center justify-center flex-1 min-w-0 min-h-[56px] px-2 sm:px-3 py-3 text-xs sm:text-sm font-semibold border-4 text-foreground transition-all duration-100 focus:outline-none focus:ring-2 focus:ring-primary pixel-border whitespace-nowrap overflow-hidden"
+              className="inline-flex items-center justify-center flex-1 min-w-0 min-h-[64px] sm:min-h-[72px] px-3 sm:px-4 py-3 sm:py-4 text-sm sm:text-base md:text-lg font-semibold border-4 text-foreground transition-all duration-100 focus:outline-none focus:ring-2 focus:ring-primary pixel-border whitespace-nowrap overflow-hidden"
               onMouseEnter={(e) => {
                 e.currentTarget.style.borderColor = '#00ffff';
                 e.currentTarget.style.backgroundColor = 'rgba(0, 255, 255, 0.2)';
@@ -883,7 +883,7 @@ function LandingPageContent() {
                 borderColor: '#3E7CAC',
                 backgroundColor: '#003A63',
               }}
-              className="inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 border-4 text-foreground transition-all duration-100 focus:outline-none focus:ring-2 focus:ring-primary pixel-border"
+              className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 border-4 text-foreground transition-all duration-100 focus:outline-none focus:ring-2 focus:ring-primary pixel-border"
               onMouseEnter={(e) => {
                 e.currentTarget.style.borderColor = '#00ffff';
                 e.currentTarget.style.backgroundColor = 'rgba(0, 255, 255, 0.2)';
@@ -895,11 +895,11 @@ function LandingPageContent() {
               aria-label={musicEnabled ? 'Mute music' : 'Unmute music'}
             >
               {musicEnabled ? (
-                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <svg className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 14.142M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
                 </svg>
               ) : (
-                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <svg className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
                 </svg>

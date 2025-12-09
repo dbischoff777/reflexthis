@@ -117,9 +117,9 @@ export function DemoMode({ onStart, onReady }: DemoModeProps) {
   }, [highlightedButtons, feedbackButtons, highlightStartTime]);
 
   return (
-    <div className="w-full max-w-md mx-auto">
+    <div className="w-full max-w-2xl mx-auto">
       <div 
-        className="h-[280px] sm:h-[320px] md:h-[360px]"
+        className="h-[360px] sm:h-[400px] md:h-[480px] lg:h-[560px]"
         style={{
           willChange: 'transform',
           transform: 'translateZ(0)',

@@ -141,14 +141,14 @@ export function ModeAndDifficultySelector({
   };
 
   return (
-    <div className="flex flex-col gap-3 w-full max-w-md mx-auto">
+    <div className="flex flex-col gap-4 sm:gap-5 w-full max-w-2xl mx-auto">
       {/* Subtitle: "Choose Your Game" - left-aligned */}
-      <h3 className="text-base sm:text-lg font-semibold text-white text-left">
+      <h3 className="text-lg sm:text-xl md:text-2xl font-semibold text-white text-left">
         Choose Your Game
       </h3>
       
       {/* 3x2 Grid of mode buttons + difficulty selector */}
-      <div className="grid grid-cols-3 gap-3 sm:gap-4">
+      <div className="grid grid-cols-3 gap-4 sm:gap-5 md:gap-6">
         {modes.map((mode) => {
           const modeInfo = GAME_MODES[mode];
           const isHovered = hoveredMode === mode;
@@ -171,7 +171,7 @@ export function ModeAndDifficultySelector({
                 draggable={false}
                 className={cn(
                   'relative w-full aspect-square rounded-2xl transition-all duration-200',
-                  'min-h-[100px] sm:min-h-[120px] md:min-h-[140px]',
+                  'min-h-[140px] sm:min-h-[160px] md:min-h-[180px] lg:min-h-[200px]',
                   'flex flex-col overflow-hidden',
                   'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
                   // 3D effect with shadows
@@ -195,7 +195,7 @@ export function ModeAndDifficultySelector({
                   </div>
                 )}
                 {/* Image container - larger icons */}
-                <div className="flex-1 relative flex items-center justify-center overflow-hidden px-2 pt-2 sm:px-3 sm:pt-3">
+                <div className="flex-1 relative flex items-center justify-center overflow-hidden px-3 pt-3 sm:px-4 sm:pt-4 md:px-5 md:pt-5">
                   <img
                     src={buttonImage}
                     alt={modeInfo.name}
@@ -207,8 +207,8 @@ export function ModeAndDifficultySelector({
                   />
                 </div>
                 {/* Label at bottom */}
-                <div className="flex flex-col items-center justify-center py-2 sm:py-2.5 md:py-3 pointer-events-none shrink-0 gap-1">
-                  <span className="font-bold text-sm sm:text-base md:text-lg text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)]">
+                <div className="flex flex-col items-center justify-center py-2 sm:py-3 md:py-4 pointer-events-none shrink-0 gap-1">
+                  <span className="font-bold text-base sm:text-lg md:text-xl lg:text-2xl text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)]">
                     {mode === 'reflex' && t(language, 'mode.reflex.name')}
                     {mode === 'sequence' && t(language, 'mode.sequence.name')}
                     {mode === 'survival' && t(language, 'mode.survival.name')}
@@ -216,7 +216,7 @@ export function ModeAndDifficultySelector({
                     {mode === 'oddOneOut' && t(language, 'mode.odd.name')}
                   </span>
                   {bestScore !== null && (
-                    <span className="text-[10px] text-white/80 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+                    <span className="text-xs sm:text-sm text-white/80 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
                       {t(language, 'mode.bestScore')}: {bestScore.toLocaleString()}
                     </span>
                   )}
@@ -262,7 +262,7 @@ export function ModeAndDifficultySelector({
             draggable={false}
             className={cn(
               'relative w-full aspect-square rounded-2xl transition-all duration-200',
-              'min-h-[100px] sm:min-h-[120px] md:min-h-[140px]',
+              'min-h-[140px] sm:min-h-[160px] md:min-h-[180px] lg:min-h-[200px]',
               'flex flex-col items-center justify-center overflow-hidden',
               'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
               // 3D effect with shadows - matching mode buttons
@@ -284,24 +284,24 @@ export function ModeAndDifficultySelector({
                   : '#7C3AED', // Purple for regular (different from game mode buttons)
             }}
           >
-            <div className="flex flex-col items-center justify-center flex-1 px-2">
+            <div className="flex flex-col items-center justify-center flex-1 px-2 overflow-hidden">
               {/* Icon or stars for difficulty */}
-              <div className="flex items-center justify-center flex-1 pb-1">
+              <div className="flex items-center justify-center flex-1 pb-1 w-full max-h-[60%] overflow-hidden">
                 {localDifficulty === 'nightmare' ? (
-                  <span className="text-4xl sm:text-5xl">{difficultyIcons[localDifficulty]}</span>
+                  <span className="text-4xl sm:text-5xl md:text-6xl leading-none block">{difficultyIcons[localDifficulty]}</span>
                 ) : (
-                  <span className="text-3xl sm:text-4xl leading-none">{difficultyStars[localDifficulty]}</span>
+                  <span className="text-2xl sm:text-3xl md:text-4xl leading-none block text-center">{difficultyStars[localDifficulty]}</span>
                 )}
               </div>
               {/* Text label */}
-              <span className="font-bold text-sm sm:text-base md:text-lg text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)] text-center shrink-0">
+              <span className="font-bold text-base sm:text-lg md:text-xl lg:text-2xl text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)] text-center shrink-0">
                 {localDifficulty === 'easy' && t(language, 'difficulty.name.easy')}
                 {localDifficulty === 'medium' && t(language, 'difficulty.name.medium')}
                 {localDifficulty === 'hard' && t(language, 'difficulty.name.hard')}
                 {localDifficulty === 'nightmare' && t(language, 'difficulty.name.nightmare')}
               </span>
               <span className={cn(
-                "text-[10px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] mt-1 text-center",
+                "text-xs sm:text-sm drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] mt-1 text-center",
                 localDifficulty === 'nightmare' 
                   ? "text-red-300 font-semibold" 
                   : "text-white/80"
