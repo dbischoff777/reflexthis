@@ -73,6 +73,11 @@ export default function RootLayout({
         <meta name="theme-color" content="#0a0a0f" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        {/* Resource hints for critical splash screen assets */}
+        <link rel="preload" href="/logo/ReflexIcon.jpg" as="image" />
+        <link rel="preload" href="/animation/ReflexIconAnimated.mp4" as="video" />
+        <link rel="prefetch" href="/animation/menu-background-animated.mp4" as="video" />
+        <link rel="prefetch" href="/game" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${rajdhani.variable} antialiased`}

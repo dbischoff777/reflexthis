@@ -28,20 +28,76 @@ const WARMUP_BUTTONS = Array.from({ length: 10 }, (_, i) => ({
  */
 const BackgroundVideo = React.memo(function BackgroundVideo() {
   const [activeVideo, setActiveVideo] = useState(0);
+  const [videoError, setVideoError] = useState(false);
+  const [secondVideoLoaded, setSecondVideoLoaded] = useState(false);
   const video1Ref = useRef<HTMLVideoElement>(null);
   const video2Ref = useRef<HTMLVideoElement>(null);
   const fadeTriggeredRef = useRef(false);
   const rafIdRef = useRef<number | null>(null);
+  const activeVideoRef = useRef(0); // Use ref to avoid stale closure
 
+  // Keep ref in sync with state
+  useEffect(() => {
+    activeVideoRef.current = activeVideo;
+  }, [activeVideo]);
+
+  // Handle video errors with fallback
+  useEffect(() => {
+    const video1 = video1Ref.current;
+    if (!video1) return;
+
+    const handleVideoError = () => {
+      console.warn('Background video failed to load, using fallback');
+      setVideoError(true);
+    };
+
+    video1.addEventListener('error', handleVideoError);
+    return () => {
+      video1.removeEventListener('error', handleVideoError);
+    };
+  }, []);
+
+  // Lazy load second video after first video starts playing
+  useEffect(() => {
+    const video1 = video1Ref.current;
+    if (!video1 || secondVideoLoaded) return;
+
+    const handleCanPlay = () => {
+      // Start loading second video after first is ready
+      setSecondVideoLoaded(true);
+    };
+
+    if (video1.readyState >= 3) {
+      // Already ready
+      setSecondVideoLoaded(true);
+    } else {
+      video1.addEventListener('canplay', handleCanPlay, { once: true });
+    }
+
+    return () => {
+      video1.removeEventListener('canplay', handleCanPlay);
+    };
+  }, [secondVideoLoaded]);
+
+  // Set up crossfade logic when both videos are available
   useEffect(() => {
     const video1 = video1Ref.current;
     const video2 = video2Ref.current;
-    if (!video1 || !video2) return;
+    if (!video1 || !secondVideoLoaded || !video2) return;
+
+    // Handle video2 errors
+    const handleVideo2Error = () => {
+      console.warn('Second background video failed to load');
+      // Don't set videoError, just continue with single video
+    };
+    video2.addEventListener('error', handleVideo2Error);
 
     // Use timeupdate event for more efficient checking (fires ~4 times per second)
     const handleTimeUpdate = () => {
-      const currentVideo = activeVideo === 0 ? video1 : video2;
-      const nextVideo = activeVideo === 0 ? video2 : video1;
+      // Use ref to get current value, avoiding stale closure
+      const currentActive = activeVideoRef.current;
+      const currentVideo = currentActive === 0 ? video1 : video2;
+      const nextVideo = currentActive === 0 ? video2 : video1;
       
       if (!currentVideo || !nextVideo || !currentVideo.duration) return;
       
@@ -59,10 +115,11 @@ const BackgroundVideo = React.memo(function BackgroundVideo() {
           if (nextVideo.readyState >= 2) { // HAVE_CURRENT_DATA
             // Use requestAnimationFrame for smoother transitions
             rafIdRef.current = requestAnimationFrame(() => {
-              if (currentVideo && nextVideo) {
+              if (currentVideo && nextVideo && video1Ref.current && video2Ref.current) {
                 currentVideo.style.opacity = '0';
                 nextVideo.style.opacity = '1';
-                setActiveVideo(activeVideo === 0 ? 1 : 0);
+                const newActive = currentActive === 0 ? 1 : 0;
+                setActiveVideo(newActive);
                 
                 // Reset trigger after transition completes
                 setTimeout(() => {
@@ -80,40 +137,69 @@ const BackgroundVideo = React.memo(function BackgroundVideo() {
     };
 
     // Handle video ended event as fallback for smooth looping
-    const handleEnded = (video: HTMLVideoElement, isCurrent: boolean) => {
-      if (isCurrent && !fadeTriggeredRef.current) {
-        // If we missed the timeupdate, force transition
-        const otherVideo = video === video1 ? video2 : video1;
-        if (otherVideo) {
-          fadeTriggeredRef.current = true;
-          otherVideo.currentTime = 0;
-          otherVideo.play().catch(() => {});
-          video.style.opacity = '0';
-          otherVideo.style.opacity = '1';
-          setActiveVideo(video === video1 ? 1 : 0);
-          setTimeout(() => {
-            fadeTriggeredRef.current = false;
-          }, 1300);
+    const handleEnded1 = () => {
+      const currentActive = activeVideoRef.current;
+      if (currentActive === 0 && !fadeTriggeredRef.current && video2Ref.current) {
+        fadeTriggeredRef.current = true;
+        const otherVideo = video2Ref.current;
+        otherVideo.currentTime = 0;
+        otherVideo.play().catch(() => {});
+        if (video1Ref.current) {
+          video1Ref.current.style.opacity = '0';
         }
+        otherVideo.style.opacity = '1';
+        setActiveVideo(1);
+        setTimeout(() => {
+          fadeTriggeredRef.current = false;
+        }, 1300);
+      }
+    };
+
+    const handleEnded2 = () => {
+      const currentActive = activeVideoRef.current;
+      if (currentActive === 1 && !fadeTriggeredRef.current && video1Ref.current) {
+        fadeTriggeredRef.current = true;
+        const otherVideo = video1Ref.current;
+        otherVideo.currentTime = 0;
+        otherVideo.play().catch(() => {});
+        if (video2Ref.current) {
+          video2Ref.current.style.opacity = '0';
+        }
+        otherVideo.style.opacity = '1';
+        setActiveVideo(0);
+        setTimeout(() => {
+          fadeTriggeredRef.current = false;
+        }, 1300);
       }
     };
 
     // Attach event listeners to both videos
     video1.addEventListener('timeupdate', handleTimeUpdate);
     video2.addEventListener('timeupdate', handleTimeUpdate);
-    video1.addEventListener('ended', () => handleEnded(video1, activeVideo === 0));
-    video2.addEventListener('ended', () => handleEnded(video2, activeVideo === 1));
+    video1.addEventListener('ended', handleEnded1);
+    video2.addEventListener('ended', handleEnded2);
 
     return () => {
       video1.removeEventListener('timeupdate', handleTimeUpdate);
       video2.removeEventListener('timeupdate', handleTimeUpdate);
-      video1.removeEventListener('ended', () => handleEnded(video1, activeVideo === 0));
-      video2.removeEventListener('ended', () => handleEnded(video2, activeVideo === 1));
+      video1.removeEventListener('ended', handleEnded1);
+      video2.removeEventListener('ended', handleEnded2);
+      video2.removeEventListener('error', handleVideo2Error);
       if (rafIdRef.current !== null) {
         cancelAnimationFrame(rafIdRef.current);
       }
     };
-  }, [activeVideo]);
+  }, [secondVideoLoaded]); // Re-run when second video loads
+
+  // Fallback to static background if video fails
+  if (videoError) {
+    return (
+      <div 
+        className="fixed inset-0 w-full h-full z-0 bg-gradient-to-br from-background via-background/95 to-primary/5"
+        aria-hidden="true"
+      />
+    );
+  }
 
   return (
     <div className="fixed inset-0 w-full h-full z-0">
@@ -135,24 +221,27 @@ const BackgroundVideo = React.memo(function BackgroundVideo() {
       >
         <source src="/animation/menu-background-animated.mp4" type="video/mp4" />
       </video>
-      <video
-        ref={video2Ref}
-        className="fixed inset-0 w-full h-full object-cover transition-opacity duration-[1200ms] ease-in-out"
-        style={{ 
-          opacity: activeVideo === 1 ? 1 : 0,
-          transform: 'translateZ(0)',
-          willChange: 'opacity',
-          backfaceVisibility: 'hidden',
-        }}
-        autoPlay
-        loop
-        muted
-        playsInline
-        preload="auto"
-        aria-hidden="true"
-      >
-        <source src="/animation/menu-background-animated.mp4" type="video/mp4" />
-      </video>
+      {/* Lazy load second video only after first is ready */}
+      {secondVideoLoaded && (
+        <video
+          ref={video2Ref}
+          className="fixed inset-0 w-full h-full object-cover transition-opacity duration-[1200ms] ease-in-out"
+          style={{ 
+            opacity: activeVideo === 1 ? 1 : 0,
+            transform: 'translateZ(0)',
+            willChange: 'opacity',
+            backfaceVisibility: 'hidden',
+          }}
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="auto"
+          aria-hidden="true"
+        >
+          <source src="/animation/menu-background-animated.mp4" type="video/mp4" />
+        </video>
+      )}
     </div>
   );
 });
@@ -189,6 +278,7 @@ function LandingPageContent() {
   const [bootTipIndex, setBootTipIndex] = useState(0);
   const [demoReady, setDemoReady] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [splashVideoError, setSplashVideoError] = useState(false);
   
   // Use a ref to prevent multiple initializations even if component remounts (StrictMode protection)
   const bootstrappingInitRef = useRef(false);
@@ -245,47 +335,109 @@ function LandingPageContent() {
     }
 
     let cancelled = false;
+    const startTime = Date.now();
+    const MIN_DISPLAY_TIME = 1000; // Minimum 1 second display for better UX
 
-    let completedSteps = 0;
-    const totalSteps = 5; // icon, animation, audio, button images, minimum delay
-
-    const advanceProgress = () => {
-      if (cancelled) return;
-      completedSteps += 1;
-      const pct = Math.round((completedSteps / totalSteps) * 100);
-      setBootProgress(pct);
+    // Track individual asset loading progress
+    const assetProgress = {
+      logoImage: 0,
+      logoVideo: 0,
+      buttonImages: 0,
+      audio: 0,
     };
 
-    const preloadImage = (src: string) =>
+    const updateProgress = () => {
+      if (cancelled) return;
+      // Weighted progress: logo (20%), video (30%), buttons (20%), audio (30%)
+      const totalProgress = 
+        assetProgress.logoImage * 0.2 +
+        assetProgress.logoVideo * 0.3 +
+        assetProgress.buttonImages * 0.2 +
+        assetProgress.audio * 0.3;
+      setBootProgress(Math.min(99, Math.round(totalProgress)));
+    };
+
+    const preloadImage = (src: string, onProgress?: (progress: number) => void) =>
       new Promise<void>((resolve) => {
         const img = new Image();
-        img.onload = () => resolve();
-        img.onerror = () => resolve();
-        img.src = src;
+        let progress = 0;
+        
+        // Track loading progress if supported
+        if ('decode' in img) {
+          img.decode()
+            .then(() => {
+              progress = 100;
+              onProgress?.(progress);
+              resolve();
+            })
+            .catch(() => {
+              // Fallback to onload
+              img.onload = () => {
+                progress = 100;
+                onProgress?.(progress);
+                resolve();
+              };
+              img.onerror = () => {
+                onProgress?.(100); // Count as done even on error
+                resolve();
+              };
+              img.src = src;
+            });
+        } else {
+          img.onload = () => {
+            progress = 100;
+            onProgress?.(progress);
+            resolve();
+          };
+          img.onerror = () => {
+            onProgress?.(100); // Count as done even on error
+            resolve();
+          };
+          img.src = src;
+        }
       });
 
-    const preloadVideo = (src: string) =>
+    const preloadVideo = (src: string, onProgress?: (progress: number) => void) =>
       new Promise<void>((resolve) => {
         const video = document.createElement('video');
+        let progress = 0;
+        
+        const updateVideoProgress = () => {
+          if (video.buffered.length > 0 && video.duration > 0) {
+            const bufferedEnd = video.buffered.end(video.buffered.length - 1);
+            progress = Math.min(100, Math.round((bufferedEnd / video.duration) * 100));
+            onProgress?.(progress);
+          }
+        };
+
         const cleanup = () => {
-          video.onloadeddata = null;
-          video.onerror = null;
+          video.removeEventListener('loadeddata', handleLoaded);
+          video.removeEventListener('progress', updateVideoProgress);
+          video.removeEventListener('error', handleError);
         };
-        video.onloadeddata = () => {
+
+        const handleLoaded = () => {
+          progress = 100;
+          onProgress?.(progress);
           cleanup();
           resolve();
         };
-        video.onerror = () => {
+
+        const handleError = () => {
+          progress = 100; // Count as done even on error
+          onProgress?.(progress);
           cleanup();
           resolve();
         };
+
+        video.addEventListener('loadeddata', handleLoaded);
+        video.addEventListener('progress', updateVideoProgress);
+        video.addEventListener('error', handleError);
         video.src = src;
         video.load();
       });
 
-    const minDelay = new Promise<void>((resolve) => setTimeout(resolve, 2000)).then(advanceProgress);
-
-    // Preload all button images for mode selector
+    // Preload all button images for mode selector (parallel)
     const buttonImages = [
       '/buttons/reflexRegular.png',
       '/buttons/reflexHover.png',
@@ -298,30 +450,64 @@ function LandingPageContent() {
       '/buttons/oddoneoutRegular.png',
       '/buttons/oddoneoutHover.png',
     ];
-    const buttonImagePromises = buttonImages.map(img => preloadImage(img));
-    const allButtonImagesPromise = Promise.all(buttonImagePromises).then(advanceProgress);
+    
+    // Track button images progress
+    let buttonImagesLoaded = 0;
+    const buttonImagePromises = buttonImages.map(img => 
+      preloadImage(img, () => {
+        buttonImagesLoaded++;
+        assetProgress.buttonImages = Math.round((buttonImagesLoaded / buttonImages.length) * 100);
+        updateProgress();
+      })
+    );
 
-    const imagePromise = preloadImage('/logo/ReflexIcon.jpg').then(advanceProgress);
-    const videoPromise = preloadVideo('/animation/ReflexIconAnimated.mp4').then(advanceProgress);
-    const audioPromise = preloadAudioAssets().then(advanceProgress);
+    // Preload critical assets in parallel with progress tracking
+    const imagePromise = preloadImage('/logo/ReflexIcon.jpg', (progress) => {
+      assetProgress.logoImage = progress;
+      updateProgress();
+    });
+
+    const videoPromise = preloadVideo('/animation/ReflexIconAnimated.mp4', (progress) => {
+      assetProgress.logoVideo = progress;
+      updateProgress();
+    });
+
+    const audioPromise = preloadAudioAssets().then(() => {
+      assetProgress.audio = 100;
+      updateProgress();
+    });
 
     // Preload game route and 3D bundle in the background while splash is showing
-    // router.prefetch in the app router returns void, so we just fire-and-forget.
     try {
       router.prefetch('/game');
     } catch {
       // Ignore prefetch errors – it will still load on first navigation.
     }
 
-    Promise.all([imagePromise, videoPromise, audioPromise, allButtonImagesPromise, minDelay]).then(() => {
+    // Wait for all assets and minimum display time
+    Promise.all([
+      imagePromise, 
+      videoPromise, 
+      audioPromise, 
+      Promise.all(buttonImagePromises),
+      new Promise<void>((resolve) => {
+        const elapsed = Date.now() - startTime;
+        const remaining = Math.max(0, MIN_DISPLAY_TIME - elapsed);
+        setTimeout(resolve, remaining);
+      })
+    ]).then(() => {
       if (!cancelled) {
-        setBootstrapping(false);
-        // Set sessionStorage flag ONLY after all assets are successfully preloaded
-        // This ensures that if the page unmounts/refreshes before preloading completes,
-        // the next mount will still show the splash and complete the preloading
-        if (typeof window !== 'undefined') {
-          window.sessionStorage.setItem('reflex_boot_done', '1');
-        }
+        setBootProgress(100);
+        // Small delay to show 100% before hiding
+        setTimeout(() => {
+          if (!cancelled) {
+            setBootstrapping(false);
+            // Set sessionStorage flag ONLY after all assets are successfully preloaded
+            if (typeof window !== 'undefined') {
+              window.sessionStorage.setItem('reflex_boot_done', '1');
+            }
+          }
+        }, 200);
       }
     });
 
@@ -396,6 +582,24 @@ function LandingPageContent() {
     }
   }, []);
 
+  // Handle skip loading (Space or Enter key) - MUST be before any conditional returns
+  useEffect(() => {
+    if (!bootstrapping) return;
+
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.key === ' ' || e.key === 'Enter') {
+        e.preventDefault();
+        setBootstrapping(false);
+        if (typeof window !== 'undefined') {
+          window.sessionStorage.setItem('reflex_boot_done', '1');
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [bootstrapping]);
+
   // During SSR or before hydration, always render splash placeholder to match server/client
   if (!mounted) {
     return (
@@ -419,7 +623,12 @@ function LandingPageContent() {
     // Reduced effects / high-contrast: no video, simple static splash
     if (reducedEffects || highContrastMode) {
       return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background text-foreground overflow-hidden">
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-background text-foreground overflow-hidden"
+          role="status"
+          aria-live="polite"
+          aria-label={statusLabel}
+        >
           {/* Hidden warm-up grid runs behind splash to pre-initialize WebGL */}
           <WarmupGrid />
           <div className="relative w-full h-full flex flex-col items-center justify-center gap-6">
@@ -434,15 +643,25 @@ function LandingPageContent() {
               </p>
             </div>
 
-            <div className="w-56 sm:w-72 border-2 border-primary bg-black rounded-full overflow-hidden">
+            <div 
+              className="w-56 sm:w-72 border-2 border-primary bg-black rounded-full overflow-hidden"
+              role="progressbar"
+              aria-valuenow={bootProgress}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label={`Loading progress: ${bootProgress}%`}
+            >
               <div
                 className="h-3 bg-primary transition-all duration-200"
                 style={{ width: `${bootProgress}%` }}
               />
             </div>
 
-            <p className="text-[11px] sm:text-xs text-muted-foreground font-mono tracking-wide">
+            <p className="text-[11px] sm:text-xs text-muted-foreground font-mono tracking-wide" aria-live="polite">
               {bootProgress}%
+            </p>
+            <p className="text-[10px] text-muted-foreground/60 font-mono mt-2">
+              Press Space or Enter to skip
             </p>
           </div>
         </div>
@@ -451,29 +670,52 @@ function LandingPageContent() {
 
     // Full animated splash
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-background text-foreground overflow-hidden">
+      <div 
+        className="fixed inset-0 z-50 flex items-center justify-center bg-background text-foreground overflow-hidden"
+        role="status"
+        aria-live="polite"
+        aria-label={t(language, 'loading.engine')}
+      >
         {/* Hidden warm-up grid runs behind splash to pre-initialize WebGL */}
         <WarmupGrid />
         <div className="relative w-full h-full flex items-center justify-center">
-          <video
-            className="max-w-[520px] w-[70vw] max-h-[70vh] rounded-xl shadow-2xl shadow-primary/40 border-4 border-primary/60 bg-black/80 object-contain"
-            src="/animation/ReflexIconAnimated.mp4"
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="auto"
-            style={{
-              transform: 'translateZ(0)',
-              willChange: 'transform',
-              backfaceVisibility: 'hidden',
-            }}
-          />
+          {splashVideoError ? (
+            // Fallback to static image if video fails
+            <img
+              src="/logo/ReflexIcon.jpg"
+              alt="Reflex This"
+              className="max-w-[520px] w-[70vw] max-h-[70vh] rounded-xl shadow-2xl shadow-primary/40 border-4 border-primary/60 bg-black/80 object-contain"
+            />
+          ) : (
+            <video
+              className="max-w-[520px] w-[70vw] max-h-[70vh] rounded-xl shadow-2xl shadow-primary/40 border-4 border-primary/60 bg-black/80 object-contain"
+              src="/animation/ReflexIconAnimated.mp4"
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="auto"
+              onError={() => setSplashVideoError(true)}
+              style={{
+                transform: 'translateZ(0)',
+                willChange: 'transform',
+                backfaceVisibility: 'hidden',
+              }}
+              aria-hidden="true"
+            />
+          )}
           <div className="pointer-events-none absolute inset-0 bg-gradient-radial from-transparent via-transparent to-black/60" />
 
           {/* Boot progress indicator + tips */}
           <div className="pointer-events-none absolute bottom-10 w-full flex flex-col items-center gap-3 px-4">
-            <div className="w-56 sm:w-72 border-2 border-primary/70 bg-black/70 rounded-full overflow-hidden shadow-lg shadow-primary/30">
+            <div 
+              className="w-56 sm:w-72 border-2 border-primary/70 bg-black/70 rounded-full overflow-hidden shadow-lg shadow-primary/30"
+              role="progressbar"
+              aria-valuenow={bootProgress}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label={`Loading progress: ${bootProgress}%`}
+            >
               <div
                 className="h-3 bg-gradient-to-r from-primary via-secondary to-chart-3 relative transition-all duration-200"
                 style={{ width: `${bootProgress}%` }}
@@ -488,11 +730,14 @@ function LandingPageContent() {
                 />
               </div>
             </div>
-            <p className="text-[11px] sm:text-xs text-muted-foreground font-mono tracking-wide">
+            <p className="text-[11px] sm:text-xs text-muted-foreground font-mono tracking-wide" aria-live="polite">
               {statusLabel} {bootProgress}%
             </p>
-            <p className="text-[11px] sm:text-xs text-foreground/70 font-mono text-center max-w-md">
+            <p className="text-[11px] sm:text-xs text-foreground/70 font-mono text-center max-w-md" aria-live="polite">
               {LOADING_TIPS[bootTipIndex]}
+            </p>
+            <p className="text-[10px] text-muted-foreground/60 font-mono mt-2">
+              Press Space or Enter to skip
             </p>
           </div>
         </div>
@@ -665,8 +910,7 @@ function LandingPageContent() {
         </div>
       </main>
 
-      {/* Hidden warm-up 3D grid to keep WebGL and shaders hot on landing */}
-      <WarmupGrid />
+      {/* WarmupGrid is already rendered during splash, no need to duplicate */}
 
       {/* Unified Settings Modal */}
       <SettingsModal
