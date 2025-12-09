@@ -39,6 +39,7 @@ const DynamicBloom = memo(function DynamicBloom({ comboMilestone, baseIntensity 
   const celebrationIntensityRef = useRef(0);
   const lastMilestoneRef = useRef<number | null>(null);
   const startTimeRef = useRef(0);
+  const lastSetRef = useRef(baseIntensity);
   
   useFrame((state) => {
     const time = state.clock.elapsedTime;
@@ -63,6 +64,7 @@ const DynamicBloom = memo(function DynamicBloom({ comboMilestone, baseIntensity 
     }
     
     // Animate bloom burst (fade out over time)
+    let targetIntensity = baseIntensity;
     if (celebrationIntensityRef.current > 0) {
       const elapsed = time - startTimeRef.current;
       const duration = 0.6; // 600ms bloom burst
@@ -71,14 +73,20 @@ const DynamicBloom = memo(function DynamicBloom({ comboMilestone, baseIntensity 
         const progress = elapsed / duration;
         const fade = 1 - progress * progress; // Ease out
         const currentBurst = celebrationIntensityRef.current * fade;
-        setIntensity(baseIntensity + currentBurst);
+        targetIntensity = baseIntensity + currentBurst;
       } else {
         celebrationIntensityRef.current = 0;
-        setIntensity(baseIntensity);
+        targetIntensity = baseIntensity;
       }
     } else {
       // Smoothly return to base intensity
-      setIntensity(prev => THREE.MathUtils.lerp(prev, baseIntensity, 0.1));
+      targetIntensity = THREE.MathUtils.lerp(lastSetRef.current, baseIntensity, 0.1);
+    }
+
+    // Avoid per-frame state updates when changes are negligible
+    if (Math.abs(targetIntensity - lastSetRef.current) > 0.02) {
+      lastSetRef.current = targetIntensity;
+      setIntensity(targetIntensity);
     }
   });
   
@@ -668,6 +676,7 @@ const ParticleBurst = memo(function ParticleBurst({
     // Update existing particles
     const gravity = -4;
     const activeParticles: PooledParticle[] = [];
+    let activeCount = 0;
     
     particlesRef.current.forEach((particle, i) => {
       particle.life -= delta / particle.maxLife;
@@ -689,30 +698,27 @@ const ParticleBurst = memo(function ParticleBurst({
       const scale = particle.size * particle.life;
       dummy.scale.set(scale, scale, scale);
       dummy.updateMatrix();
-      meshRef.current!.setMatrixAt(activeParticles.length, dummy.matrix);
+      meshRef.current!.setMatrixAt(activeCount, dummy.matrix);
       
       // Update color with fade
       tempColor.copy(particle.color);
       tempColor.multiplyScalar(particle.life);
-      meshRef.current!.setColorAt(activeParticles.length, tempColor);
+      meshRef.current!.setColorAt(activeCount, tempColor);
       
       activeParticles.push(particle);
+      activeCount += 1;
     });
     
     // Update particles array
     particlesRef.current = activeParticles;
     
-    // Hide unused instances
-    for (let i = activeParticles.length; i < PARTICLE_COUNT * 2; i++) {
-      dummy.position.set(0, -100, 0);
-      dummy.scale.set(0, 0, 0);
-      dummy.updateMatrix();
-      meshRef.current.setMatrixAt(i, dummy.matrix);
-    }
-    
-    meshRef.current.instanceMatrix.needsUpdate = true;
-    if (meshRef.current.instanceColor) {
-      meshRef.current.instanceColor.needsUpdate = true;
+    // Render only the active instances
+    meshRef.current.count = activeCount;
+    if (activeCount > 0) {
+      meshRef.current.instanceMatrix.needsUpdate = true;
+      if (meshRef.current.instanceColor) {
+        meshRef.current.instanceColor.needsUpdate = true;
+      }
     }
   });
   
@@ -1585,6 +1591,13 @@ const ButtonMesh = memo(function ButtonMesh({
   const [pressed, setPressed] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [lodLevel, setLodLevel] = useState(0);
+  const isVisibleRef = useRef(true);
+  const lodLevelRef = useRef(0);
+  const buttonPositionRef = useMemo(() => new THREE.Vector3(...position), [position]);
+
+  useEffect(() => {
+    buttonPositionRef.set(position[0], position[1], position[2]);
+  }, [position, buttonPositionRef]);
   
   // Animation state
   const targetDepth = useRef(BASE_DEPTH);
@@ -1605,18 +1618,23 @@ const ButtonMesh = memo(function ButtonMesh({
     // Frustum culling and LOD check (every 10 frames for performance)
     if (cullCheckFrame.current % 10 === 0 && groupRef.current) {
       const visible = isInFrustum(groupRef.current, state.camera);
-      setIsVisible(visible);
+      if (visible !== isVisibleRef.current) {
+        isVisibleRef.current = visible;
+        setIsVisible(visible);
+      }
       
       if (visible) {
-        const buttonPosition = new THREE.Vector3(...position);
-        const lod = calculateLOD(buttonPosition, state.camera);
-        setLodLevel(lod);
+        const lod = calculateLOD(buttonPositionRef, state.camera);
+        if (lod !== lodLevelRef.current) {
+          lodLevelRef.current = lod;
+          setLodLevel(lod);
+        }
       }
     }
     cullCheckFrame.current++;
     
     // Skip rendering if not visible
-    if (!isVisible && !highlighted) {
+    if (!isVisibleRef.current && !highlighted) {
       if (groupRef.current) {
         groupRef.current.visible = false;
       }
