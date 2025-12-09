@@ -35,146 +35,21 @@ import { lazy, Suspense } from 'react';
 import { useTimer } from '@/hooks/useTimer';
 import { useDeviceProfile } from '@/hooks/useDeviceProfile';
 import { MobileGestures } from '@/components/MobileGestures';
-import { TutorialOverlay, type TutorialStep } from '@/components/TutorialOverlay';
+import { TutorialOverlay } from '@/components/TutorialOverlay';
+import { BackgroundVideo } from './components/BackgroundVideo';
+import { PauseModal } from './components/PauseModal';
+import { useTutorial } from './hooks/useTutorial';
+import { useComboMilestones } from './hooks/useComboMilestones';
+import { useScreenEffects } from './hooks/useScreenEffects';
+import { useHighlightButtons } from './hooks/useHighlightButtons';
+import { useGameButtonHandlers } from './hooks/useGameButtonHandlers';
+import { useSequenceMode } from './hooks/useSequenceMode';
+import { useMobileHandlers } from './hooks/useMobileHandlers';
+import { useGameInitialization } from './hooks/useGameInitialization';
 
 // Lazy load heavy modal components
 const GameOverModal = lazy(() => import('@/components/GameOverModal').then(m => ({ default: m.GameOverModal })));
 const SettingsModal = lazy(() => import('@/components/SettingsModal'));
-
-/**
- * BackgroundVideo component - Smooth looping background video with crossfade
- * Optimized for performance with GPU acceleration and efficient event handling
- */
-const BackgroundVideo = React.memo(function BackgroundVideo() {
-  const [activeVideo, setActiveVideo] = useState(0);
-  const video1Ref = useRef<HTMLVideoElement>(null);
-  const video2Ref = useRef<HTMLVideoElement>(null);
-  const fadeTriggeredRef = useRef(false);
-  const rafIdRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    const video1 = video1Ref.current;
-    const video2 = video2Ref.current;
-    if (!video1 || !video2) return;
-
-    // Use timeupdate event for more efficient checking (fires ~4 times per second)
-    const handleTimeUpdate = () => {
-      const currentVideo = activeVideo === 0 ? video1 : video2;
-      const nextVideo = activeVideo === 0 ? video2 : video1;
-      
-      if (!currentVideo || !nextVideo || !currentVideo.duration) return;
-      
-      // Start crossfade earlier to ensure smooth transition - 1.2 seconds before end
-      // This accounts for the 1200ms transition duration
-      if (currentVideo.currentTime >= currentVideo.duration - 1.2 && !fadeTriggeredRef.current) {
-        fadeTriggeredRef.current = true;
-        
-        // Prepare next video - ensure it's ready
-        nextVideo.currentTime = 0;
-        nextVideo.play().catch(() => {});
-        
-        // Wait for next video to be ready before starting fade
-        const checkReady = () => {
-          if (nextVideo.readyState >= 2) { // HAVE_CURRENT_DATA
-            // Use requestAnimationFrame for smoother transitions
-            rafIdRef.current = requestAnimationFrame(() => {
-              if (currentVideo && nextVideo) {
-                currentVideo.style.opacity = '0';
-                nextVideo.style.opacity = '1';
-                setActiveVideo(activeVideo === 0 ? 1 : 0);
-                
-                // Reset trigger after transition completes
-                setTimeout(() => {
-                  fadeTriggeredRef.current = false;
-                }, 1300);
-              }
-            });
-          } else {
-            // Retry if not ready yet
-            requestAnimationFrame(checkReady);
-          }
-        };
-        checkReady();
-      }
-    };
-
-    // Handle video ended event as fallback for smooth looping
-    const handleEnded = (video: HTMLVideoElement, isCurrent: boolean) => {
-      if (isCurrent && !fadeTriggeredRef.current) {
-        // If we missed the timeupdate, force transition
-        const otherVideo = video === video1 ? video2 : video1;
-        if (otherVideo) {
-          fadeTriggeredRef.current = true;
-          otherVideo.currentTime = 0;
-          otherVideo.play().catch(() => {});
-          video.style.opacity = '0';
-          otherVideo.style.opacity = '1';
-          setActiveVideo(video === video1 ? 1 : 0);
-          setTimeout(() => {
-            fadeTriggeredRef.current = false;
-          }, 1300);
-        }
-      }
-    };
-
-    // Attach event listeners to both videos
-    video1.addEventListener('timeupdate', handleTimeUpdate);
-    video2.addEventListener('timeupdate', handleTimeUpdate);
-    video1.addEventListener('ended', () => handleEnded(video1, activeVideo === 0));
-    video2.addEventListener('ended', () => handleEnded(video2, activeVideo === 1));
-
-    return () => {
-      video1.removeEventListener('timeupdate', handleTimeUpdate);
-      video2.removeEventListener('timeupdate', handleTimeUpdate);
-      video1.removeEventListener('ended', () => handleEnded(video1, activeVideo === 0));
-      video2.removeEventListener('ended', () => handleEnded(video2, activeVideo === 1));
-      if (rafIdRef.current !== null) {
-        cancelAnimationFrame(rafIdRef.current);
-      }
-    };
-  }, [activeVideo]);
-
-  return (
-    <div className="fixed inset-0 w-full h-full z-0">
-      <video
-        ref={video1Ref}
-        className="fixed inset-0 w-full h-full object-cover transition-opacity duration-1200 ease-in-out"
-        style={{ 
-          opacity: activeVideo === 0 ? 1 : 0,
-          transform: 'translateZ(0)',
-          willChange: 'opacity',
-          backfaceVisibility: 'hidden',
-        }}
-        autoPlay
-        loop
-        muted
-        playsInline
-        preload="auto"
-        aria-hidden="true"
-      >
-        <source src="/animation/menu-background-animated.mp4" type="video/mp4" />
-      </video>
-      <video
-        ref={video2Ref}
-        className="fixed inset-0 w-full h-full object-cover transition-opacity duration-1200 ease-in-out"
-        style={{ 
-          opacity: activeVideo === 1 ? 1 : 0,
-          transform: 'translateZ(0)',
-          willChange: 'opacity',
-          backfaceVisibility: 'hidden',
-        }}
-        autoPlay
-        loop
-        muted
-        playsInline
-        preload="auto"
-        aria-hidden="true"
-      >
-        <source src="/animation/menu-background-animated.mp4" type="video/mp4" />
-      </video>
-    </div>
-  );
-});
 
 export default function GamePage() {
   const router = useRouter();
@@ -236,204 +111,43 @@ export default function GamePage() {
   const [buttonPressFeedback, setButtonPressFeedback] = useState<Record<number, 'correct' | 'incorrect' | null>>({});
   const [buttonReactionTimes, setButtonReactionTimes] = useState<Record<number, number | null>>({});
   const [oddOneOutTarget, setOddOneOutTarget] = useState<number | null>(null);
-  const [tutorialMode, setTutorialMode] = useState<GameMode | null>(null);
-  const [tutorialStepIndex, setTutorialStepIndex] = useState(0);
-  const [showTutorialOverlay, setShowTutorialOverlay] = useState(false);
-  const [pendingStartAfterTutorial, setPendingStartAfterTutorial] = useState(false);
-  const [resumeAfterTutorial, setResumeAfterTutorial] = useState(false);
-  const [tutorialCompletion, setTutorialCompletion] = useState<Record<GameMode, boolean>>({
-    reflex: false,
-    sequence: false,
-    survival: false,
-    nightmare: false,
-    oddOneOut: false,
-  });
-  const [tutorialLoaded, setTutorialLoaded] = useState(false);
   
   // Track previous values for performance feedback
   const previousComboRef = useRef(0);
   const previousScoreRef = useRef(0);
   const [currentReactionTime, setCurrentReactionTime] = useState<number | null>(null);
   const [isNewBestReaction, setIsNewBestReaction] = useState(false);
-  
-  // Track combo milestones for celebration effects (5, 10, 20, 30, 50)
-  const [comboMilestone, setComboMilestone] = useState<number | null>(null);
-  const lastMilestoneRef = useRef<number>(0);
   // Bonus target & micro-objectives
   const [bonusButtonId, setBonusButtonId] = useState<number | null>(null);
   const [bonusActive, setBonusActive] = useState(false);
   const [bonusHighlightDuration, setBonusHighlightDuration] = useState<number | null>(null);
   const [fastStreakCount, setFastStreakCount] = useState(0);
   const [fastStreakActive, setFastStreakActive] = useState(false);
+  
+  // Settings modal state
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [pausedByMenu, setPausedByMenu] = useState(false);
+  const [showPauseModal, setShowPauseModal] = useState(false);
 
   const { deviceInfo, quality } = useDeviceProfile();
-  const tutorialStorageKey = useCallback((mode: GameMode) => `rt_tutorial_done_${mode}_v1`, []);
-  const tutorialStepsByMode: Record<GameMode, TutorialStep[]> = useMemo(
-    () => ({
-      reflex: [
-        {
-          id: 'reflex-1',
-          title: t(language, 'tutorial.reflex.1.title'),
-          body: t(language, 'tutorial.reflex.1.body'),
-        },
-        {
-          id: 'reflex-2',
-          title: t(language, 'tutorial.reflex.2.title'),
-          body: t(language, 'tutorial.reflex.2.body'),
-          callout: t(language, 'tutorial.reflex.2.callout'),
-        },
-        {
-          id: 'reflex-3',
-          title: t(language, 'tutorial.reflex.3.title'),
-          body: t(language, 'tutorial.reflex.3.body'),
-        },
-      ],
-      sequence: [
-        {
-          id: 'sequence-1',
-          title: t(language, 'tutorial.sequence.1.title'),
-          body: t(language, 'tutorial.sequence.1.body'),
-        },
-        {
-          id: 'sequence-2',
-          title: t(language, 'tutorial.sequence.2.title'),
-          body: t(language, 'tutorial.sequence.2.body'),
-          callout: t(language, 'tutorial.sequence.2.callout'),
-        },
-        {
-          id: 'sequence-3',
-          title: t(language, 'tutorial.sequence.3.title'),
-          body: t(language, 'tutorial.sequence.3.body'),
-        },
-      ],
-      survival: [
-        {
-          id: 'survival-1',
-          title: t(language, 'tutorial.survival.1.title'),
-          body: t(language, 'tutorial.survival.1.body'),
-        },
-        {
-          id: 'survival-2',
-          title: t(language, 'tutorial.survival.2.title'),
-          body: t(language, 'tutorial.survival.2.body'),
-        },
-        {
-          id: 'survival-3',
-          title: t(language, 'tutorial.survival.3.title'),
-          body: t(language, 'tutorial.survival.3.body'),
-        },
-      ],
-      nightmare: [
-        {
-          id: 'nightmare-1',
-          title: t(language, 'tutorial.nightmare.1.title'),
-          body: t(language, 'tutorial.nightmare.1.body'),
-        },
-        {
-          id: 'nightmare-2',
-          title: t(language, 'tutorial.nightmare.2.title'),
-          body: t(language, 'tutorial.nightmare.2.body'),
-        },
-        {
-          id: 'nightmare-3',
-          title: t(language, 'tutorial.nightmare.3.title'),
-          body: t(language, 'tutorial.nightmare.3.body'),
-        },
-      ],
-      oddOneOut: [
-        {
-          id: 'odd-1',
-          title: t(language, 'tutorial.odd.1.title'),
-          body: t(language, 'tutorial.odd.1.body'),
-        },
-        {
-          id: 'odd-2',
-          title: t(language, 'tutorial.odd.2.title'),
-          body: t(language, 'tutorial.odd.2.body'),
-          callout: t(language, 'tutorial.odd.2.callout'),
-        },
-        {
-          id: 'odd-3',
-          title: t(language, 'tutorial.odd.3.title'),
-          body: t(language, 'tutorial.odd.3.body'),
-        },
-      ],
-    }),
-    [language]
-  );
-
-  // Load tutorial completion flags from storage
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const map: Record<GameMode, boolean> = {
-      reflex: localStorage.getItem(tutorialStorageKey('reflex')) === 'true',
-      sequence: localStorage.getItem(tutorialStorageKey('sequence')) === 'true',
-      survival: localStorage.getItem(tutorialStorageKey('survival')) === 'true',
-      nightmare: localStorage.getItem(tutorialStorageKey('nightmare')) === 'true',
-      oddOneOut: localStorage.getItem(tutorialStorageKey('oddOneOut')) === 'true',
-    };
-    setTutorialCompletion(map);
-    setTutorialLoaded(true);
-  }, [tutorialStorageKey]);
-
-  const startGameplay = useCallback(() => {
-    setIsReady(true);
-    startGame();
-  }, [startGame]);
   
-  // Detect combo milestones - Expanded list: 5, 10, 15, 20, 25, 30, 40, 50, 75, 100
-  useEffect(() => {
-    const milestones = [5, 10, 15, 20, 25, 30, 40, 50, 75, 100];
-    
-    // Check if we crossed a new milestone threshold
-    for (const milestone of milestones) {
-      if (combo >= milestone && previousComboRef.current < milestone && milestone > lastMilestoneRef.current) {
-        lastMilestoneRef.current = milestone;
-        setComboMilestone(milestone);
-        
-        // Play combo sound
-        playSound('combo', soundEnabled);
-        
-        // Trigger screen flash for combo milestone
-        let flashTimer: NodeJS.Timeout | null = null;
-        if (screenFlashEnabled) {
-          // Map milestone to valid flash type (use closest available)
-          let flashType: 'combo-5' | 'combo-10' | 'combo-20' | 'combo-30' | 'combo-50' = 'combo-5';
-          if (milestone >= 50) flashType = 'combo-50';
-          else if (milestone >= 30) flashType = 'combo-30';
-          else if (milestone >= 20) flashType = 'combo-20';
-          else if (milestone >= 10) flashType = 'combo-10';
-          else flashType = 'combo-5';
-          
-          setScreenFlash(flashType);
-          // Longer duration for higher milestones
-          const flashDuration = milestone >= 75 ? 500 : milestone >= 50 ? 400 : milestone >= 30 ? 350 : milestone >= 20 ? 300 : milestone >= 10 ? 250 : 200;
-          flashTimer = setTimer(() => {
-            setScreenFlash(null);
-          }, reducedEffects ? flashDuration * 0.5 : flashDuration);
-        }
-        
-        // Clear milestone after animation duration
-        const milestoneTimer = setTimer(() => {
-          setComboMilestone(null);
-        }, 1000);
-        
-        // Cleanup both timers
-        return () => {
-          clearTimer(milestoneTimer);
-          if (flashTimer) {
-            clearTimer(flashTimer);
-          }
-        };
-      }
-    }
-    
-    // Reset milestone tracking when combo resets to 0
-    if (combo === 0) {
-      lastMilestoneRef.current = 0;
-    }
-  }, [combo, screenFlashEnabled, reducedEffects, soundEnabled]);
+  // Screen effects hook - must be before useHighlightButtons
+  const { screenShake, setScreenShake } = useScreenEffects({
+    screenShakeEnabled,
+    reducedEffects,
+  });
   
+  // Combo milestones hook
+  const { comboMilestone } = useComboMilestones({
+    combo,
+    soundEnabled,
+    screenFlashEnabled,
+    reducedEffects,
+    setScreenFlash,
+    setTimer,
+    clearTimer,
+  });
+
   // Update previous values when combo/score change
   useEffect(() => {
     previousComboRef.current = combo;
@@ -477,205 +191,147 @@ export default function GamePage() {
     isProcessingRef.current = false;
   }, [pauseGame, clearHighlightTimer, setHighlightedButtons]);
 
-  const markTutorialDone = useCallback(
-    (mode: GameMode) => {
-      setTutorialCompletion((prev) => ({ ...prev, [mode]: true }));
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(tutorialStorageKey(mode), 'true');
-      }
-    },
-    [tutorialStorageKey]
-  );
+  // Highlight new buttons hook
+  const { highlightNewButtons } = useHighlightButtons({
+    gameOver,
+    isReady,
+    isPausedRef,
+    isProcessingRef,
+    gameMode,
+    score,
+    difficulty,
+    lives,
+    soundEnabled,
+    screenShakeEnabled,
+    screenFlashEnabled,
+    reducedEffects,
+    setHighlightedButtons,
+    setOddOneOutTarget,
+    setBonusButtonId,
+    setBonusActive,
+    setHighlightDuration,
+    setBonusHighlightDuration,
+    setHighlightStartTimeState,
+    setScreenShake,
+    setScreenFlash,
+    decrementLives,
+    clearHighlightTimer,
+    setTimer,
+    timerRef,
+    nextHighlightTimerRef,
+    lastHighlightedRef,
+    currentHighlightedRef,
+    highlightStartTimeRef,
+  });
 
-  const openTutorial = useCallback(
-    (mode: GameMode, autoStartAfter = false, resumeAfter = false) => {
-      setTutorialMode(mode);
-      setTutorialStepIndex(0);
-      setShowTutorialOverlay(true);
-      setPendingStartAfterTutorial(autoStartAfter);
-      setResumeAfterTutorial(resumeAfter);
-      if (resumeAfter) {
-        pauseGameAndClearState();
-      }
-    },
-    [pauseGameAndClearState]
-  );
-
-  // Highlight new buttons
-  const highlightNewButtons = useCallback(function highlightNewButtonsInternal() {
-    if (gameOver || isProcessingRef.current || !isReady || isPausedRef.current) return;
-
-    clearHighlightTimer();
-    isProcessingRef.current = true;
-
-    let newHighlighted: number[] = [];
-
-    if (gameMode === 'oddOneOut') {
-      // Odd One Out mode: always show a small cluster of buttons and pick a single correct target
-      const baseCount = getButtonsToHighlightForDifficulty(score, difficulty);
-      // Clamp to 3–6 buttons for better visual discrimination
-      const buttonCount = Math.min(6, Math.max(3, baseCount));
-      newHighlighted = getRandomButtons(buttonCount, 10);
-      if (newHighlighted.length > 0) {
-        const targetIndex = Math.floor(Math.random() * newHighlighted.length);
-        setOddOneOutTarget(newHighlighted[targetIndex]);
-      } else {
-        setOddOneOutTarget(null);
-      }
-    } else {
-      const buttonCount = getButtonsToHighlightForDifficulty(score, difficulty);
-      newHighlighted = getRandomButtons(
-        buttonCount,
-        10,
-        lastHighlightedRef.current
-      );
-      setOddOneOutTarget(null);
-
-      // Occasionally spawn a bonus button in reflex / survival / nightmare
-      if ((gameMode === 'reflex' || gameMode === 'survival' || gameMode === 'nightmare') && Math.random() < 0.18) {
-        const available = Array.from({ length: 10 }, (_, i) => i + 1).filter(
-          (id) => !newHighlighted.includes(id)
-        );
-        if (available.length > 0) {
-          const idx = Math.floor(Math.random() * available.length);
-          const bonusId = available[idx];
-          newHighlighted = [...newHighlighted, bonusId];
-          setBonusButtonId(bonusId);
-          setBonusActive(true);
-        } else {
-          setBonusButtonId(null);
-          setBonusActive(false);
-        }
-      } else {
-        setBonusButtonId(null);
-        setBonusActive(false);
-      }
-    }
-
-    lastHighlightedRef.current = newHighlighted;
-
-    setHighlightedButtons(newHighlighted);
-    currentHighlightedRef.current = newHighlighted;
-    const timestamp = Date.now();
-    highlightStartTimeRef.current = timestamp; // Track when buttons were highlighted
-    setHighlightStartTimeState(timestamp); // Update state for memo dependency
-    isProcessingRef.current = false;
-
-    // Play highlight sound
-    playSound('highlight', soundEnabled);
-
-    // Set timer to clear highlight and penalize if not pressed in time
-    const duration = getHighlightDurationForDifficulty(score, difficulty);
-    setHighlightDuration(duration);
-    setBonusHighlightDuration(bonusActive ? Math.max(200, duration * 0.6) : null);
-    timerRef.current = setTimer(() => {
-      // Check if buttons are still highlighted (not pressed)
-      if (currentHighlightedRef.current.length > 0) {
-        setHighlightedButtons([]);
-        currentHighlightedRef.current = [];
-        highlightStartTimeRef.current = null;
-        setHighlightStartTimeState(null);
-        setOddOneOutTarget(null);
-        
-        // Trigger screen shake for missed buttons (respect comfort settings)
-        if (screenShakeEnabled && !reducedEffects) {
-          setScreenShake(true);
-          setTimer(() => {
-            setScreenShake(false);
-          }, 400);
-        }
-        
-        if (screenFlashEnabled) {
-          setScreenFlash('error');
-          setTimer(() => setScreenFlash(null), reducedEffects ? 150 : 300);
-        }
-        // Calculate new lives before calling decrementLives (which updates state async)
-        const livesAfterDecrement = lives - 1;
-        decrementLives();
-      
-        // Schedule next highlight if player will still have lives after this decrement
-        if (livesAfterDecrement > 0) {
-        nextHighlightTimerRef.current = setTimer(() => {
-          highlightNewButtonsInternal();
-        }, 1000);
-        }
-      }
-    }, duration);
-  }, [score, difficulty, lives, isReady, setHighlightedButtons, decrementLives, clearHighlightTimer, soundEnabled, gameMode]);
-
-  const handleTutorialFinish = useCallback(
-    (remember: boolean) => {
-      if (!tutorialMode) return;
-      if (remember) {
-        markTutorialDone(tutorialMode);
-      }
-      setShowTutorialOverlay(false);
-      setTutorialMode(null);
-      const shouldStart = pendingStartAfterTutorial;
-      const shouldResume = resumeAfterTutorial;
-      setPendingStartAfterTutorial(false);
-      setResumeAfterTutorial(false);
-
-      if (shouldStart) {
-        startGameplay();
-      } else if (shouldResume) {
-        resumeGame();
-        // If nothing highlighted, kick off next highlight after resuming
-        if (!gameOver && highlightedButtons.length === 0 && !isProcessingRef.current) {
-          highlightNewButtons();
-        }
-      }
-    },
-    [
-      tutorialMode,
-      markTutorialDone,
-      pendingStartAfterTutorial,
-      resumeAfterTutorial,
-      startGameplay,
-      resumeGame,
-      gameOver,
-      highlightedButtons.length,
-      highlightNewButtons,
-    ]
-  );
-
-  const restartForMobile = useCallback(() => {
-    pauseGameAndClearState();
-    resetGame();
+  const startGameplay = useCallback(() => {
     setIsReady(true);
     startGame();
-  }, [pauseGameAndClearState, resetGame, startGame]);
+  }, [startGame]);
 
-  const togglePauseForMobile = useCallback(() => {
-    if (!isReady || gameOver) return;
-    if (isPaused) {
-      setShowPauseModal(false);
-      isPausedRef.current = false;
-      resumeGame();
-      if (!gameOver && highlightedButtons.length === 0 && !isProcessingRef.current) {
-        highlightNewButtons();
-      }
-    } else {
-      pauseGameAndClearState();
-      setShowPauseModal(true);
-    }
-  }, [
-    gameOver,
-    highlightNewButtons,
-    highlightedButtons.length,
-    isPaused,
-    isReady,
+  // Tutorial hook - must be after highlightNewButtons is defined
+  const {
+    tutorialMode,
+    tutorialStepIndex,
+    setTutorialStepIndex,
+    showTutorialOverlay,
+    tutorialCompletion,
+    tutorialLoaded,
+    tutorialStepsByMode,
+    openTutorial,
+    handleTutorialFinish,
+  } = useTutorial({
+    language,
     pauseGameAndClearState,
+    startGameplay,
     resumeGame,
-  ]);
+    gameOver,
+    highlightedButtons,
+    isProcessingRef,
+    highlightNewButtons,
+  });
+
+  // Mobile handlers hook
+  const { restartForMobile, togglePauseForMobile } = useMobileHandlers({
+    isReady,
+    gameOver,
+    isPaused,
+    highlightedButtons,
+    isProcessingRef,
+    isPausedRef,
+    pauseGameAndClearState,
+    resetGame,
+    setIsReady,
+    startGame,
+    resumeGame,
+    highlightNewButtons,
+    setShowPauseModal,
+  });
 
   
-  // Sequence mode state
-  const [sequence, setSequence] = useState<number[]>([]);
-  const [playerSequence, setPlayerSequence] = useState<number[]>([]);
-  const [isShowingSequence, setIsShowingSequence] = useState(false);
-  const [isWaitingForInput, setIsWaitingForInput] = useState(false);
+  // Sequence mode hook
   const sequenceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const latencyMonitorRef = useRef<{ recordFeedback: (buttonId: number) => void } | undefined>(undefined);
+  const {
+    sequence,
+    playerSequence,
+    isShowingSequence,
+    isWaitingForInput,
+    showSequence,
+    handleSequenceButtonPress,
+    resetSequence,
+  } = useSequenceMode({
+    gameOver,
+    isReady,
+    isPausedRef,
+    isProcessingRef,
+    score,
+    difficulty,
+    combo,
+    screenShakeEnabled,
+    screenFlashEnabled,
+    reducedEffects,
+    soundEnabled,
+    highlightedButtons,
+    latencyMonitorRef,
+    setHighlightedButtons,
+    setButtonPressFeedback,
+    setScreenShake,
+    setScreenFlash,
+    incrementScore,
+    decrementLives,
+    clearHighlightTimer,
+    setTimer,
+    previousComboRef,
+    previousScoreRef,
+    sequenceTimerRef,
+  });
+
+  // Auto-start sequence mode when ready
+  useEffect(() => {
+    if (
+      gameMode === 'sequence' &&
+      !gameOver &&
+      isReady &&
+      !isPaused &&
+      !isProcessingRef.current &&
+      sequence.length === 0 &&
+      !isShowingSequence &&
+      !isWaitingForInput
+    ) {
+      showSequence();
+    }
+  }, [
+    gameMode,
+    gameOver,
+    isReady,
+    isPaused,
+    isProcessingRef,
+    sequence.length,
+    isShowingSequence,
+    isWaitingForInput,
+    showSequence,
+  ]);
 
   // Memoized keybinding map for control hints - only recalculates when keybindings change
   const keybindingHints: Record<number, string> = useMemo(() => {
@@ -718,372 +374,70 @@ export default function GamePage() {
     isPausedRef.current = isPaused;
   }, [isPaused]);
 
-  // Handle button press (Reflex / Survival / Nightmare modes)
-  const handleReflexButtonPress = useCallback(
-    (buttonId: number) => {
-      if (gameOver || isPausedRef.current || !isReady || !highlightedButtons.length || isProcessingRef.current) {
-        return;
-      }
+  // Game button handlers hook
+  const { handleReflexButtonPress, handleOddOneOutButtonPress } = useGameButtonHandlers({
+    gameOver,
+    isReady,
+    isPausedRef,
+    isProcessingRef,
+    gameMode,
+    highlightedButtons,
+    oddOneOutTarget,
+    bonusActive,
+    bonusButtonId,
+    fastStreakActive,
+    maxLives,
+    lives,
+    reactionTimeStats,
+    screenShakeEnabled,
+    screenFlashEnabled,
+    reducedEffects,
+    soundEnabled,
+    highlightStartTimeRef,
+    currentHighlightedRef,
+    nextHighlightTimerRef,
+    latencyMonitorRef,
+    setButtonPressFeedback,
+    setButtonReactionTimes,
+    setCurrentReactionTime,
+    setIsNewBestReaction,
+    setHighlightedButtons,
+    setHighlightStartTimeState,
+    setHighlightDuration,
+    setOddOneOutTarget,
+    setBonusActive,
+    setBonusButtonId,
+    setBonusHighlightDuration,
+    setScreenShake,
+    setScreenFlash,
+    setFastStreakCount,
+    setFastStreakActive,
+    setLives,
+    incrementScore,
+    decrementLives,
+    clearHighlightTimer,
+    highlightNewButtons,
+    setTimer,
+  });
 
-      const isBonusHit = bonusActive && bonusButtonId === buttonId;
-
-      if (highlightedButtons.includes(buttonId)) {
-        // Calculate reaction time
-        const reactionTime = highlightStartTimeRef.current
-          ? Date.now() - highlightStartTimeRef.current
-          : 0;
-
-        // Check if this is a new best reaction time
-        const wasNewBest = reactionTimeStats.fastest === null || reactionTime < reactionTimeStats.fastest;
-        setIsNewBestReaction(wasNewBest);
-        setCurrentReactionTime(reactionTime);
-
-        // Correct button pressed - show feedback and particles
-        // Use requestAnimationFrame for immediate visual feedback to minimize latency
-        requestAnimationFrame(() => {
-          setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: 'correct' }));
-          setButtonReactionTimes((prev) => ({ ...prev, [buttonId]: reactionTime }));
-          
-          // Record visual feedback timestamp for latency monitoring
-          if (latencyMonitor) {
-            latencyMonitor.recordFeedback(buttonId);
-          }
-        });
-        setTimer(() => {
-          startTransition(() => {
-            setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: null }));
-            setButtonReactionTimes((prev) => ({ ...prev, [buttonId]: null }));
-          });
-        }, 300);
-
-        // Increment score, with a small bonus multiplier when a fast-streak objective is active
-        if (fastStreakActive) {
-          incrementScore(Math.max(1, Math.floor(reactionTime * 0.8)));
-        } else {
-          incrementScore(reactionTime);
-        }
-        // Success flash (respect comfort settings)
-        if (screenFlashEnabled) {
-          setScreenFlash('success');
-          setTimer(
-            () => setScreenFlash(null),
-            reducedEffects ? 120 : 200
-          );
-        }
-        
-        // Reset reaction time after a short delay to allow feedback to process
-        setTimer(() => {
-          setCurrentReactionTime(null);
-          setIsNewBestReaction(false);
-        }, 100);
-
-        // Micro-objective: track fast streaks (e.g. < 250ms) only in reflex/survival/nightmare
-        if (
-          (gameMode === 'reflex' || gameMode === 'survival' || gameMode === 'nightmare') &&
-          reactionTime > 0 &&
-          reactionTime <= 250
-        ) {
-          setFastStreakCount((prev) => {
-            const next = prev + 1;
-            if (!fastStreakActive && next >= 5) {
-              setFastStreakActive(true);
-              // Temporary objective buff ends automatically after a short delay
-              setTimer(() => setFastStreakActive(false), 8000);
-            }
-            return next;
-          });
-        } else {
-          setFastStreakCount(0);
-        }
-
-        // Bonus button: heal (except survival) and extra score
-        if (isBonusHit) {
-          setBonusActive(false);
-          setBonusButtonId(null);
-          setBonusHighlightDuration(null);
-          // Heal 1 life up to maxLives (skip in survival mode - only 1 life)
-          if (gameMode !== 'survival') {
-            setLives(Math.min(maxLives, lives + 1));
-          }
-          // Extra celebratory flash
-          if (screenFlashEnabled) {
-            setScreenFlash('combo-5');
-            setTimer(
-              () => setScreenFlash(null),
-              reducedEffects ? 150 : 260
-            );
-          }
-        }
-
-        // Remove this button from highlighted buttons
-        const updatedHighlighted = highlightedButtons.filter(
-          (id) => id !== buttonId
-        );
-        setHighlightedButtons(updatedHighlighted);
-        currentHighlightedRef.current = updatedHighlighted;
-
-        // If all highlighted buttons are pressed, reset highlight time
-        if (updatedHighlighted.length === 0) {
-          highlightStartTimeRef.current = null;
-          setHighlightStartTimeState(null);
-          setHighlightDuration(0);
-          clearHighlightTimer();
-          nextHighlightTimerRef.current = setTimer(() => {
-            highlightNewButtons();
-          }, 500);
-        }
-      } else {
-        // Wrong button pressed - show feedback, screen shake, and error particles
-        // Use requestAnimationFrame for immediate visual feedback
-        requestAnimationFrame(() => {
-          setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: 'incorrect' }));
-          
-          // Record visual feedback timestamp for latency monitoring
-          if (latencyMonitor) {
-            latencyMonitor.recordFeedback(buttonId);
-          }
-        });
-        setTimer(() => {
-          startTransition(() => {
-            setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: null }));
-          });
-        }, 300);
-
-        // Trigger screen shake (respect comfort settings)
-        if (screenShakeEnabled && !reducedEffects) {
-          setScreenShake(true);
-          setTimer(() => {
-            setScreenShake(false);
-          }, 400);
-        }
-
-        playSound('error', soundEnabled);
-        if (screenFlashEnabled) {
-          setScreenFlash('error');
-          setTimer(() => setScreenFlash(null), reducedEffects ? 150 : 300);
-        }
-        
-        // Clear highlighted buttons (match behavior when timer expires)
-        setHighlightedButtons([]);
-        currentHighlightedRef.current = [];
-        highlightStartTimeRef.current = null;
-        setHighlightStartTimeState(null);
-        setHighlightDuration(0);
-        clearHighlightTimer();
-        
-        // Calculate new lives before calling decrementLives (which updates state async)
-        const livesAfterDecrement = lives - 1;
-        decrementLives();
-        
-        // Schedule next highlight if player will still have lives after this decrement
-        if (livesAfterDecrement > 0) {
-          nextHighlightTimerRef.current = setTimer(() => {
-            highlightNewButtons();
-          }, 1000);
-        }
-      }
-    },
-    [
-      highlightedButtons,
-      lives,
-      isReady,
-      reactionTimeStats,
-      incrementScore,
-      setHighlightedButtons,
-      decrementLives,
-      clearHighlightTimer,
-      highlightNewButtons,
-      soundEnabled,
-      screenShakeEnabled,
-      screenFlashEnabled,
-      reducedEffects,
-      setTimer,
-    ]
-  );
+  // OLD HANDLERS REMOVED - Now using useGameButtonHandlers hook
   
-  // Handle button press (Odd One Out mode)
-  const handleOddOneOutButtonPress = useCallback(
-    (buttonId: number) => {
-      if (gameMode !== 'oddOneOut') return;
-      if (gameOver || isPausedRef.current || !isReady || !highlightedButtons.length || isProcessingRef.current) {
-        return;
-      }
-
-      const isHighlighted = highlightedButtons.includes(buttonId);
-      const isCorrect = isHighlighted && oddOneOutTarget !== null && buttonId === oddOneOutTarget;
-
-      if (isCorrect) {
-        // Calculate reaction time from when this cluster appeared
-        const reactionTime = highlightStartTimeRef.current
-          ? Date.now() - highlightStartTimeRef.current
-          : 0;
-
-        const wasNewBest =
-          reactionTimeStats.fastest === null || reactionTime < reactionTimeStats.fastest;
-        setIsNewBestReaction(wasNewBest);
-        setCurrentReactionTime(reactionTime);
-
-        // Correct target pressed
-        startTransition(() => {
-          setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: 'correct' }));
-          setButtonReactionTimes((prev) => ({ ...prev, [buttonId]: reactionTime }));
-        });
-        setTimer(() => {
-          startTransition(() => {
-            setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: null }));
-            setButtonReactionTimes((prev) => ({ ...prev, [buttonId]: null }));
-          });
-        }, 300);
-
-        incrementScore(reactionTime);
-
-        if (screenFlashEnabled) {
-          setScreenFlash('success');
-          setTimer(() => setScreenFlash(null), reducedEffects ? 120 : 200);
-        }
-
-        setTimer(() => {
-          setCurrentReactionTime(null);
-          setIsNewBestReaction(false);
-        }, 100);
-
-        // Clear this round and schedule next cluster
-        setHighlightedButtons([]);
-        currentHighlightedRef.current = [];
-        highlightStartTimeRef.current = null;
-        setHighlightStartTimeState(null);
-        setHighlightDuration(0);
-        clearHighlightTimer();
-        setOddOneOutTarget(null);
-
-        nextHighlightTimerRef.current = setTimer(() => {
-          highlightNewButtons();
-        }, 700);
-      } else {
-        // Any wrong press (non-highlighted or non-target highlight) is a mistake
-        requestAnimationFrame(() => {
-          setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: 'incorrect' }));
-          
-          // Record visual feedback timestamp for latency monitoring
-          if (latencyMonitor) {
-            latencyMonitor.recordFeedback(buttonId);
-          }
-        });
-        setTimer(() => {
-          setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: null }));
-        }, 300);
-
-        if (screenShakeEnabled && !reducedEffects) {
-          setScreenShake(true);
-          setTimer(() => {
-            setScreenShake(false);
-          }, 400);
-        }
-
-        playSound('error', soundEnabled);
-        if (screenFlashEnabled) {
-          setScreenFlash('error');
-          setTimer(() => setScreenFlash(null), reducedEffects ? 150 : 300);
-        }
-
-        // Clear current cluster and penalize
-        setHighlightedButtons([]);
-        currentHighlightedRef.current = [];
-        highlightStartTimeRef.current = null;
-        setHighlightStartTimeState(null);
-        setHighlightDuration(0);
-        clearHighlightTimer();
-        setOddOneOutTarget(null);
-
-        const livesAfterDecrement = lives - 1;
-        decrementLives();
-
-        if (livesAfterDecrement > 0) {
-          nextHighlightTimerRef.current = setTimer(() => {
-            highlightNewButtons();
-          }, 1000);
-        }
-      }
-    },
-    [
-      gameMode,
-      gameOver,
-      isReady,
-      highlightedButtons,
-      oddOneOutTarget,
-      reactionTimeStats,
-      incrementScore,
-      setHighlightedButtons,
-      clearHighlightTimer,
-      highlightNewButtons,
-      lives,
-      decrementLives,
-      screenShakeEnabled,
-      reducedEffects,
-      soundEnabled,
-      screenFlashEnabled,
-      setTimer,
-    ]
-  );
-  
-  // Handle ready button click - show tutorial first if needed
-  const handleReady = useCallback(() => {
-    if (!tutorialLoaded) return;
-    if (!tutorialCompletion[gameMode]) {
-      openTutorial(gameMode, true, false);
-      return;
-    }
-    startGameplay();
-  }, [tutorialLoaded, tutorialCompletion, gameMode, openTutorial, startGameplay]);
-
-  // Track if game has been initialized to prevent resetting on every render
-  const hasInitializedRef = useRef(false);
-  const isInitialMountRef = useRef(true);
-  
-  // Initialize game on mount - show loading screen once
-  useEffect(() => {
-    // Only run on initial mount
-    if (isInitialMountRef.current) {
-      isInitialMountRef.current = false;
-      
-      // Ensure we're using the latest game mode and difficulty from context
-      // The context state should already be updated from the selector, but we
-      // verify it matches localStorage as a fallback to ensure consistency
-      if (typeof window !== 'undefined') {
-        const storedMode = localStorage.getItem('reflexthis_gameMode');
-        const storedDifficulty = localStorage.getItem('reflexthis_difficulty');
-        
-        // If localStorage has different values than context, sync them
-        // This handles the case where state updates haven't propagated yet
-        if (storedMode && ['reflex', 'sequence', 'survival', 'nightmare', 'oddOneOut'].includes(storedMode) && storedMode !== gameMode) {
-          setGameMode(storedMode as GameMode);
-        }
-        if (storedDifficulty && ['easy', 'medium', 'hard', 'nightmare'].includes(storedDifficulty) && storedDifficulty !== difficulty) {
-          setDifficulty(storedDifficulty as DifficultyPreset);
-        }
-      }
-      
-      // Reset game first to ensure clean state (sets lives correctly based on game mode)
-      // Use a small delay to ensure state updates are applied
-      const initTimer = setTimer(() => {
-        resetGame();
-      }, 0);
-      
-      // LoadingScreen will handle calling handleReady() when it completes
-      // No need for a separate timer - LoadingScreen takes ~3.3 seconds total
-      
-      return () => {
-        clearTimer(initTimer);
-      };
-    }
-  }, [resetGame, setTimer, clearTimer, gameMode, difficulty, setGameMode, setDifficulty]);
-
-  // When loading finishes, decide whether to show tutorial or start immediately
-  useEffect(() => {
-    if (!isLoading && !isReady) {
-      handleReady();
-    }
-  }, [isLoading, isReady, handleReady]);
+  // Game initialization hook
+  const { handleReady, hasInitializedRef } = useGameInitialization({
+    isLoading,
+    isReady,
+    gameMode,
+    difficulty,
+    tutorialLoaded,
+    tutorialCompletion,
+    setGameMode,
+    setDifficulty,
+    resetGame,
+    setTimer,
+    clearTimer,
+    openTutorial,
+    startGameplay,
+  });
 
   // Start reflex/nightmare/oddOneOut game when component mounts or game resets (only after ready)
   useEffect(() => {
@@ -1147,229 +501,7 @@ export default function GamePage() {
     };
   }, [endGame, clearHighlightTimer, clearAllTimers]);
 
-  // ========== SEQUENCE MODE LOGIC ==========
-  
-  // Show sequence to player
-  const showSequence = useCallback(() => {
-    if (gameOver || !isReady || isPausedRef.current || isProcessingRef.current) return;
-    
-    clearHighlightTimer();
-    isProcessingRef.current = true;
-    setIsWaitingForInput(false);
-    setIsShowingSequence(true);
-    setPlayerSequence([]);
-    
-    const sequenceLength = getSequenceLength(score, difficulty);
-    const newSequence = generateSequence(sequenceLength);
-    setSequence(newSequence);
-    
-    const { displayDuration, gapDuration } = getSequenceTiming(difficulty);
-    
-    // Show sequence one button at a time
-    const showNextButton = (index: number) => {
-      if (index >= newSequence.length) {
-        // Sequence complete, wait for player input
-        setIsShowingSequence(false);
-        setIsWaitingForInput(true);
-        setHighlightedButtons([]);
-        isProcessingRef.current = false;
-        playSound('highlight', soundEnabled);
-        return;
-      }
-      
-      // Highlight current button in sequence
-      setHighlightedButtons([newSequence[index]]);
-      playSound('highlight', soundEnabled);
-      
-      // Schedule next button or completion
-      sequenceTimerRef.current = setTimer(() => {
-        setHighlightedButtons([]);
-        
-        if (index < newSequence.length - 1) {
-          // Gap before next button
-          setTimer(() => {
-            showNextButton(index + 1);
-          }, gapDuration);
-        } else {
-          // Sequence complete
-          setTimer(() => {
-            setIsShowingSequence(false);
-            setIsWaitingForInput(true);
-            setHighlightedButtons([]);
-            isProcessingRef.current = false;
-          }, gapDuration);
-        }
-      }, displayDuration);
-    };
-    
-    // Start showing sequence after a reduced delay
-    setTimer(() => {
-      showNextButton(0);
-    }, 200);
-  }, [score, difficulty, gameOver, isReady, soundEnabled, clearHighlightTimer, setTimer]);
-  
-  // Handle button press in sequence mode
-  const handleSequenceButtonPress = useCallback(
-    (buttonId: number) => {
-      // Only allow input after sequence is complete (isWaitingForInput is true)
-      if (gameOver || isPausedRef.current || !isReady || !isWaitingForInput || isShowingSequence || isProcessingRef.current) {
-        return;
-      }
-      
-      const newPlayerSequence = [...playerSequence, buttonId];
-      setPlayerSequence(newPlayerSequence);
-      
-      // Check if sequence is complete
-      if (newPlayerSequence.length === sequence.length) {
-        // Check if correct
-        if (checkSequence(newPlayerSequence, sequence)) {
-          // Correct sequence - show feedback for all buttons
-          sequence.forEach((id) => {
-            setButtonPressFeedback((prev) => ({ ...prev, [id]: 'correct' }));
-            setTimer(() => {
-              setButtonPressFeedback((prev) => ({ ...prev, [id]: null }));
-            }, 300);
-          });
-
-          incrementScore(0); // No reaction time in sequence mode
-          
-          // Update previous values for feedback tracking
-          previousComboRef.current = combo;
-          previousScoreRef.current = score;
-          
-          if (screenFlashEnabled) {
-            setScreenFlash('success');
-            setTimer(() => setScreenFlash(null), reducedEffects ? 120 : 200);
-          }
-          
-          // Generate next sequence
-          setTimer(() => {
-            showSequence();
-          }, 1000);
-        } else {
-          // Wrong sequence - show feedback for wrong button
-          requestAnimationFrame(() => {
-            setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: 'incorrect' }));
-            
-            // Record visual feedback timestamp for latency monitoring
-            if (latencyMonitor) {
-              latencyMonitor.recordFeedback(buttonId);
-            }
-          });
-          setTimer(() => {
-            setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: null }));
-          }, 300);
-
-          // Trigger screen shake (respect comfort settings)
-          if (screenShakeEnabled && !reducedEffects) {
-            setScreenShake(true);
-            setTimer(() => {
-              setScreenShake(false);
-            }, 400);
-          }
-
-          playSound('error', soundEnabled);
-          if (screenFlashEnabled) {
-            setScreenFlash('error');
-            setTimer(() => setScreenFlash(null), reducedEffects ? 150 : 300);
-          }
-          setPlayerSequence([]);
-          decrementLives();
-          
-          // Restart sequence after error
-          if (!gameOver) {
-            setTimer(() => {
-              showSequence();
-            }, 1500);
-          }
-        }
-      } else {
-        // Check if current input is correct so far
-        if (newPlayerSequence[newPlayerSequence.length - 1] !== sequence[newPlayerSequence.length - 1]) {
-          // Wrong button pressed - show feedback
-          requestAnimationFrame(() => {
-            setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: 'incorrect' }));
-            
-            // Record visual feedback timestamp for latency monitoring
-            if (latencyMonitor) {
-              latencyMonitor.recordFeedback(buttonId);
-            }
-          });
-          setTimer(() => {
-            setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: null }));
-          }, 300);
-
-          // Trigger screen shake (respect comfort settings)
-          if (screenShakeEnabled && !reducedEffects) {
-            setScreenShake(true);
-            setTimer(() => {
-              setScreenShake(false);
-            }, 400);
-          }
-
-          playSound('error', soundEnabled);
-          if (screenFlashEnabled) {
-            setScreenFlash('error');
-            setTimer(
-              () => setScreenFlash(null),
-              reducedEffects ? 150 : 300
-            );
-          }
-          setPlayerSequence([]);
-          decrementLives();
-          
-          // Restart sequence after error
-          if (!gameOver) {
-            setTimer(() => {
-              showSequence();
-            }, 1500);
-          }
-        } else {
-          // Correct so far - show feedback
-          setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: 'correct' }));
-          setTimer(() => {
-            setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: null }));
-          }, 300);
-          
-          playSound('success', soundEnabled);
-        }
-      }
-    },
-    [
-      gameOver,
-      isReady,
-      isWaitingForInput,
-      isShowingSequence,
-      playerSequence,
-      sequence,
-      incrementScore,
-      decrementLives,
-      soundEnabled,
-      showSequence,
-      screenShakeEnabled,
-      screenFlashEnabled,
-      reducedEffects,
-      setTimer,
-    ]
-  );
-  
-  // Start sequence game (only after ready)
-  useEffect(() => {
-    if (gameMode === 'sequence' && !gameOver && isReady && !isPaused && sequence.length === 0) {
-      showSequence();
-    }
-  }, [gameMode, gameOver, isReady, isPaused, sequence.length, showSequence]);
-  
-  // Cleanup sequence timers
-  useEffect(() => {
-    return () => {
-      if (sequenceTimerRef.current) {
-        clearTimeout(sequenceTimerRef.current);
-      }
-    };
-  }, []);
-
-  // ========== END SEQUENCE MODE LOGIC ==========
+  // Sequence mode logic is now in useSequenceMode hook
 
   // Determine which button handler to use based on game mode
   const getButtonHandler = () => {
@@ -1382,28 +514,11 @@ export default function GamePage() {
   const keyboardEnabled = !gameOver && isReady && !isPaused && (gameMode !== 'sequence' || isWaitingForInput);
   const buttonHandler = getButtonHandler();
   const { latencyMonitor } = useKeyboardControls(buttonHandler, keyboardEnabled, true, true);
-
-  // Settings modal state
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
-  const [pausedByMenu, setPausedByMenu] = useState(false);
-  const [showPauseModal, setShowPauseModal] = useState(false);
-
-  const [screenShake, setScreenShake] = useState(false);
-
-  // Prevent scrollbars during screen shake
+  
+  // Update latencyMonitor ref for sequence mode hook
   useEffect(() => {
-    if (screenShake) {
-      document.body.style.overflow = 'hidden';
-      document.documentElement.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-      document.documentElement.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-      document.documentElement.style.overflow = '';
-    };
-  }, [screenShake]);
+    latencyMonitorRef.current = latencyMonitor || undefined;
+  }, [latencyMonitor]);
 
   // Prevent context menu, text selection, and drag globally
   useEffect(() => {
@@ -1518,7 +633,7 @@ export default function GamePage() {
       {/* Background Video */}
       {!reducedEffects && <BackgroundVideo />}
       {/* Dark overlay for better text readability - increased opacity for better contrast */}
-      <div className={`fixed inset-0 z-[1] ${reducedEffects ? 'bg-black/70' : 'bg-black/55'}`} aria-hidden="true" />
+      <div className={`fixed inset-0 z-1 ${reducedEffects ? 'bg-black/70' : 'bg-black/55'}`} aria-hidden="true" />
       
       {/* Screen Flash Effect */}
       {screenFlash && screenFlashEnabled && (
@@ -1658,10 +773,7 @@ export default function GamePage() {
             // Reset the initialization flag so game can be reset properly
             hasInitializedRef.current = false;
             // Clear all local game state
-            setSequence([]);
-            setPlayerSequence([]);
-            setIsShowingSequence(false);
-            setIsWaitingForInput(false);
+            resetSequence();
             setOddOneOutTarget(null);
             setBonusButtonId(null);
             setBonusActive(false);
@@ -1701,75 +813,24 @@ export default function GamePage() {
       </Suspense>
 
       {/* Pause Confirmation Modal */}
-      {showPauseModal && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/80">
-          <div 
-            className="border-4 pixel-border p-4 sm:p-6 md:p-8 max-w-sm w-full mx-4 text-center shadow-[0_0_20px_rgba(62,124,172,0.4)]"
-            style={{
-              borderColor: '#3E7CAC',
-              backgroundColor: '#003A63',
-            }}
-          >
-            <h2 
-              className="text-2xl sm:text-3xl font-bold text-foreground mb-4 pixel-border px-4 py-2 inline-block"
-              style={{ borderColor: '#3E7CAC' }}
-            >
-              {t(language, 'pause.title')}
-            </h2>
-            <p className="text-sm text-foreground/80 mb-6">
-              {t(language, 'pause.message')}
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <button
-                onClick={() => {
-                  setShowPauseModal(false);
-                  // Synchronously mark as unpaused for callbacks/timers
-                  isPausedRef.current = false;
-                  resumeGame();
-                  if (!gameOver && highlightedButtons.length === 0 && !isProcessingRef.current) {
-                    highlightNewButtons();
-                  }
-                }}
-                className="px-6 py-3 border-4 pixel-border font-bold transition-all duration-200 focus:outline-none focus:ring-2"
-                style={{
-                  borderColor: '#3E7CAC',
-                  backgroundColor: '#3E7CAC',
-                  color: '#ffffff',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(62, 124, 172, 0.8)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#3E7CAC';
-                }}
-              >
-                {t(language, 'pause.continue')}
-              </button>
-              <button
-                onClick={() => {
-                  setShowPauseModal(false);
-                  endGame();
-                  router.push('/');
-                }}
-                className="px-6 py-3 border-4 pixel-border font-bold transition-all duration-200 focus:outline-none focus:ring-2"
-                style={{
-                  borderColor: '#3E7CAC',
-                  backgroundColor: 'rgba(0, 58, 99, 0.6)',
-                  color: '#ffffff',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(62, 124, 172, 0.3)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(0, 58, 99, 0.6)';
-                }}
-              >
-                {t(language, 'pause.exit')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <PauseModal
+        show={showPauseModal}
+        language={language}
+        onContinue={() => {
+          setShowPauseModal(false);
+          // Synchronously mark as unpaused for callbacks/timers
+          isPausedRef.current = false;
+          resumeGame();
+          if (!gameOver && highlightedButtons.length === 0 && !isProcessingRef.current) {
+            highlightNewButtons();
+          }
+        }}
+        onExit={() => {
+          setShowPauseModal(false);
+          endGame();
+          router.push('/');
+        }}
+      />
 
       <TutorialOverlay
         show={showTutorialOverlay}

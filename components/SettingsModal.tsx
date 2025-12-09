@@ -238,26 +238,37 @@ export function SettingsModal({ show, onClose }: SettingsModalProps) {
               <RippleButton
                 onClick={toggleSound}
                 rippleColor="rgba(0, 255, 255, 0.3)"
-                className="w-full px-4 py-3 border-4 pixel-border font-bold text-sm sm:text-base focus:outline-none focus:ring-2"
+                className="w-full px-4 py-3 border-4 pixel-border font-bold text-sm sm:text-base focus:outline-none focus:ring-2 transition-all"
                 style={{
-                  borderColor: '#3E7CAC',
-                  backgroundColor: 'rgba(0, 58, 99, 0.6)',
+                  borderColor: soundEnabled ? '#00D9FF' : '#3E7CAC',
+                  borderWidth: soundEnabled ? '4px' : '4px',
+                  backgroundColor: soundEnabled ? 'rgba(0, 217, 255, 0.12)' : 'rgba(0, 58, 99, 0.6)',
                   color: '#ffffff',
+                  boxShadow: soundEnabled ? '0 0 8px rgba(0, 217, 255, 0.3)' : 'none',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(62, 124, 172, 0.3)';
+                  if (!soundEnabled) {
+                    e.currentTarget.style.borderColor = 'rgba(62, 124, 172, 0.8)';
+                    e.currentTarget.style.backgroundColor = 'rgba(62, 124, 172, 0.3)';
+                  }
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(0, 58, 99, 0.6)';
+                  if (!soundEnabled) {
+                    e.currentTarget.style.borderColor = '#3E7CAC';
+                    e.currentTarget.style.backgroundColor = 'rgba(0, 58, 99, 0.6)';
+                  }
                 }}
               >
                 {t(language, 'settings.audio.sound')} {soundEnabled ? t(language, 'settings.audio.soundOn') : t(language, 'settings.audio.soundOff')}
               </RippleButton>
 
-              <div className="space-y-1">
-                <div className="flex justify-between text-[11px] text-foreground/70">
-                  <span>{t(language, 'settings.audio.soundVolume')}</span>
-                  <span>{Math.round(soundVolume * 100)}%</span>
+              <div className="space-y-1 border-2 rounded px-3 py-2 transition-all" style={{ 
+                borderColor: '#3E7CAC', 
+                backgroundColor: 'rgba(0, 58, 99, 0.35)',
+              }}>
+                <div className="flex justify-between text-xs sm:text-sm text-foreground/80 mb-1">
+                  <span className="font-semibold">{t(language, 'settings.audio.soundVolume')}</span>
+                  <span className="font-semibold">{Math.round(soundVolume * 100)}%</span>
                 </div>
                 <input
                   type="range"
@@ -267,32 +278,46 @@ export function SettingsModal({ show, onClose }: SettingsModalProps) {
                   value={Math.round(soundVolume * 100)}
                   onChange={handleSoundVolumeChange}
                   className="w-full accent-primary cursor-pointer"
+                  style={{
+                    accentColor: '#00D9FF',
+                  }}
                 />
               </div>
 
               <RippleButton
                 onClick={toggleMusic}
                 rippleColor="rgba(0, 255, 255, 0.3)"
-                className="w-full px-4 py-3 border-4 pixel-border font-bold text-sm sm:text-base focus:outline-none focus:ring-2"
+                className="w-full px-4 py-3 border-4 pixel-border font-bold text-sm sm:text-base focus:outline-none focus:ring-2 transition-all"
                 style={{
-                  borderColor: '#3E7CAC',
-                  backgroundColor: 'rgba(0, 58, 99, 0.6)',
+                  borderColor: musicEnabled ? '#00D9FF' : '#3E7CAC',
+                  borderWidth: musicEnabled ? '4px' : '4px',
+                  backgroundColor: musicEnabled ? 'rgba(0, 217, 255, 0.12)' : 'rgba(0, 58, 99, 0.6)',
                   color: '#ffffff',
+                  boxShadow: musicEnabled ? '0 0 8px rgba(0, 217, 255, 0.3)' : 'none',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(62, 124, 172, 0.3)';
+                  if (!musicEnabled) {
+                    e.currentTarget.style.borderColor = 'rgba(62, 124, 172, 0.8)';
+                    e.currentTarget.style.backgroundColor = 'rgba(62, 124, 172, 0.3)';
+                  }
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(0, 58, 99, 0.6)';
+                  if (!musicEnabled) {
+                    e.currentTarget.style.borderColor = '#3E7CAC';
+                    e.currentTarget.style.backgroundColor = 'rgba(0, 58, 99, 0.6)';
+                  }
                 }}
               >
                 {t(language, 'settings.audio.music')} {musicEnabled ? t(language, 'settings.audio.musicOn') : t(language, 'settings.audio.musicOff')}
               </RippleButton>
 
-              <div className="space-y-1">
-                <div className="flex justify-between text-[11px] text-foreground/70">
-                  <span>{t(language, 'settings.audio.musicVolume')}</span>
-                  <span>{Math.round(musicVolume * 100)}%</span>
+              <div className="space-y-1 border-2 rounded px-3 py-2 transition-all" style={{ 
+                borderColor: '#3E7CAC', 
+                backgroundColor: 'rgba(0, 58, 99, 0.35)',
+              }}>
+                <div className="flex justify-between text-xs sm:text-sm text-foreground/80 mb-1">
+                  <span className="font-semibold">{t(language, 'settings.audio.musicVolume')}</span>
+                  <span className="font-semibold">{Math.round(musicVolume * 100)}%</span>
                 </div>
                 <input
                   type="range"
@@ -302,10 +327,13 @@ export function SettingsModal({ show, onClose }: SettingsModalProps) {
                   value={Math.round(musicVolume * 100)}
                   onChange={handleMusicVolumeChange}
                   className="w-full accent-primary cursor-pointer"
+                  style={{
+                    accentColor: '#00D9FF',
+                  }}
                 />
               </div>
 
-              <p className="text-xs text-foreground/60 mt-1">
+              <p className="text-xs text-foreground/60 mt-1 px-1">
                 {t(language, 'settings.audio.musicNote')}
               </p>
             </div>
@@ -322,33 +350,105 @@ export function SettingsModal({ show, onClose }: SettingsModalProps) {
         {activeTab === 'comfort' && (
           <section className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm">
-              <button
-                type="button"
-                className="w-full px-3 py-3 border-2 rounded text-left transition-colors font-semibold"
-                style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 58, 99, 0.5)' }}
-                onClick={applyMobilePerformancePreset}
-              >
-                <div className="text-sm sm:text-base">{t(language, 'settings.mobile.performance')}</div>
-                <div className="text-foreground/70 mt-1">{t(language, 'settings.mobile.performance.desc')}</div>
-              </button>
-              <button
-                type="button"
-                className="w-full px-3 py-3 border-2 rounded text-left transition-colors font-semibold"
-                style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 58, 99, 0.5)' }}
-                onClick={applyMobileVisualPreset}
-              >
-                <div className="text-sm sm:text-base">{t(language, 'settings.mobile.visual')}</div>
-                <div className="text-foreground/70 mt-1">{t(language, 'settings.mobile.visual.desc')}</div>
-              </button>
-              <button
-                type="button"
-                className="w-full px-3 py-3 border-2 rounded text-left transition-colors font-semibold sm:col-span-2"
-                style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 58, 99, 0.5)' }}
-                onClick={restoreDesktopDefaults}
-              >
-                <div className="text-sm sm:text-base">{t(language, 'settings.mobile.reset')}</div>
-                <div className="text-foreground/70 mt-1">{t(language, 'settings.mobile.reset.desc')}</div>
-              </button>
+              {(() => {
+                const isPerformanceActive = reducedEffects && !screenShakeEnabled && !screenFlashEnabled;
+                return (
+                  <button
+                    type="button"
+                    className="w-full px-3 py-3 border-2 rounded text-left transition-all font-semibold relative"
+                    style={{
+                      borderColor: isPerformanceActive ? '#00D9FF' : '#3E7CAC',
+                      borderWidth: isPerformanceActive ? '3px' : '2px',
+                      backgroundColor: isPerformanceActive ? 'rgba(0, 217, 255, 0.15)' : 'rgba(0, 58, 99, 0.5)',
+                      boxShadow: isPerformanceActive ? '0 0 12px rgba(0, 217, 255, 0.4)' : 'none',
+                    }}
+                    onClick={applyMobilePerformancePreset}
+                    onMouseEnter={(e) => {
+                      if (!isPerformanceActive) {
+                        e.currentTarget.style.borderColor = 'rgba(62, 124, 172, 0.8)';
+                        e.currentTarget.style.backgroundColor = 'rgba(62, 124, 172, 0.2)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isPerformanceActive) {
+                        e.currentTarget.style.borderColor = '#3E7CAC';
+                        e.currentTarget.style.backgroundColor = 'rgba(0, 58, 99, 0.5)';
+                      }
+                    }}
+                  >
+                    <div className="text-sm sm:text-base">
+                      {t(language, 'settings.mobile.performance')}
+                    </div>
+                    <div className="text-foreground/70 mt-1">{t(language, 'settings.mobile.performance.desc')}</div>
+                  </button>
+                );
+              })()}
+              {(() => {
+                const isVisualActive = reducedEffects && screenShakeEnabled && !screenFlashEnabled;
+                return (
+                  <button
+                    type="button"
+                    className="w-full px-3 py-3 border-2 rounded text-left transition-all font-semibold relative"
+                    style={{
+                      borderColor: isVisualActive ? '#00D9FF' : '#3E7CAC',
+                      borderWidth: isVisualActive ? '3px' : '2px',
+                      backgroundColor: isVisualActive ? 'rgba(0, 217, 255, 0.15)' : 'rgba(0, 58, 99, 0.5)',
+                      boxShadow: isVisualActive ? '0 0 12px rgba(0, 217, 255, 0.4)' : 'none',
+                    }}
+                    onClick={applyMobileVisualPreset}
+                    onMouseEnter={(e) => {
+                      if (!isVisualActive) {
+                        e.currentTarget.style.borderColor = 'rgba(62, 124, 172, 0.8)';
+                        e.currentTarget.style.backgroundColor = 'rgba(62, 124, 172, 0.2)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isVisualActive) {
+                        e.currentTarget.style.borderColor = '#3E7CAC';
+                        e.currentTarget.style.backgroundColor = 'rgba(0, 58, 99, 0.5)';
+                      }
+                    }}
+                  >
+                    <div className="text-sm sm:text-base">
+                      {t(language, 'settings.mobile.visual')}
+                    </div>
+                    <div className="text-foreground/70 mt-1">{t(language, 'settings.mobile.visual.desc')}</div>
+                  </button>
+                );
+              })()}
+              {(() => {
+                const isDesktopActive = !reducedEffects && screenShakeEnabled && screenFlashEnabled;
+                return (
+                  <button
+                    type="button"
+                    className="w-full px-3 py-3 border-2 rounded text-left transition-all font-semibold sm:col-span-2 relative"
+                    style={{
+                      borderColor: isDesktopActive ? '#00D9FF' : '#3E7CAC',
+                      borderWidth: isDesktopActive ? '3px' : '2px',
+                      backgroundColor: isDesktopActive ? 'rgba(0, 217, 255, 0.15)' : 'rgba(0, 58, 99, 0.5)',
+                      boxShadow: isDesktopActive ? '0 0 12px rgba(0, 217, 255, 0.4)' : 'none',
+                    }}
+                    onClick={restoreDesktopDefaults}
+                    onMouseEnter={(e) => {
+                      if (!isDesktopActive) {
+                        e.currentTarget.style.borderColor = 'rgba(62, 124, 172, 0.8)';
+                        e.currentTarget.style.backgroundColor = 'rgba(62, 124, 172, 0.2)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isDesktopActive) {
+                        e.currentTarget.style.borderColor = '#3E7CAC';
+                        e.currentTarget.style.backgroundColor = 'rgba(0, 58, 99, 0.5)';
+                      }
+                    }}
+                  >
+                    <div className="text-sm sm:text-base">
+                      {t(language, 'settings.mobile.reset')}
+                    </div>
+                    <div className="text-foreground/70 mt-1">{t(language, 'settings.mobile.reset.desc')}</div>
+                  </button>
+                );
+              })()}
             </div>
             <div className="border-2 rounded px-3 py-3 space-y-3" style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 58, 99, 0.35)' }}>
               <div className="flex items-center justify-between">
@@ -356,22 +456,30 @@ export function SettingsModal({ show, onClose }: SettingsModalProps) {
                   <div className="font-semibold text-sm sm:text-base">{t(language, 'settings.hud.layout')}</div>
                   <div className="text-foreground/70 text-xs sm:text-sm">{t(language, 'settings.hud.layout.desc')}</div>
                 </div>
-                <div className="inline-flex rounded-md overflow-hidden border" style={{ borderColor: '#3E7CAC' }}>
-                  {(['standard', 'compact', 'minimal'] as const).map((layout) => (
-                    <button
-                      key={layout}
-                      type="button"
-                      className="px-2 sm:px-3 py-1 text-xs sm:text-sm font-semibold transition-colors"
-                      style={{
-                        backgroundColor: hudLayout === layout ? 'rgba(62, 124, 172, 0.6)' : 'rgba(0, 58, 99, 0.5)',
-                        color: '#e8f4ff',
-                      }}
-                      onClick={() => updateHudLayout(layout)}
-                      aria-label={`Set HUD layout to ${layout}`}
-                    >
-                      {t(language, `settings.hud.layout.${layout}`)}
-                    </button>
-                  ))}
+                <div className="inline-flex rounded-md overflow-hidden border-2" style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 0, 0, 0.4)' }}>
+                  {(['standard', 'compact', 'minimal'] as const).map((layout) => {
+                    const isActive = hudLayout === layout;
+                    return (
+                      <button
+                        key={layout}
+                        type="button"
+                        className={
+                          'px-2 sm:px-3 py-1 text-xs sm:text-sm font-semibold transition-colors ' +
+                          (isActive
+                            ? 'text-foreground'
+                            : 'text-foreground/70 hover:text-foreground')
+                        }
+                        style={{
+                          borderLeft: layout !== 'standard' ? '1px solid #3E7CAC' : 'none',
+                          ...(isActive ? { backgroundColor: 'rgba(62, 124, 172, 0.3)' } : {})
+                        }}
+                        onClick={() => updateHudLayout(layout)}
+                        aria-label={`Set HUD layout to ${layout}`}
+                      >
+                        {t(language, `settings.hud.layout.${layout}`)}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
               <div className="rounded border px-3 py-2 bg-black/40" style={{ borderColor: '#3E7CAC' }}>
@@ -406,96 +514,248 @@ export function SettingsModal({ show, onClose }: SettingsModalProps) {
                   {t(language, 'settings.hud.layout.preview')}
                 </div>
               </div>
-              <label className="flex items-start gap-2 cursor-pointer border-2 rounded px-3 py-2 transition-colors" style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 58, 99, 0.5)' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(62, 124, 172, 0.7)'; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#3E7CAC'; }}>
+              <label 
+                className="flex items-start gap-3 cursor-pointer border-2 rounded px-3 py-2 transition-all relative" 
+                style={{ 
+                  borderColor: hudHidden ? '#00D9FF' : '#3E7CAC',
+                  borderWidth: hudHidden ? '3px' : '2px',
+                  backgroundColor: hudHidden ? 'rgba(0, 217, 255, 0.12)' : 'rgba(0, 58, 99, 0.5)',
+                  boxShadow: hudHidden ? '0 0 8px rgba(0, 217, 255, 0.3)' : 'none',
+                }} 
+                onMouseEnter={(e) => { 
+                  if (!hudHidden) {
+                    e.currentTarget.style.borderColor = 'rgba(62, 124, 172, 0.8)';
+                    e.currentTarget.style.backgroundColor = 'rgba(62, 124, 172, 0.2)';
+                  }
+                }} 
+                onMouseLeave={(e) => { 
+                  if (!hudHidden) {
+                    e.currentTarget.style.borderColor = '#3E7CAC';
+                    e.currentTarget.style.backgroundColor = 'rgba(0, 58, 99, 0.5)';
+                  }
+                }}
+              >
                 <input
                   type="checkbox"
-                  className="mt-0.5 accent-primary"
+                  className="mt-0.5 accent-primary w-5 h-5 cursor-pointer"
+                  style={{
+                    accentColor: '#00D9FF',
+                  }}
                   checked={hudHidden}
                   onChange={(e) => toggleHudHidden(e.target.checked)}
                 />
-                <span>
-                  <span className="font-semibold">{t(language, 'settings.hud.hide')}</span>
-                  <span className="block text-foreground/70">
+                <span className="flex-1">
+                  <span className="font-semibold">
+                    {t(language, 'settings.hud.hide')}
+                  </span>
+                  <span className="block text-foreground/70 text-xs sm:text-sm mt-0.5">
                     {t(language, 'settings.hud.hide.desc')}
                   </span>
                 </span>
               </label>
             </div>
             <div className="flex flex-col gap-3 text-xs sm:text-sm">
-              <label className="flex items-start gap-2 cursor-pointer border-2 rounded px-3 py-2 transition-colors" style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 58, 99, 0.5)' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(62, 124, 172, 0.7)'; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#3E7CAC'; }}>
+              <label 
+                className="flex items-start gap-3 cursor-pointer border-2 rounded px-3 py-2 transition-all relative" 
+                style={{ 
+                  borderColor: screenShakeEnabled ? '#00D9FF' : '#3E7CAC',
+                  borderWidth: screenShakeEnabled ? '3px' : '2px',
+                  backgroundColor: screenShakeEnabled ? 'rgba(0, 217, 255, 0.12)' : 'rgba(0, 58, 99, 0.5)',
+                  boxShadow: screenShakeEnabled ? '0 0 8px rgba(0, 217, 255, 0.3)' : 'none',
+                }} 
+                onMouseEnter={(e) => { 
+                  if (!screenShakeEnabled) {
+                    e.currentTarget.style.borderColor = 'rgba(62, 124, 172, 0.8)';
+                    e.currentTarget.style.backgroundColor = 'rgba(62, 124, 172, 0.2)';
+                  }
+                }} 
+                onMouseLeave={(e) => { 
+                  if (!screenShakeEnabled) {
+                    e.currentTarget.style.borderColor = '#3E7CAC';
+                    e.currentTarget.style.backgroundColor = 'rgba(0, 58, 99, 0.5)';
+                  }
+                }}
+              >
                 <input
                   type="checkbox"
-                  className="mt-0.5 accent-primary"
+                  className="mt-0.5 accent-primary w-5 h-5 cursor-pointer"
+                  style={{
+                    accentColor: '#00D9FF',
+                  }}
                   checked={screenShakeEnabled}
                   onChange={(e) => setScreenShakeEnabled(e.target.checked)}
                 />
-                <span>
-                  <span className="font-semibold">{t(language, 'settings.comfort.screenShake')}</span>
-                  <span className="block text-foreground/70">
+                <span className="flex-1">
+                  <span className="font-semibold">
+                    {t(language, 'settings.comfort.screenShake')}
+                  </span>
+                  <span className="block text-foreground/70 text-xs sm:text-sm mt-0.5">
                     {t(language, 'settings.comfort.screenShake.desc')}
                   </span>
                 </span>
               </label>
 
-              <label className="flex items-start gap-2 cursor-pointer border-2 rounded px-3 py-2 transition-colors" style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 58, 99, 0.5)' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(62, 124, 172, 0.7)'; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#3E7CAC'; }}>
+              <label 
+                className="flex items-start gap-3 cursor-pointer border-2 rounded px-3 py-2 transition-all relative" 
+                style={{ 
+                  borderColor: screenFlashEnabled ? '#00D9FF' : '#3E7CAC',
+                  borderWidth: screenFlashEnabled ? '3px' : '2px',
+                  backgroundColor: screenFlashEnabled ? 'rgba(0, 217, 255, 0.12)' : 'rgba(0, 58, 99, 0.5)',
+                  boxShadow: screenFlashEnabled ? '0 0 8px rgba(0, 217, 255, 0.3)' : 'none',
+                }} 
+                onMouseEnter={(e) => { 
+                  if (!screenFlashEnabled) {
+                    e.currentTarget.style.borderColor = 'rgba(62, 124, 172, 0.8)';
+                    e.currentTarget.style.backgroundColor = 'rgba(62, 124, 172, 0.2)';
+                  }
+                }} 
+                onMouseLeave={(e) => { 
+                  if (!screenFlashEnabled) {
+                    e.currentTarget.style.borderColor = '#3E7CAC';
+                    e.currentTarget.style.backgroundColor = 'rgba(0, 58, 99, 0.5)';
+                  }
+                }}
+              >
                 <input
                   type="checkbox"
-                  className="mt-0.5 accent-primary"
+                  className="mt-0.5 accent-primary w-5 h-5 cursor-pointer"
+                  style={{
+                    accentColor: '#00D9FF',
+                  }}
                   checked={screenFlashEnabled}
                   onChange={(e) => setScreenFlashEnabled(e.target.checked)}
                 />
-                <span>
-                  <span className="font-semibold">{t(language, 'settings.comfort.screenFlash')}</span>
-                  <span className="block text-foreground/70">
+                <span className="flex-1">
+                  <span className="font-semibold">
+                    {t(language, 'settings.comfort.screenFlash')}
+                  </span>
+                  <span className="block text-foreground/70 text-xs sm:text-sm mt-0.5">
                     {t(language, 'settings.comfort.screenFlash.desc')}
                   </span>
                 </span>
               </label>
 
-              <label className="flex items-start gap-2 cursor-pointer border-2 rounded px-3 py-2 transition-colors" style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 58, 99, 0.5)' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(62, 124, 172, 0.7)'; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#3E7CAC'; }}>
+              <label 
+                className="flex items-start gap-3 cursor-pointer border-2 rounded px-3 py-2 transition-all relative" 
+                style={{ 
+                  borderColor: reducedEffects ? '#00D9FF' : '#3E7CAC',
+                  borderWidth: reducedEffects ? '3px' : '2px',
+                  backgroundColor: reducedEffects ? 'rgba(0, 217, 255, 0.12)' : 'rgba(0, 58, 99, 0.5)',
+                  boxShadow: reducedEffects ? '0 0 8px rgba(0, 217, 255, 0.3)' : 'none',
+                }} 
+                onMouseEnter={(e) => { 
+                  if (!reducedEffects) {
+                    e.currentTarget.style.borderColor = 'rgba(62, 124, 172, 0.8)';
+                    e.currentTarget.style.backgroundColor = 'rgba(62, 124, 172, 0.2)';
+                  }
+                }} 
+                onMouseLeave={(e) => { 
+                  if (!reducedEffects) {
+                    e.currentTarget.style.borderColor = '#3E7CAC';
+                    e.currentTarget.style.backgroundColor = 'rgba(0, 58, 99, 0.5)';
+                  }
+                }}
+              >
                 <input
                   type="checkbox"
-                  className="mt-0.5 accent-primary"
+                  className="mt-0.5 accent-primary w-5 h-5 cursor-pointer"
+                  style={{
+                    accentColor: '#00D9FF',
+                  }}
                   checked={reducedEffects}
                   onChange={(e) => setReducedEffects(e.target.checked)}
                 />
-                <span>
-                  <span className="font-semibold">{t(language, 'settings.comfort.reducedEffects')}</span>
-                  <span className="block text-foreground/70">
+                <span className="flex-1">
+                  <span className="font-semibold">
+                    {t(language, 'settings.comfort.reducedEffects')}
+                  </span>
+                  <span className="block text-foreground/70 text-xs sm:text-sm mt-0.5">
                     {t(language, 'settings.comfort.reducedEffects.desc')}
                   </span>
                 </span>
               </label>
 
-              <label className="flex items-start gap-2 cursor-pointer border-2 rounded px-3 py-2 transition-colors" style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 58, 99, 0.5)' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(62, 124, 172, 0.7)'; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#3E7CAC'; }}>
+              <label 
+                className="flex items-start gap-3 cursor-pointer border-2 rounded px-3 py-2 transition-all relative" 
+                style={{ 
+                  borderColor: highContrastMode ? '#00D9FF' : '#3E7CAC',
+                  borderWidth: highContrastMode ? '3px' : '2px',
+                  backgroundColor: highContrastMode ? 'rgba(0, 217, 255, 0.12)' : 'rgba(0, 58, 99, 0.5)',
+                  boxShadow: highContrastMode ? '0 0 8px rgba(0, 217, 255, 0.3)' : 'none',
+                }} 
+                onMouseEnter={(e) => { 
+                  if (!highContrastMode) {
+                    e.currentTarget.style.borderColor = 'rgba(62, 124, 172, 0.8)';
+                    e.currentTarget.style.backgroundColor = 'rgba(62, 124, 172, 0.2)';
+                  }
+                }} 
+                onMouseLeave={(e) => { 
+                  if (!highContrastMode) {
+                    e.currentTarget.style.borderColor = '#3E7CAC';
+                    e.currentTarget.style.backgroundColor = 'rgba(0, 58, 99, 0.5)';
+                  }
+                }}
+              >
                 <input
                   type="checkbox"
-                  className="mt-0.5 accent-primary"
+                  className="mt-0.5 accent-primary w-5 h-5 cursor-pointer"
+                  style={{
+                    accentColor: '#00D9FF',
+                  }}
                   checked={highContrastMode}
                   onChange={(e) => setHighContrastMode(e.target.checked)}
                 />
-                <span>
-                  <span className="font-semibold">{t(language, 'settings.comfort.highContrast')}</span>
-                  <span className="block text-foreground/70">
+                <span className="flex-1">
+                  <span className="font-semibold">
+                    {t(language, 'settings.comfort.highContrast')}
+                  </span>
+                  <span className="block text-foreground/70 text-xs sm:text-sm mt-0.5">
                     {t(language, 'settings.comfort.highContrast.desc')}
                   </span>
                 </span>
               </label>
 
-              <div className="border-2 rounded px-3 py-2 flex items-center justify-between transition-colors" style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 58, 99, 0.5)' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(62, 124, 172, 0.7)'; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#3E7CAC'; }}>
+              <div 
+                className="border-2 rounded px-3 py-2 flex items-center justify-between transition-all" 
+                style={{ 
+                  borderColor: '#3E7CAC', 
+                  backgroundColor: 'rgba(0, 58, 99, 0.5)',
+                }} 
+                onMouseEnter={(e) => { 
+                  e.currentTarget.style.borderColor = 'rgba(62, 124, 172, 0.8)';
+                  e.currentTarget.style.backgroundColor = 'rgba(62, 124, 172, 0.15)';
+                }} 
+                onMouseLeave={(e) => { 
+                  e.currentTarget.style.borderColor = '#3E7CAC';
+                  e.currentTarget.style.backgroundColor = 'rgba(0, 58, 99, 0.5)';
+                }}
+              >
                 <div>
                   <div className="font-semibold">{t(language, 'settings.language.label')}</div>
-                  <div className="text-foreground/70">
+                  <div className="text-foreground/70 text-xs sm:text-sm">
                     {t(language, 'settings.language.desc')}
                   </div>
                 </div>
                 <select
-                  className="ml-3 px-2 py-1 border border-border bg-background text-xs sm:text-sm"
+                  className="ml-3 px-2 py-1.5 border-2 rounded text-xs sm:text-sm font-semibold transition-all cursor-pointer"
+                  style={{
+                    borderColor: '#3E7CAC',
+                    backgroundColor: 'rgba(0, 58, 99, 0.7)',
+                    color: '#e8f4ff',
+                  }}
                   value={language}
                   onChange={handleLanguageChange}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = '#00D9FF';
+                    e.currentTarget.style.boxShadow = '0 0 8px rgba(0, 217, 255, 0.4)';
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = '#3E7CAC';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
                 >
-                  <option value="en">{t(language, 'settings.language.en')}</option>
-                  <option value="de">{t(language, 'settings.language.de')}</option>
+                  <option value="en" style={{ backgroundColor: '#003A63', color: '#e8f4ff' }}>{t(language, 'settings.language.en')}</option>
+                  <option value="de" style={{ backgroundColor: '#003A63', color: '#e8f4ff' }}>{t(language, 'settings.language.de')}</option>
                 </select>
               </div>
             </div>

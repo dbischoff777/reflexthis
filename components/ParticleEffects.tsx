@@ -111,7 +111,7 @@ export function ExplosionParticles({
   if (particles.length === 0) return null;
 
   return (
-    <div className="fixed inset-0 pointer-events-none z-[45]" style={{ imageRendering: 'pixelated' }}>
+    <div className="fixed inset-0 pointer-events-none z-45" style={{ imageRendering: 'pixelated' }}>
       {particles.map((particle) => (
         <div
           key={particle.id}
@@ -221,7 +221,7 @@ export function TrailParticles({
   if (particles.length === 0) return null;
 
   return (
-    <div className="fixed inset-0 pointer-events-none z-[44]" style={{ imageRendering: 'pixelated' }}>
+    <div className="fixed inset-0 pointer-events-none z-44" style={{ imageRendering: 'pixelated' }}>
       {particles.map((particle) => (
         <div
           key={particle.id}
@@ -275,7 +275,7 @@ export function ScreenShake({ active, intensity = 'medium' }: ScreenShakeProps) 
 
   return (
     <div
-      className={`fixed inset-0 pointer-events-none z-[60] ${intensityMap[intensity]}`}
+      className={`fixed inset-0 pointer-events-none z-60 ${intensityMap[intensity]}`}
       style={{
         imageRendering: 'pixelated',
       }}

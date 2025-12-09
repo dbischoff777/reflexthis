@@ -160,9 +160,10 @@ export function KeybindingsSettings({ onClose, embedded = false }: KeybindingsSe
                       'focus:outline-none focus:ring-2'
                     )}
                     style={editingButtonId === buttonId ? {
-                      backgroundColor: 'rgba(62, 124, 172, 0.5)',
-                      borderColor: '#3E7CAC',
+                      backgroundColor: 'rgba(0, 217, 255, 0.15)',
+                      borderColor: '#00D9FF',
                       color: '#ffffff',
+                      boxShadow: '0 0 12px rgba(0, 217, 255, 0.4)',
                     } : {
                       backgroundColor: 'rgba(0, 58, 99, 0.6)',
                       borderColor: '#3E7CAC',
@@ -170,11 +171,13 @@ export function KeybindingsSettings({ onClose, embedded = false }: KeybindingsSe
                     }}
                     onMouseEnter={(e) => {
                       if (editingButtonId !== buttonId) {
+                        e.currentTarget.style.borderColor = 'rgba(62, 124, 172, 0.8)';
                         e.currentTarget.style.backgroundColor = 'rgba(62, 124, 172, 0.3)';
                       }
                     }}
                     onMouseLeave={(e) => {
                       if (editingButtonId !== buttonId) {
+                        e.currentTarget.style.borderColor = '#3E7CAC';
                         e.currentTarget.style.backgroundColor = 'rgba(0, 58, 99, 0.6)';
                       }
                     }}
@@ -209,9 +212,11 @@ export function KeybindingsSettings({ onClose, embedded = false }: KeybindingsSe
             color: '#ffffff',
           }}
           onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = 'rgba(62, 124, 172, 0.8)';
             e.currentTarget.style.backgroundColor = 'rgba(62, 124, 172, 0.3)';
           }}
           onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = '#3E7CAC';
             e.currentTarget.style.backgroundColor = 'rgba(0, 58, 99, 0.6)';
           }}
         >
@@ -227,9 +232,11 @@ export function KeybindingsSettings({ onClose, embedded = false }: KeybindingsSe
             color: '#ffffff',
           }}
           onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = 'rgba(62, 124, 172, 0.8)';
             e.currentTarget.style.backgroundColor = 'rgba(62, 124, 172, 0.3)';
           }}
           onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = '#3E7CAC';
             e.currentTarget.style.backgroundColor = 'rgba(0, 58, 99, 0.6)';
           }}
         >
@@ -259,15 +266,21 @@ export function KeybindingsSettings({ onClose, embedded = false }: KeybindingsSe
 
       {!embedded && (
         <div 
-          className="mt-6 p-3 border-2 transition-colors pixel-border"
-          style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 58, 99, 0.5)' }}
-          onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(62, 124, 172, 0.7)'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#3E7CAC'; }}
+          className="mt-6 p-3 border-2 rounded transition-all"
+          style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 58, 99, 0.35)' }}
+          onMouseEnter={(e) => { 
+            e.currentTarget.style.borderColor = 'rgba(62, 124, 172, 0.8)';
+            e.currentTarget.style.backgroundColor = 'rgba(62, 124, 172, 0.15)';
+          }}
+          onMouseLeave={(e) => { 
+            e.currentTarget.style.borderColor = '#3E7CAC';
+            e.currentTarget.style.backgroundColor = 'rgba(0, 58, 99, 0.35)';
+          }}
         >
-          <p className="text-xs text-foreground/70">
-            <strong className="text-foreground">{t(language, 'keybindings.defaultLayout')}</strong> Q W E (top row), A S D F (middle row), Y X C (bottom row)
+          <p className="text-xs sm:text-sm text-foreground/80">
+            <strong className="text-foreground font-semibold">{t(language, 'keybindings.defaultLayout')}</strong> Q W E (top row), A S D F (middle row), Y X C (bottom row)
           </p>
-          <p className="text-xs text-foreground/70 mt-1">
+          <p className="text-xs sm:text-sm text-foreground/70 mt-1">
             {t(language, 'keybindings.customize')}
           </p>
         </div>

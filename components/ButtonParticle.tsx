@@ -85,7 +85,7 @@ export function ButtonParticle({
   if (particles.length === 0) return null;
 
   return (
-    <div className="fixed inset-0 pointer-events-none z-[40]">
+    <div className="fixed inset-0 pointer-events-none z-40">
       {particles.map((particle) => (
         <div
           key={particle.id}

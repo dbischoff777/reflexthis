@@ -135,7 +135,7 @@ export function DifficultySelector({
                 className={cn(
                   'p-6 sm:p-8 border-4 transition-all duration-150 text-center pixel-border relative',
                   'focus:outline-none focus:ring-2 focus:ring-primary',
-                  'bg-gradient-to-br from-purple-300 via-purple-200 to-blue-300',
+                  'bg-linear-to-br from-purple-300 via-purple-200 to-blue-300',
                   'border-white/80 shadow-lg',
                   'h-[180px] sm:h-[200px] w-full',
                   'flex flex-col items-center justify-center',

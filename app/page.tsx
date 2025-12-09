@@ -195,7 +195,7 @@ const BackgroundVideo = React.memo(function BackgroundVideo() {
   if (videoError) {
     return (
       <div 
-        className="fixed inset-0 w-full h-full z-0 bg-gradient-to-br from-background via-background/95 to-primary/5"
+        className="fixed inset-0 w-full h-full z-0 bg-linear-to-r from-background via-background/95 to-primary/5"
         aria-hidden="true"
       />
     );
@@ -205,7 +205,7 @@ const BackgroundVideo = React.memo(function BackgroundVideo() {
     <div className="fixed inset-0 w-full h-full z-0">
       <video
         ref={video1Ref}
-        className="fixed inset-0 w-full h-full object-cover transition-opacity duration-[1200ms] ease-in-out"
+        className="fixed inset-0 w-full h-full object-cover transition-opacity duration-1200 ease-in-out"
         style={{ 
           opacity: activeVideo === 0 ? 1 : 0,
           transform: 'translateZ(0)',
@@ -225,7 +225,7 @@ const BackgroundVideo = React.memo(function BackgroundVideo() {
       {secondVideoLoaded && (
         <video
           ref={video2Ref}
-          className="fixed inset-0 w-full h-full object-cover transition-opacity duration-[1200ms] ease-in-out"
+          className="fixed inset-0 w-full h-full object-cover transition-opacity duration-1200 ease-in-out"
           style={{ 
             opacity: activeVideo === 1 ? 1 : 0,
             transform: 'translateZ(0)',
@@ -285,7 +285,7 @@ function LandingPageContent() {
 
   // Hidden warm-up grid to pre-initialize WebGL and shaders
   const WarmupGrid = () => (
-    <div className="pointer-events-none fixed -z-10 opacity-0 w-[1px] h-[1px] overflow-hidden">
+    <div className="pointer-events-none fixed -z-10 opacity-0 w-px h-px overflow-hidden">
       <GameButtonGridWebGL
         buttons={WARMUP_BUTTONS}
         highlightDuration={1000}
@@ -717,7 +717,7 @@ function LandingPageContent() {
               aria-label={`Loading progress: ${bootProgress}%`}
             >
               <div
-                className="h-3 bg-gradient-to-r from-primary via-secondary to-chart-3 relative transition-all duration-200"
+                className="h-3 bg-linear-to-r from-primary via-secondary to-chart-3 relative transition-all duration-200"
                 style={{ width: `${bootProgress}%` }}
               >
                 {/* Diagonal scanlines inside the bar */}
@@ -750,7 +750,7 @@ function LandingPageContent() {
       {/* Full-screen background video with smooth looping */}
       {!reducedEffects && <BackgroundVideo />}
       {/* Dark overlay for better text readability */}
-      <div className={`fixed inset-0 z-[1] ${reducedEffects ? 'bg-black/60' : 'bg-black/40'}`} aria-hidden="true" />
+      <div className={`fixed inset-0 z-1 ${reducedEffects ? 'bg-black/60' : 'bg-black/40'}`} aria-hidden="true" />
       
       <main className="relative z-10 flex flex-col items-center justify-between flex-1 w-full max-w-4xl text-center py-4">
         {/* Center content area */}
@@ -929,12 +929,12 @@ function LandingPageContent() {
             }}
           >
             <h2 
-              className="text-2xl sm:text-3xl font-bold text-foreground mb-4 pixel-border px-4 py-2 inline-block break-words"
+              className="text-2xl sm:text-3xl font-bold text-foreground mb-4 pixel-border px-4 py-2 inline-block wrap-break-word"
               style={{ borderColor: '#3E7CAC' }}
             >
               {t(language, 'landing.exitConfirm.title')}
             </h2>
-            <p className="text-sm text-foreground/80 mb-6 break-words">
+            <p className="text-sm text-foreground/80 mb-6 wrap-break-word">
               {t(language, 'landing.exitConfirm.message')}
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">

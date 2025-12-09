@@ -83,7 +83,7 @@ export function Confetti({ active, duration = 3000 }: ConfettiProps) {
   if (!active || particles.length === 0) return null;
 
   return (
-    <div className="fixed inset-0 pointer-events-none z-[60] overflow-hidden">
+    <div className="fixed inset-0 pointer-events-none z-60 overflow-hidden">
       {particles.map((particle) => (
         <div
           key={particle.id}
