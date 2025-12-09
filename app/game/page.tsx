@@ -769,6 +769,7 @@ export default function GamePage() {
           reactionTimeStats={reactionTimeStats}
           gameMode={gameMode}
           difficulty={difficulty}
+          newlyUnlockedAchievementIds={newlyUnlockedAchievements}
           onRestart={() => {
             // Reset the initialization flag so game can be reset properly
             hasInitializedRef.current = false;

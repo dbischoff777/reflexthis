@@ -8,10 +8,8 @@ import { ModeAndDifficultySelector } from '@/components/ModeAndDifficultySelecto
 import { StatsModal } from '@/components/StatsModal';
 import { RippleButton } from '@/components/RippleButton';
 import { DemoMode } from '@/components/DemoMode';
-import { LoadingScreen } from '@/components/LoadingScreen';
 import { GameButtonGridWebGL } from '@/components/GameButton3DWebGL';
 import SettingsModal from '@/components/SettingsModal';
-import { DifficultyPreset } from '@/lib/difficulty';
 import { GameMode } from '@/lib/gameModes';
 import { GameProvider, useGameState } from '@/lib/GameContext';
 import { stopBackgroundMusic, setGamePageActive, playMenuMusic, stopMenuMusic, preloadAudioAssets } from '@/lib/soundUtils';
@@ -57,24 +55,45 @@ const BackgroundVideo = React.memo(function BackgroundVideo() {
     };
   }, []);
 
-  // Lazy load second video after first video starts playing
+  // Ensure first video is fully buffered before playing, then load second video
   useEffect(() => {
     const video1 = video1Ref.current;
-    if (!video1 || secondVideoLoaded) return;
+    if (!video1) return;
 
-    const handleCanPlay = () => {
+    // Wait for video to be fully buffered before starting playback
+    const handleCanPlayThrough = () => {
+      // Video is fully buffered and can play smoothly
+      if (video1.paused) {
+        video1.play().catch(() => {
+          // Ignore play errors (e.g., autoplay restrictions)
+        });
+      }
       // Start loading second video after first is ready
-      setSecondVideoLoaded(true);
+      if (!secondVideoLoaded) {
+        setSecondVideoLoaded(true);
+      }
     };
 
-    if (video1.readyState >= 3) {
-      // Already ready
-      setSecondVideoLoaded(true);
+    // Fallback handler for canplay event
+    const handleCanPlay = () => {
+      if (!secondVideoLoaded) {
+        setSecondVideoLoaded(true);
+      }
+    };
+
+    // Check if video is already ready
+    if (video1.readyState >= 4) {
+      // HAVE_ENOUGH_DATA - video can play through
+      handleCanPlayThrough();
     } else {
+      // Wait for canplaythrough event (more reliable than canplay for smooth playback)
+      video1.addEventListener('canplaythrough', handleCanPlayThrough, { once: true });
+      // Fallback to canplay if canplaythrough doesn't fire
       video1.addEventListener('canplay', handleCanPlay, { once: true });
     }
 
     return () => {
+      video1.removeEventListener('canplaythrough', handleCanPlayThrough);
       video1.removeEventListener('canplay', handleCanPlay);
     };
   }, [secondVideoLoaded]);
@@ -106,13 +125,15 @@ const BackgroundVideo = React.memo(function BackgroundVideo() {
       if (currentVideo.currentTime >= currentVideo.duration - 1.2 && !fadeTriggeredRef.current) {
         fadeTriggeredRef.current = true;
         
-        // Prepare next video - ensure it's ready
+        // Prepare next video - ensure it's ready and buffered
         nextVideo.currentTime = 0;
-        nextVideo.play().catch(() => {});
         
-        // Wait for next video to be ready before starting fade
+        // Wait for next video to be fully buffered before starting fade
         const checkReady = () => {
-          if (nextVideo.readyState >= 2) { // HAVE_CURRENT_DATA
+          // Wait for HAVE_ENOUGH_DATA (4) for smooth playback
+          if (nextVideo.readyState >= 4) {
+            // Ensure video is playing
+            nextVideo.play().catch(() => {});
             // Use requestAnimationFrame for smoother transitions
             rafIdRef.current = requestAnimationFrame(() => {
               if (currentVideo && nextVideo && video1Ref.current && video2Ref.current) {
@@ -132,6 +153,11 @@ const BackgroundVideo = React.memo(function BackgroundVideo() {
             requestAnimationFrame(checkReady);
           }
         };
+        
+        // Start loading if not already
+        if (nextVideo.readyState < 2) {
+          nextVideo.load();
+        }
         checkReady();
       }
     };
@@ -344,16 +370,18 @@ function LandingPageContent() {
       logoVideo: 0,
       buttonImages: 0,
       audio: 0,
+      backgroundVideo: 0,
     };
 
     const updateProgress = () => {
       if (cancelled) return;
-      // Weighted progress: logo (20%), video (30%), buttons (20%), audio (30%)
+      // Weighted progress: logo (15%), video (25%), buttons (15%), audio (25%), background video (20%)
       const totalProgress = 
-        assetProgress.logoImage * 0.2 +
-        assetProgress.logoVideo * 0.3 +
-        assetProgress.buttonImages * 0.2 +
-        assetProgress.audio * 0.3;
+        assetProgress.logoImage * 0.15 +
+        assetProgress.logoVideo * 0.25 +
+        assetProgress.buttonImages * 0.15 +
+        assetProgress.audio * 0.25 +
+        assetProgress.backgroundVideo * 0.2;
       setBootProgress(Math.min(99, Math.round(totalProgress)));
     };
 
@@ -477,6 +505,12 @@ function LandingPageContent() {
       updateProgress();
     });
 
+    // Preload background video for smooth playback
+    const backgroundVideoPromise = preloadVideo('/animation/menu-background-animated.mp4', (progress) => {
+      assetProgress.backgroundVideo = progress;
+      updateProgress();
+    });
+
     // Preload game route and 3D bundle in the background while splash is showing
     try {
       router.prefetch('/game');
@@ -489,6 +523,7 @@ function LandingPageContent() {
       imagePromise, 
       videoPromise, 
       audioPromise, 
+      backgroundVideoPromise,
       Promise.all(buttonImagePromises),
       new Promise<void>((resolve) => {
         const elapsed = Date.now() - startTime;

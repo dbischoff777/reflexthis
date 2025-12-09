@@ -21,6 +21,7 @@ import {
 import { ReactionTimeGraph } from '@/components/ReactionTimeGraph';
 import { GameMode } from '@/lib/gameModes';
 import { DifficultyPreset } from '@/lib/difficulty';
+import { getAchievementById } from '@/lib/achievements';
 
 interface GameOverModalProps {
   score: number;
@@ -31,6 +32,7 @@ interface GameOverModalProps {
   onRestart: () => void;
   gameMode?: GameMode;
   difficulty?: DifficultyPreset;
+  newlyUnlockedAchievementIds?: string[];
 }
 
 function getCoachingTip(
@@ -80,6 +82,7 @@ export function GameOverModal({
   onRestart,
   gameMode,
   difficulty,
+  newlyUnlockedAchievementIds = [],
 }: GameOverModalProps) {
   const { language } = useGameState();
   const [displayedScore, setDisplayedScore] = useState(0);
@@ -143,28 +146,68 @@ export function GameOverModal({
     const statsAfter = calculateSessionStatisticsFromSessions(sessions);
     const metaAfter = getMetaProgressionFromSessions(statsAfter, sessions);
 
-    // Meta before this run (all but last session)
-    const sessionsBefore =
-      sessions.length > 1 ? sessions.slice(0, -1) : [];
-    const statsBefore = calculateSessionStatisticsFromSessions(sessionsBefore);
-    const metaBefore = getMetaProgressionFromSessions(statsBefore, sessionsBefore);
-
     setMetaSummary({
       rankName: metaAfter.rank?.name ?? null,
       nextRank: metaAfter.rank?.nextName ?? null,
     });
 
-    const unlockedBefore = new Set(
-      metaBefore.achievements.filter((a) => a.achieved).map((a) => a.id)
-    );
-    const unlockedNow = metaAfter.achievements.filter((a) => a.achieved);
-    const newlyUnlocked = unlockedNow.filter(
-      (a) => !unlockedBefore.has(a.id)
-    );
+    // Use newly unlocked achievements from props if available, otherwise fall back to calculation
+    if (newlyUnlockedAchievementIds.length > 0) {
+      // Convert achievement IDs to AchievementProgress objects
+      const sessionsForProgress = getGameSessions();
+      const statsForProgress = calculateSessionStatisticsFromSessions(sessionsForProgress);
+      const metaForProgress = getMetaProgressionFromSessions(statsForProgress, sessionsForProgress);
+      
+      // Create a map of achievement IDs to their progress data
+      const achievementMap = new Map(
+        metaForProgress.achievements.map(a => [a.id, a])
+      );
+      
+      // Convert IDs to AchievementProgress objects
+      const convertedAchievements = newlyUnlockedAchievementIds
+        .map(id => {
+          const progress = achievementMap.get(id);
+          if (progress) return progress;
+          
+          // Fallback: get achievement data directly if not in progress map
+          const achievement = getAchievementById(id);
+          if (achievement) {
+            return {
+              id: achievement.id,
+              title: achievement.title,
+              description: achievement.description,
+              achieved: true,
+              current: achievement.target,
+              target: achievement.target,
+              category: achievement.category,
+              icon: achievement.icon,
+              rarity: achievement.rarity,
+            };
+          }
+          return null;
+        })
+        .filter((a): a is AchievementProgress => a !== null);
+      
+      setNewAchievements(convertedAchievements);
+    } else {
+      // Fallback: calculate newly unlocked achievements by comparing before/after
+      const sessionsBefore = sessions.length > 1 ? sessions.slice(0, -1) : [];
+      const statsBefore = calculateSessionStatisticsFromSessions(sessionsBefore);
+      const metaBefore = getMetaProgressionFromSessions(statsBefore, sessionsBefore);
 
-    setNewAchievements(newlyUnlocked);
+      const unlockedBefore = new Set(
+        metaBefore.achievements.filter((a) => a.achieved).map((a) => a.id)
+      );
+      const unlockedNow = metaAfter.achievements.filter((a) => a.achieved);
+      const newlyUnlocked = unlockedNow.filter(
+        (a) => !unlockedBefore.has(a.id)
+      );
+
+      setNewAchievements(newlyUnlocked);
+    }
 
     // Find previous best performance (excluding current session)
+    const sessionsBefore = sessions.length > 1 ? sessions.slice(0, -1) : [];
     if (sessionsBefore.length > 0) {
       const bestSession = sessionsBefore.reduce((best, session) => {
         if (session.score > best.score) return session;
@@ -179,7 +222,7 @@ export function GameOverModal({
         fastestReaction: bestSession.fastestReactionTime,
       });
     }
-  }, []);
+  }, [newlyUnlockedAchievementIds]);
 
 
   // Tab content components
