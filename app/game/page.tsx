@@ -1603,13 +1603,15 @@ export default function GamePage() {
         </div>
         
         {/* 3D WebGL Button Grid */}
-        <div className="w-full max-w-4xl">
+        <div className="w-full max-w-6xl mx-auto px-2 sm:px-4">
           <div
-            className="w-full game-area-3d"
+            className="w-full game-area-3d relative mx-auto"
             style={{
-              height: deviceInfo.isMobile ? '68vh' : '60vh',
-              minHeight: deviceInfo.isMobile ? '320px' : '280px',
-              maxHeight: deviceInfo.isMobile ? '780px' : '720px',
+              height: deviceInfo.isMobile ? '72vh' : '68vh',
+              minHeight: deviceInfo.isMobile ? '360px' : '400px',
+              maxHeight: deviceInfo.isMobile ? '820px' : '900px',
+              maxWidth: '100%',
+              aspectRatio: '16 / 9',
             }}
           >
             <GameButtonGridWebGL

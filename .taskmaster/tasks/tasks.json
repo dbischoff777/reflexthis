@@ -2,18 +2,19 @@
   "master": {
     "tasks": [
       {
-        "id": 1,
+        "id": "1",
         "title": "Audit and optimize render loop performance",
         "description": "Analyze the current render loop and three-fiber usage to identify and fix performance bottlenecks causing frame drops or inconsistent frame times.",
         "details": "1. Profile the application using Chrome DevTools Performance tab or React Profiler\n2. Identify components causing unnecessary re-renders\n3. Implement React.memo() for pure functional components\n4. Optimize useEffect dependencies to prevent redundant renders\n5. Review three-fiber usage and ensure proper object disposal\n6. Check for and fix any memory leaks\n7. Implement useMemo/useCallback for expensive calculations\n8. Ensure animations use requestAnimationFrame\n9. Monitor and fix any GC pressure in hot paths\n\nPseudo-code example for optimization:\n```jsx\n// Before\nfunction GameComponent({ props }) {\n  const expensiveCalculation = calculateSomething(props);\n  \n  useEffect(() => {\n    // Effect with missing dependencies\n  }, []);\n  \n  return <Scene>{/* components */}</Scene>;\n}\n\n// After\nconst GameComponent = React.memo(function GameComponent({ props }) {\n  const expensiveCalculation = useMemo(() => calculateSomething(props), [props]);\n  \n  useEffect(() => {\n    // Effect with proper dependencies\n  }, [requiredDependencies]);\n  \n  return <Scene>{/* components */}</Scene>;\n});\n```",
         "testStrategy": "1. Establish baseline performance metrics using Chrome DevTools Performance tab\n2. Measure p95 frame time before and after changes\n3. Create automated performance tests that fail if frame time exceeds 16.6ms\n4. Test on target devices at 1080p resolution\n5. Verify no frame time spikes above 50ms during gameplay\n6. Document performance improvements with before/after metrics",
         "priority": "high",
         "dependencies": [],
-        "status": "pending",
-        "subtasks": []
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2025-12-09T10:17:11.385Z"
       },
       {
-        "id": 2,
+        "id": "2",
         "title": "Enhance ready screen visual prominence",
         "description": "Redesign the ready screen to be larger, more dominant with a clear call-to-action, and implement smooth transitions into gameplay.",
         "details": "1. Increase the size of the ready screen container (maintain aspect ratio)\n2. Implement responsive scaling for different resolutions (1080p+)\n3. Enhance typography with consistent font sizes and weights\n4. Add a more prominent call-to-action button\n5. Implement smooth transition animations between ready screen and gameplay\n6. Ensure proper spacing and alignment of all elements\n7. Verify the layout works across all supported resolutions\n\nCSS changes example:\n```css\n.ready-screen {\n  display: flex;\n  flex-direction: column;\n  justify-content: center;\n  align-items: center;\n  width: clamp(320px, 80vw, 1200px);\n  height: auto;\n  aspect-ratio: 16 / 9;\n  margin: 0 auto;\n  transition: opacity 0.3s ease-in-out;\n}\n\n.cta-button {\n  font-size: clamp(1rem, 2vw, 1.5rem);\n  padding: 1rem 2rem;\n  border-radius: 8px;\n  background: var(--primary-color);\n  color: white;\n  font-weight: bold;\n  transition: transform 0.2s ease;\n}\n\n.cta-button:hover {\n  transform: scale(1.05);\n}\n```",
@@ -24,18 +25,19 @@
         "subtasks": []
       },
       {
-        "id": 3,
+        "id": "3",
         "title": "Optimize game area scaling and prominence",
         "description": "Increase the visual prominence of the game area while maintaining aspect ratio and implementing proper scaling for different resolutions.",
         "details": "1. Increase the size of the game area container\n2. Implement responsive scaling that avoids letterboxing where possible\n3. Ensure all game elements scale proportionally on 1080p+ resolutions\n4. Maintain consistent aspect ratio across different screen sizes\n5. Add subtle visual enhancements to make the game area more prominent (e.g., shadow, subtle glow)\n6. Implement proper z-indexing to ensure game area has visual priority\n\nImplementation example:\n```jsx\nconst GameArea = () => {\n  const containerRef = useRef(null);\n  \n  useEffect(() => {\n    const handleResize = () => {\n      const container = containerRef.current;\n      if (!container) return;\n      \n      // Calculate optimal scaling based on viewport\n      const viewportWidth = window.innerWidth;\n      const viewportHeight = window.innerHeight;\n      const targetAspectRatio = 16 / 9;\n      \n      // Calculate dimensions that maintain aspect ratio\n      let width, height;\n      if (viewportWidth / viewportHeight > targetAspectRatio) {\n        // Constrained by height\n        height = Math.min(viewportHeight * 0.8, 900);\n        width = height * targetAspectRatio;\n      } else {\n        // Constrained by width\n        width = Math.min(viewportWidth * 0.9, 1600);\n        height = width / targetAspectRatio;\n      }\n      \n      container.style.width = `${width}px`;\n      container.style.height = `${height}px`;\n    };\n    \n    window.addEventListener('resize', handleResize);\n    handleResize(); // Initial sizing\n    \n    return () => window.removeEventListener('resize', handleResize);\n  }, []);\n  \n  return (\n    <div className=\"game-area-container\" ref={containerRef}>\n      {/* Game content */}\n    </div>\n  );\n};\n```",
         "testStrategy": "1. Create visual snapshot tests at multiple resolutions (1080p and higher)\n2. Verify the game area scales properly without clipping or excessive empty space\n3. Test on various aspect ratios to ensure consistent appearance\n4. Measure the visual prominence through user testing\n5. Verify performance is maintained with the scaling implementation\n6. Create automated tests to verify aspect ratio is maintained",
         "priority": "high",
         "dependencies": [],
-        "status": "pending",
-        "subtasks": []
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2025-12-09T10:20:35.802Z"
       },
       {
-        "id": 4,
+        "id": "4",
         "title": "Enhance hit/miss feedback cues",
         "description": "Improve the visual clarity of hit/miss indicators with high-contrast, distinct feedback cues and consistent animation timing.",
         "details": "1. Design distinct visual indicators for hit and miss states\n2. Ensure high contrast between hit/miss indicators and background\n3. Implement consistent animation timing for feedback cues\n4. Add subtle sound/haptic feedback if applicable\n5. Ensure feedback is visible but not obtrusive\n6. Centralize animation timing constants\n\nImplementation example:\n```jsx\n// Animation timing constants\nconst ANIMATION_TIMINGS = {\n  HIT_FEEDBACK: 300, // ms\n  MISS_FEEDBACK: 400, // ms\n  TRANSITION_DELAY: 50 // ms\n};\n\nconst FeedbackCue = ({ type, position }) => {\n  const [visible, setVisible] = useState(true);\n  \n  useEffect(() => {\n    const timer = setTimeout(() => {\n      setVisible(false);\n    }, type === 'hit' ? ANIMATION_TIMINGS.HIT_FEEDBACK : ANIMATION_TIMINGS.MISS_FEEDBACK);\n    \n    return () => clearTimeout(timer);\n  }, [type]);\n  \n  // Play sound effect\n  useEffect(() => {\n    if (type === 'hit') {\n      playSound('hit-sound.mp3');\n    } else {\n      playSound('miss-sound.mp3');\n    }\n    \n    // Optional haptic feedback\n    if (navigator.vibrate) {\n      navigator.vibrate(type === 'hit' ? 50 : 100);\n    }\n  }, [type]);\n  \n  return (\n    <div \n      className={`feedback-cue ${type} ${visible ? 'visible' : 'hidden'}`}\n      style={{\n        left: `${position.x}px`,\n        top: `${position.y}px`,\n        animation: `${type}Animation ${type === 'hit' ? ANIMATION_TIMINGS.HIT_FEEDBACK : ANIMATION_TIMINGS.MISS_FEEDBACK}ms ease-out`\n      }}\n    />\n  );\n};\n```\n\nCSS for feedback cues:\n```css\n.feedback-cue {\n  position: absolute;\n  transform: translate(-50%, -50%);\n  transition: opacity 0.15s ease;\n}\n\n.feedback-cue.hit {\n  background-color: var(--success-color);\n  border-radius: 50%;\n  box-shadow: 0 0 10px var(--success-glow);\n}\n\n.feedback-cue.miss {\n  background-color: var(--error-color);\n  border-radius: 4px;\n  box-shadow: 0 0 10px var(--error-glow);\n}\n\n.feedback-cue.visible {\n  opacity: 1;\n}\n\n.feedback-cue.hidden {\n  opacity: 0;\n}\n\n@keyframes hitAnimation {\n  0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }\n  30% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }\n  100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }\n}\n\n@keyframes missAnimation {\n  0% { transform: translate(-50%, -50%) scale(0.8) rotate(0deg); opacity: 0; }\n  30% { transform: translate(-50%, -50%) scale(1.1) rotate(5deg); opacity: 1; }\n  100% { transform: translate(-50%, -50%) scale(1) rotate(-5deg); opacity: 0; }\n}\n```",
@@ -46,101 +48,105 @@
         "subtasks": []
       },
       {
-        "id": 5,
+        "id": "5",
         "title": "Improve state transitions between game phases",
         "description": "Enhance the clarity of transitions between ready, active gameplay, and results states with smooth animations and visual cues.",
         "details": "1. Design and implement clear visual transitions between game states\n2. Add brief overlays or subtle animations for state changes\n3. Ensure transitions are visually obvious but not disruptive\n4. Maintain consistent timing for all transitions\n5. Implement a state management system if not already present\n\nImplementation example:\n```jsx\nconst GameStateManager = ({ children }) => {\n  const [gameState, setGameState] = useState('ready'); // 'ready', 'active', 'results'\n  const [transitioning, setTransitioning] = useState(false);\n  \n  const transitionTo = useCallback((newState) => {\n    setTransitioning(true);\n    \n    // Short delay before changing actual state\n    setTimeout(() => {\n      setGameState(newState);\n      \n      // Short delay after changing state before ending transition\n      setTimeout(() => {\n        setTransitioning(false);\n      }, 300);\n    }, 300);\n  }, []);\n  \n  return (\n    <GameStateContext.Provider value={{ gameState, transitionTo }}>\n      <div className={`game-container ${transitioning ? 'transitioning' : ''}`}>\n        {transitioning && <div className=\"transition-overlay\" />}\n        {children}\n      </div>\n    </GameStateContext.Provider>\n  );\n};\n\n// Usage in components\nconst GameComponent = () => {\n  const { gameState, transitionTo } = useContext(GameStateContext);\n  \n  // Example of triggering state change\n  const handleStartGame = () => {\n    transitionTo('active');\n  };\n  \n  const handleGameEnd = () => {\n    transitionTo('results');\n  };\n  \n  return (\n    <div>\n      {gameState === 'ready' && <ReadyScreen onStart={handleStartGame} />}\n      {gameState === 'active' && <ActiveGame onEnd={handleGameEnd} />}\n      {gameState === 'results' && <ResultsScreen />}\n    </div>\n  );\n};\n```\n\nCSS for transitions:\n```css\n.game-container {\n  position: relative;\n  overflow: hidden;\n}\n\n.transition-overlay {\n  position: absolute;\n  top: 0;\n  left: 0;\n  right: 0;\n  bottom: 0;\n  background-color: rgba(255, 255, 255, 0.2);\n  z-index: 10;\n  pointer-events: none;\n  animation: pulse 600ms ease-in-out;\n}\n\n@keyframes pulse {\n  0% { opacity: 0; }\n  50% { opacity: 1; }\n  100% { opacity: 0; }\n}\n\n.transitioning .ready-screen,\n.transitioning .active-game,\n.transitioning .results-screen {\n  animation: fadeTransition 600ms ease-in-out;\n}\n\n@keyframes fadeTransition {\n  0% { opacity: 1; transform: scale(1); }\n  50% { opacity: 0.8; transform: scale(0.98); }\n  100% { opacity: 1; transform: scale(1); }\n}\n```",
         "testStrategy": "1. Create visual tests for each state transition\n2. Verify transitions are smooth and consistent across devices\n3. Test timing of transitions to ensure they're not too long or too short\n4. Conduct user testing to confirm transitions are clear and understandable\n5. Verify transitions don't cause performance issues\n6. Test that state management correctly handles rapid state changes",
         "priority": "medium",
         "dependencies": [
-          2,
-          3
+          "2",
+          "3"
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 6,
+        "id": "6",
         "title": "Implement HUD alignment and contrast improvements",
         "description": "Maintain the current HUD size while improving spacing, contrast, and alignment with the updated game and ready screen layouts.",
         "details": "1. Audit current HUD for spacing and alignment issues\n2. Improve text contrast to meet WCAG AA standards\n3. Ensure consistent spacing between HUD elements\n4. Align HUD with updated game area and ready screen layouts\n5. Maintain current HUD size as specified in requirements\n6. Implement responsive positioning that maintains readability\n\nImplementation example:\n```jsx\nconst HUD = ({ gameStats }) => {\n  return (\n    <div className=\"hud-container\">\n      <div className=\"hud-section score\">\n        <span className=\"hud-label\">Score</span>\n        <span className=\"hud-value\">{gameStats.score}</span>\n      </div>\n      \n      <div className=\"hud-section time\">\n        <span className=\"hud-label\">Time</span>\n        <span className=\"hud-value\">{formatTime(gameStats.timeRemaining)}</span>\n      </div>\n      \n      <div className=\"hud-section combo\">\n        <span className=\"hud-label\">Combo</span>\n        <span className=\"hud-value\">{gameStats.combo}x</span>\n      </div>\n    </div>\n  );\n};\n```\n\nCSS improvements:\n```css\n.hud-container {\n  display: grid;\n  grid-template-columns: repeat(3, 1fr);\n  gap: 1rem;\n  padding: 0.75rem;\n  background-color: rgba(0, 0, 0, 0.6);\n  border-radius: 8px;\n  /* Keep current size but improve positioning */\n  width: var(--hud-width);\n  position: absolute;\n  top: 1rem;\n  left: 50%;\n  transform: translateX(-50%);\n  z-index: 5;\n}\n\n.hud-section {\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  justify-content: center;\n}\n\n.hud-label {\n  font-size: 0.875rem;\n  color: rgba(255, 255, 255, 0.9);\n  margin-bottom: 0.25rem;\n  font-weight: 500;\n  text-transform: uppercase;\n  letter-spacing: 0.05em;\n}\n\n.hud-value {\n  font-size: 1.25rem;\n  color: white;\n  font-weight: 700;\n  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);\n}\n```",
         "testStrategy": "1. Verify contrast ratios for all HUD text elements meet WCAG AA standards\n2. Create visual snapshot tests to ensure consistent appearance\n3. Test HUD alignment with the updated game area at different resolutions\n4. Verify HUD maintains its current size as specified in requirements\n5. Test readability of HUD elements during gameplay\n6. Conduct user testing to confirm HUD information is clear and accessible",
         "priority": "medium",
         "dependencies": [
-          2,
-          3
+          "2",
+          "3"
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 7,
+        "id": "7",
         "title": "Optimize asset loading and texture management",
         "description": "Improve performance by optimizing asset sizes, implementing lazy/deferred loading, and enhancing texture management.",
         "details": "1. Audit current assets and identify optimization opportunities\n2. Implement lazy loading for non-critical assets\n3. Optimize texture sizes and formats\n4. Implement proper asset preloading for critical resources\n5. Add loading indicators where appropriate\n6. Implement texture compression where beneficial\n\nImplementation example:\n```jsx\nconst useAssetLoader = () => {\n  const [loadingState, setLoadingState] = useState({\n    isLoading: true,\n    progress: 0,\n    errors: []\n  });\n  \n  useEffect(() => {\n    const criticalAssets = [\n      { id: 'background', src: '/assets/background.webp' },\n      { id: 'ui-elements', src: '/assets/ui-elements.webp' },\n      // Other critical assets\n    ];\n    \n    const nonCriticalAssets = [\n      { id: 'effects', src: '/assets/effects.webp' },\n      { id: 'sounds', src: '/assets/sounds.mp3' },\n      // Other non-critical assets\n    ];\n    \n    // Load critical assets first\n    const loadCriticalAssets = async () => {\n      let loaded = 0;\n      const total = criticalAssets.length;\n      \n      const loadPromises = criticalAssets.map(asset => {\n        return new Promise((resolve, reject) => {\n          const img = new Image();\n          img.onload = () => {\n            loaded++;\n            setLoadingState(prev => ({\n              ...prev,\n              progress: (loaded / total) * 50 // First 50% of progress\n            }));\n            resolve(asset);\n          };\n          img.onerror = () => reject(asset);\n          img.src = asset.src;\n        });\n      });\n      \n      return Promise.allSettled(loadPromises);\n    };\n    \n    // Load non-critical assets after game starts\n    const loadNonCriticalAssets = async () => {\n      let loaded = 0;\n      const total = nonCriticalAssets.length;\n      \n      const loadPromises = nonCriticalAssets.map(asset => {\n        return new Promise((resolve, reject) => {\n          const img = new Image();\n          img.onload = () => {\n            loaded++;\n            setLoadingState(prev => ({\n              ...prev,\n              progress: 50 + (loaded / total) * 50 // Last 50% of progress\n            }));\n            resolve(asset);\n          };\n          img.onerror = () => reject(asset);\n          img.src = asset.src;\n        });\n      });\n      \n      return Promise.allSettled(loadPromises);\n    };\n    \n    const loadAllAssets = async () => {\n      try {\n        // Load critical assets first\n        const criticalResults = await loadCriticalAssets();\n        \n        // Mark as ready for gameplay even though non-critical assets are still loading\n        setLoadingState(prev => ({\n          ...prev,\n          isLoading: false,\n          errors: criticalResults\n            .filter(result => result.status === 'rejected')\n            .map(result => result.reason)\n        }));\n        \n        // Continue loading non-critical assets in background\n        loadNonCriticalAssets();\n      } catch (error) {\n        console.error('Asset loading error:', error);\n        setLoadingState(prev => ({\n          ...prev,\n          isLoading: false,\n          errors: [...prev.errors, error]\n        }));\n      }\n    };\n    \n    loadAllAssets();\n  }, []);\n  \n  return loadingState;\n};\n```",
         "testStrategy": "1. Measure load times before and after optimization\n2. Verify assets load correctly on different network conditions\n3. Test memory usage during gameplay\n4. Verify texture quality remains acceptable after optimization\n5. Test lazy loading behavior to ensure it doesn't impact gameplay\n6. Create automated tests to verify all assets load correctly",
         "priority": "medium",
         "dependencies": [
-          1
+          "1"
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 8,
+        "id": "8",
         "title": "Implement accessibility improvements",
         "description": "Enhance accessibility by improving color contrast, text legibility, and ensuring critical information is not conveyed by color alone.",
         "details": "1. Audit current UI for accessibility issues\n2. Implement high contrast mode or ensure existing contrast meets WCAG AA standards\n3. Add alternative indicators for information conveyed by color\n4. Ensure text sizes scale appropriately with DPI\n5. Implement keyboard navigation where applicable\n6. Add focus indicators for interactive elements\n\nImplementation example:\n```jsx\nconst AccessibilityProvider = ({ children }) => {\n  const [highContrast, setHighContrast] = useState(false);\n  const [textSize, setTextSize] = useState('medium'); // 'small', 'medium', 'large'\n  \n  // Apply accessibility settings to document\n  useEffect(() => {\n    const root = document.documentElement;\n    \n    // Apply high contrast mode\n    if (highContrast) {\n      root.classList.add('high-contrast');\n    } else {\n      root.classList.remove('high-contrast');\n    }\n    \n    // Apply text size\n    root.dataset.textSize = textSize;\n  }, [highContrast, textSize]);\n  \n  const value = {\n    highContrast,\n    textSize,\n    setHighContrast,\n    setTextSize\n  };\n  \n  return (\n    <AccessibilityContext.Provider value={value}>\n      {children}\n    </AccessibilityContext.Provider>\n  );\n};\n\n// Example of an accessible hit/miss indicator\nconst AccessibleFeedbackCue = ({ type, position }) => {\n  const { highContrast } = useContext(AccessibilityContext);\n  \n  return (\n    <div \n      className={`feedback-cue ${type} ${highContrast ? 'high-contrast' : ''}`}\n      style={{\n        left: `${position.x}px`,\n        top: `${position.y}px`\n      }}\n      aria-live=\"polite\"\n      role=\"status\"\n    >\n      {/* Visual indicator */}\n      <div className=\"visual-indicator\" />\n      \n      {/* Text indicator for screen readers */}\n      <span className=\"sr-only\">{type === 'hit' ? 'Hit' : 'Miss'}</span>\n      \n      {/* Shape indicator (not just color) */}\n      {type === 'hit' ? (\n        <svg className=\"shape-indicator\" viewBox=\"0 0 24 24\">\n          <circle cx=\"12\" cy=\"12\" r=\"10\" />\n        </svg>\n      ) : (\n        <svg className=\"shape-indicator\" viewBox=\"0 0 24 24\">\n          <rect x=\"2\" y=\"2\" width=\"20\" height=\"20\" />\n        </svg>\n      )}\n    </div>\n  );\n};\n```\n\nCSS for accessibility:\n```css\n:root {\n  --text-base-size: 16px;\n  --primary-color: #3a86ff;\n  --text-color: #333;\n  --background-color: #fff;\n  --success-color: #38b000;\n  --error-color: #d90429;\n}\n\n/* Text size variations */\n[data-text-size=\"small\"] {\n  --text-base-size: 14px;\n}\n\n[data-text-size=\"medium\"] {\n  --text-base-size: 16px;\n}\n\n[data-text-size=\"large\"] {\n  --text-base-size: 18px;\n}\n\n/* High contrast mode */\n.high-contrast {\n  --primary-color: #0047ab;\n  --text-color: #000;\n  --background-color: #fff;\n  --success-color: #008000;\n  --error-color: #cc0000;\n}\n\n/* Screen reader only class */\n.sr-only {\n  position: absolute;\n  width: 1px;\n  height: 1px;\n  padding: 0;\n  margin: -1px;\n  overflow: hidden;\n  clip: rect(0, 0, 0, 0);\n  white-space: nowrap;\n  border-width: 0;\n}\n\n/* Focus indicators */\n:focus-visible {\n  outline: 3px solid var(--primary-color);\n  outline-offset: 2px;\n}\n```",
         "testStrategy": "1. Verify all text elements meet WCAG AA contrast standards\n2. Test with screen readers to ensure proper announcements\n3. Verify all interactive elements are keyboard accessible\n4. Test focus indicators for visibility and clarity\n5. Verify text scaling works correctly with different DPI settings\n6. Conduct user testing with individuals who have visual impairments",
         "priority": "medium",
         "dependencies": [
-          2,
-          3,
-          4,
-          6
+          "2",
+          "3",
+          "4",
+          "6"
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 9,
+        "id": "9",
         "title": "Implement input latency optimization",
         "description": "Reduce input-to-visual feedback latency to meet the target of ≤75ms on target hardware.",
         "details": "1. Audit current input handling for latency issues\n2. Optimize event handlers to minimize processing time\n3. Implement debouncing/throttling where appropriate\n4. Use passive event listeners where possible\n5. Ensure animations start immediately after input\n6. Measure and optimize the full input-to-visual-feedback pipeline\n\nImplementation example:\n```jsx\nconst useOptimizedInputHandler = (onInput, options = {}) => {\n  const {\n    passive = true,\n    throttleMs = 0, // 0 means no throttling\n    preventDefault = false\n  } = options;\n  \n  // Store the handler in a ref to avoid recreating it on each render\n  const handlerRef = useRef(onInput);\n  \n  // Update the ref when the handler changes\n  useEffect(() => {\n    handlerRef.current = onInput;\n  }, [onInput]);\n  \n  // Create a throttled version if needed\n  const throttledHandler = useCallback(\n    throttleMs > 0\n      ? throttle((e) => {\n          if (preventDefault) e.preventDefault();\n          // Use performance.now() for high-resolution timing\n          const startTime = performance.now();\n          \n          // Call the actual handler\n          handlerRef.current(e);\n          \n          // Optionally log latency for debugging\n          const processingTime = performance.now() - startTime;\n          if (processingTime > 5) {\n            console.warn(`Input handler took ${processingTime.toFixed(2)}ms to process`);\n          }\n        }, throttleMs)\n      : (e) => {\n          if (preventDefault) e.preventDefault();\n          const startTime = performance.now();\n          handlerRef.current(e);\n          const processingTime = performance.now() - startTime;\n          if (processingTime > 5) {\n            console.warn(`Input handler took ${processingTime.toFixed(2)}ms to process`);\n          }\n        },\n    [throttleMs, preventDefault]\n  );\n  \n  // Return the optimized handler and options for addEventListener\n  return [throttledHandler, { passive }];\n};\n\n// Usage example\nconst GameInput = () => {\n  const handleTap = useCallback((e) => {\n    // Process tap/click input\n    const position = { x: e.clientX, y: e.clientY };\n    processGameInput(position);\n  }, []);\n  \n  const [optimizedHandler, listenerOptions] = useOptimizedInputHandler(handleTap, {\n    passive: true,\n    throttleMs: 0, // No throttling for game inputs to minimize latency\n    preventDefault: false\n  });\n  \n  useEffect(() => {\n    const element = document.getElementById('game-area');\n    if (!element) return;\n    \n    // Use the optimized handler\n    element.addEventListener('pointerdown', optimizedHandler, listenerOptions);\n    \n    return () => {\n      element.removeEventListener('pointerdown', optimizedHandler);\n    };\n  }, [optimizedHandler, listenerOptions]);\n  \n  return <div id=\"game-area\" className=\"game-input-area\" />;\n};\n\n// Helper function for throttling\nfunction throttle(func, limit) {\n  let inThrottle;\n  return function(e) {\n    if (!inThrottle) {\n      func(e);\n      inThrottle = true;\n      setTimeout(() => (inThrottle = false), limit);\n    }\n  };\n}\n```",
         "testStrategy": "1. Measure input-to-visual feedback latency using high-speed camera or specialized tools\n2. Verify latency is ≤75ms on target hardware\n3. Test input handling under different CPU loads\n4. Create automated performance tests for input handlers\n5. Test with different input methods (touch, mouse, keyboard)\n6. Verify event handlers don't create GC pressure",
         "priority": "high",
         "dependencies": [
-          1
+          "1"
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 10,
+        "id": "10",
         "title": "Implement visual regression and performance testing",
         "description": "Create comprehensive visual regression tests and performance monitoring to ensure visual consistency and performance targets are met.",
         "details": "1. Set up visual regression testing framework (e.g., Percy, Chromatic, or custom solution)\n2. Create snapshot tests for ready screen, game area, and results states\n3. Implement performance monitoring to track frame times and input latency\n4. Create automated tests that verify performance meets targets\n5. Set up CI/CD pipeline integration for continuous testing\n6. Document testing procedures and acceptance criteria\n\nImplementation example:\n```jsx\n// Visual regression test setup\nconst setupVisualRegressionTests = () => {\n  // Example using Jest and Puppeteer for visual testing\n  describe('Visual Regression Tests', () => {\n    let browser;\n    let page;\n    \n    beforeAll(async () => {\n      browser = await puppeteer.launch();\n    });\n    \n    afterAll(async () => {\n      await browser.close();\n    });\n    \n    beforeEach(async () => {\n      page = await browser.newPage();\n      await page.setViewport({ width: 1920, height: 1080 });\n    });\n    \n    afterEach(async () => {\n      await page.close();\n    });\n    \n    test('Ready Screen Visual Regression', async () => {\n      await page.goto('http://localhost:3000/test/ready-screen');\n      await page.waitForSelector('.ready-screen', { visible: true });\n      \n      // Take screenshot and compare with baseline\n      const screenshot = await page.screenshot();\n      expect(screenshot).toMatchImageSnapshot();\n    });\n    \n    test('Game Area Visual Regression', async () => {\n      await page.goto('http://localhost:3000/test/game-area');\n      await page.waitForSelector('.game-area', { visible: true });\n      \n      const screenshot = await page.screenshot();\n      expect(screenshot).toMatchImageSnapshot();\n    });\n    \n    test('Results Screen Visual Regression', async () => {\n      await page.goto('http://localhost:3000/test/results-screen');\n      await page.waitForSelector('.results-screen', { visible: true });\n      \n      const screenshot = await page.screenshot();\n      expect(screenshot).toMatchImageSnapshot();\n    });\n  });\n};\n\n// Performance testing setup\nconst setupPerformanceTests = () => {\n  describe('Performance Tests', () => {\n    let browser;\n    let page;\n    \n    beforeAll(async () => {\n      browser = await puppeteer.launch();\n    });\n    \n    afterAll(async () => {\n      await browser.close();\n    });\n    \n    beforeEach(async () => {\n      page = await browser.newPage();\n      await page.setViewport({ width: 1920, height: 1080 });\n    });\n    \n    afterEach(async () => {\n      await page.close();\n    });\n    \n    test('Frame Time Performance', async () => {\n      await page.goto('http://localhost:3000/test/performance');\n      \n      // Start performance monitoring\n      await page.evaluate(() => {\n        window.frameTimeLog = [];\n        window.lastFrameTime = performance.now();\n        \n        window.frameTimeLogger = () => {\n          const now = performance.now();\n          const frameDuration = now - window.lastFrameTime;\n          window.frameTimeLog.push(frameDuration);\n          window.lastFrameTime = now;\n          requestAnimationFrame(window.frameTimeLogger);\n        };\n        \n        requestAnimationFrame(window.frameTimeLogger);\n      });\n      \n      // Simulate gameplay for 10 seconds\n      await page.click('#start-test-button');\n      await page.waitForTimeout(10000);\n      \n      // Get frame time data\n      const frameTimeData = await page.evaluate(() => {\n        // Stop logging\n        cancelAnimationFrame(window.frameTimeLogger);\n        return window.frameTimeLog;\n      });\n      \n      // Calculate p95 frame time\n      const sortedFrameTimes = [...frameTimeData].sort((a, b) => a - b);\n      const p95Index = Math.floor(sortedFrameTimes.length * 0.95);\n      const p95FrameTime = sortedFrameTimes[p95Index];\n      \n      // Check if performance meets target\n      expect(p95FrameTime).toBeLessThanOrEqual(16.6); // Target: 16.6ms (60fps)\n      \n      // Check for frame time spikes\n      const spikes = frameTimeData.filter(time => time > 50);\n      expect(spikes.length).toBe(0); // No spikes over 50ms\n    });\n    \n    test('Input Latency', async () => {\n      await page.goto('http://localhost:3000/test/input-latency');\n      \n      // Start latency monitoring\n      await page.evaluate(() => {\n        window.inputLatencyLog = [];\n        \n        window.addEventListener('pointerdown', (e) => {\n          const inputTime = performance.now();\n          window.lastInputTime = inputTime;\n        });\n        \n        // Mock function that would be called when visual feedback is shown\n        window.originalShowFeedback = window.showFeedback;\n        window.showFeedback = (position) => {\n          const feedbackTime = performance.now();\n          const latency = feedbackTime - window.lastInputTime;\n          window.inputLatencyLog.push(latency);\n          return window.originalShowFeedback(position);\n        };\n      });\n      \n      // Simulate multiple inputs\n      for (let i = 0; i < 20; i++) {\n        await page.mouse.click(300 + Math.random() * 400, 300 + Math.random() * 400);\n        await page.waitForTimeout(500); // Wait between clicks\n      }\n      \n      // Get latency data\n      const latencyData = await page.evaluate(() => {\n        return window.inputLatencyLog;\n      });\n      \n      // Calculate average latency\n      const avgLatency = latencyData.reduce((sum, val) => sum + val, 0) / latencyData.length;\n      \n      // Check if latency meets target\n      expect(avgLatency).toBeLessThanOrEqual(75); // Target: ≤75ms\n    });\n  });\n};\n```",
         "testStrategy": "1. Run visual regression tests at 1080p and higher resolutions\n2. Verify tests catch visual regressions when introduced\n3. Measure performance metrics against target values\n4. Test on target hardware to ensure performance meets requirements\n5. Integrate tests into CI/CD pipeline\n6. Document test results and create a baseline for future comparisons",
         "priority": "medium",
         "dependencies": [
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8,
-          9
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "7",
+          "8",
+          "9"
         ],
         "status": "pending",
         "subtasks": []
       }
     ],
     "metadata": {
-      "created": "2025-12-09T09:11:11.260Z",
-      "updated": "2025-12-09T09:11:11.260Z",
-      "description": "Tasks for master context"
+      "version": "1.0.0",
+      "lastModified": "2025-12-09T10:20:35.803Z",
+      "taskCount": 10,
+      "completedCount": 2,
+      "tags": [
+        "master"
+      ]
     }
   }
 }
