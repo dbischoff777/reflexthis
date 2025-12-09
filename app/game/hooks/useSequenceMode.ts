@@ -166,7 +166,11 @@ export function useSequenceMode({
             showSequence();
           }, 1000);
         } else {
-          // Wrong sequence - show feedback for wrong button
+          // Wrong sequence - end current sequence immediately
+          // Disable input immediately to prevent further button presses
+          setIsWaitingForInput(false);
+          isProcessingRef.current = true;
+          
           requestAnimationFrame(() => {
             setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: 'incorrect' }));
             
@@ -195,9 +199,10 @@ export function useSequenceMode({
           setPlayerSequence([]);
           decrementLives();
           
-          // Restart sequence after error
+          // Start new sequence after error
           if (!gameOver) {
             setTimer(() => {
+              isProcessingRef.current = false; // Reset processing flag so showSequence can run
               showSequence();
             }, 1500);
           }
@@ -205,7 +210,11 @@ export function useSequenceMode({
       } else {
         // Check if current input is correct so far
         if (newPlayerSequence[newPlayerSequence.length - 1] !== sequence[newPlayerSequence.length - 1]) {
-          // Wrong button pressed - show feedback
+          // Wrong button pressed - end current sequence immediately
+          // Disable input immediately to prevent further button presses
+          setIsWaitingForInput(false);
+          isProcessingRef.current = true;
+          
           requestAnimationFrame(() => {
             setButtonPressFeedback((prev) => ({ ...prev, [buttonId]: 'incorrect' }));
             
@@ -237,9 +246,10 @@ export function useSequenceMode({
           setPlayerSequence([]);
           decrementLives();
           
-          // Restart sequence after error
+          // Start new sequence after error
           if (!gameOver) {
             setTimer(() => {
+              isProcessingRef.current = false; // Reset processing flag so showSequence can run
               showSequence();
             }, 1500);
           }

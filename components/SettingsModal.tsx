@@ -146,7 +146,7 @@ export function SettingsModal({ show, onClose }: SettingsModalProps) {
           <div 
             className={cn(
               'border-4 pixel-border pointer-events-auto',
-              'p-4 sm:p-6 md:p-8 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto',
+              'p-4 sm:p-6 md:p-8 max-w-4xl w-full mx-auto max-h-[90vh] overflow-y-auto',
               'shadow-[0_0_20px_rgba(62,124,172,0.4)]'
             )}
             style={{
@@ -233,12 +233,12 @@ export function SettingsModal({ show, onClose }: SettingsModalProps) {
 
         {/* Tab content */}
         {activeTab === 'audio' && (
-          <section className="space-y-4">
-            <div className="flex flex-col gap-3">
+          <section className="space-y-5">
+            <div className="flex flex-col gap-4">
               <RippleButton
                 onClick={toggleSound}
                 rippleColor="rgba(0, 255, 255, 0.3)"
-                className="w-full px-4 py-3 border-4 pixel-border font-bold text-sm sm:text-base focus:outline-none focus:ring-2 transition-all"
+                className="w-full px-6 py-4 border-4 pixel-border font-bold text-base sm:text-lg md:text-xl focus:outline-none focus:ring-2 transition-all"
                 style={{
                   borderColor: soundEnabled ? '#00D9FF' : '#3E7CAC',
                   borderWidth: soundEnabled ? '4px' : '4px',
@@ -262,11 +262,11 @@ export function SettingsModal({ show, onClose }: SettingsModalProps) {
                 {t(language, 'settings.audio.sound')} {soundEnabled ? t(language, 'settings.audio.soundOn') : t(language, 'settings.audio.soundOff')}
               </RippleButton>
 
-              <div className="space-y-1 border-2 rounded px-3 py-2 transition-all" style={{ 
+              <div className="space-y-2 border-2 rounded px-4 py-3 transition-all" style={{ 
                 borderColor: '#3E7CAC', 
                 backgroundColor: 'rgba(0, 58, 99, 0.35)',
               }}>
-                <div className="flex justify-between text-xs sm:text-sm text-foreground/80 mb-1">
+                <div className="flex justify-between text-sm sm:text-base md:text-lg text-foreground/80 mb-2">
                   <span className="font-semibold">{t(language, 'settings.audio.soundVolume')}</span>
                   <span className="font-semibold">{Math.round(soundVolume * 100)}%</span>
                 </div>
@@ -277,7 +277,7 @@ export function SettingsModal({ show, onClose }: SettingsModalProps) {
                   step={5}
                   value={Math.round(soundVolume * 100)}
                   onChange={handleSoundVolumeChange}
-                  className="w-full accent-primary cursor-pointer"
+                  className="w-full accent-primary cursor-pointer h-3 sm:h-4"
                   style={{
                     accentColor: '#00D9FF',
                   }}
@@ -287,7 +287,7 @@ export function SettingsModal({ show, onClose }: SettingsModalProps) {
               <RippleButton
                 onClick={toggleMusic}
                 rippleColor="rgba(0, 255, 255, 0.3)"
-                className="w-full px-4 py-3 border-4 pixel-border font-bold text-sm sm:text-base focus:outline-none focus:ring-2 transition-all"
+                className="w-full px-6 py-4 border-4 pixel-border font-bold text-base sm:text-lg md:text-xl focus:outline-none focus:ring-2 transition-all"
                 style={{
                   borderColor: musicEnabled ? '#00D9FF' : '#3E7CAC',
                   borderWidth: musicEnabled ? '4px' : '4px',
@@ -311,11 +311,11 @@ export function SettingsModal({ show, onClose }: SettingsModalProps) {
                 {t(language, 'settings.audio.music')} {musicEnabled ? t(language, 'settings.audio.musicOn') : t(language, 'settings.audio.musicOff')}
               </RippleButton>
 
-              <div className="space-y-1 border-2 rounded px-3 py-2 transition-all" style={{ 
+              <div className="space-y-2 border-2 rounded px-4 py-3 transition-all" style={{ 
                 borderColor: '#3E7CAC', 
                 backgroundColor: 'rgba(0, 58, 99, 0.35)',
               }}>
-                <div className="flex justify-between text-xs sm:text-sm text-foreground/80 mb-1">
+                <div className="flex justify-between text-sm sm:text-base md:text-lg text-foreground/80 mb-2">
                   <span className="font-semibold">{t(language, 'settings.audio.musicVolume')}</span>
                   <span className="font-semibold">{Math.round(musicVolume * 100)}%</span>
                 </div>
@@ -326,14 +326,14 @@ export function SettingsModal({ show, onClose }: SettingsModalProps) {
                   step={5}
                   value={Math.round(musicVolume * 100)}
                   onChange={handleMusicVolumeChange}
-                  className="w-full accent-primary cursor-pointer"
+                  className="w-full accent-primary cursor-pointer h-3 sm:h-4"
                   style={{
                     accentColor: '#00D9FF',
                   }}
                 />
               </div>
 
-              <p className="text-xs text-foreground/60 mt-1 px-1">
+              <p className="text-sm sm:text-base text-foreground/60 mt-2 px-2">
                 {t(language, 'settings.audio.musicNote')}
               </p>
             </div>

@@ -103,25 +103,25 @@ export function KeybindingsSettings({ onClose, embedded = false }: KeybindingsSe
 
   const content = (
     <>
-      <div className="mb-4 sm:mb-6">
+      <div className="mb-5 sm:mb-7">
         {embedded ? (
           <>
-            <h3 className="text-lg sm:text-xl font-bold text-foreground mb-1">
+            <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-2">
               {t(language, 'keybindings.title')}
             </h3>
-            <p className="text-xs text-foreground/70">
+            <p className="text-sm sm:text-base text-foreground/70">
               {t(language, 'keybindings.instruction.short')}
             </p>
           </>
         ) : (
           <>
             <h2 
-              className="text-2xl sm:text-3xl font-bold text-foreground mb-2 pixel-border px-4 py-2 inline-block"
+              className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-2 pixel-border px-4 py-2 inline-block"
               style={{ borderColor: '#3E7CAC' }}
             >
               {t(language, 'keybindings.title.upper')}
             </h2>
-            <p className="text-sm text-foreground/70 mt-2">
+            <p className="text-base sm:text-lg text-foreground/70 mt-2">
               {t(language, 'keybindings.instruction')}
             </p>
           </>
@@ -129,30 +129,30 @@ export function KeybindingsSettings({ onClose, embedded = false }: KeybindingsSe
       </div>
 
       {error && (
-        <div className="mb-4 p-3 bg-destructive/20 border-2 border-destructive pixel-border shadow-[0_0_10px_rgba(255,0,0,0.3)]">
-          <p className="text-destructive text-sm font-bold">{error}</p>
+        <div className="mb-5 p-4 sm:p-5 bg-destructive/20 border-2 border-destructive pixel-border shadow-[0_0_10px_rgba(255,0,0,0.3)]">
+          <p className="text-destructive text-base sm:text-lg font-bold">{error}</p>
         </div>
       )}
 
       {/* Keybindings Grid */}
-      <div className="space-y-4 sm:space-y-6 mb-4 sm:mb-6">
+      <div className="space-y-5 sm:space-y-7 mb-5 sm:mb-7">
         {buttonLayout.map((row, rowIndex) => (
-          <div key={rowIndex} className="flex flex-col items-center gap-3">
-            <div className="flex justify-center gap-2 sm:gap-3 md:gap-4 flex-wrap">
+          <div key={rowIndex} className="flex flex-col items-center gap-4">
+            <div className="flex justify-center gap-3 sm:gap-4 md:gap-5 flex-wrap">
               {row.map((buttonId) => (
                 <div
                   key={buttonId}
-                  className="flex flex-col items-center gap-2"
+                  className="flex flex-col items-center gap-3"
                 >
-                  <div className="text-xs sm:text-sm text-foreground/60 font-bold">
+                  <div className="text-sm sm:text-base md:text-lg text-foreground/60 font-bold">
                     {t(language, 'keybindings.button')} {buttonId}
                   </div>
                   <button
                     onClick={() => handleStartEdit(buttonId)}
                     draggable={false}
                     className={cn(
-                      'min-w-[60px] sm:min-w-[80px] h-12 sm:h-14 px-4',
-                      'border-4 pixel-border font-bold text-lg sm:text-xl',
+                      'min-w-[80px] sm:min-w-[100px] md:min-w-[120px] h-14 sm:h-16 md:h-20 px-5 sm:px-6',
+                      'border-4 pixel-border font-bold text-xl sm:text-2xl md:text-3xl',
                       'transition-all duration-200',
                       editingButtonId === buttonId
                         ? 'animate-pulse'
@@ -188,7 +188,7 @@ export function KeybindingsSettings({ onClose, embedded = false }: KeybindingsSe
                     }`}
                   >
                     {editingButtonId === buttonId ? (
-                      <span className="text-xs">{t(language, 'keybindings.pressKey')}</span>
+                      <span className="text-sm sm:text-base">{t(language, 'keybindings.pressKey')}</span>
                     ) : (
                       getKeyDisplayName(currentKeybindings[buttonId])
                     )}
@@ -201,11 +201,11 @@ export function KeybindingsSettings({ onClose, embedded = false }: KeybindingsSe
       </div>
 
       {/* Action Buttons */}
-      <div className="flex flex-col sm:flex-row gap-3 justify-end mt-2">
+      <div className="flex flex-col sm:flex-row gap-4 justify-center mt-3">
         <button
           onClick={handleReset}
           draggable={false}
-          className="px-6 py-3 border-4 pixel-border font-bold transition-all duration-200 focus:outline-none focus:ring-2"
+          className="px-8 py-4 border-4 pixel-border font-bold text-base sm:text-lg md:text-xl transition-all duration-200 focus:outline-none focus:ring-2"
           style={{
             borderColor: '#3E7CAC',
             backgroundColor: 'rgba(0, 58, 99, 0.6)',
@@ -225,7 +225,7 @@ export function KeybindingsSettings({ onClose, embedded = false }: KeybindingsSe
         <button
           onClick={handleApplyNumpadPreset}
           draggable={false}
-          className="px-6 py-3 border-4 pixel-border font-bold transition-all duration-200 focus:outline-none focus:ring-2"
+          className="px-8 py-4 border-4 pixel-border font-bold text-base sm:text-lg md:text-xl transition-all duration-200 focus:outline-none focus:ring-2"
           style={{
             borderColor: '#3E7CAC',
             backgroundColor: 'rgba(0, 58, 99, 0.6)',
@@ -246,7 +246,7 @@ export function KeybindingsSettings({ onClose, embedded = false }: KeybindingsSe
           <button
             onClick={onClose}
             draggable={false}
-            className="px-6 py-3 border-4 pixel-border font-bold transition-all duration-200 focus:outline-none focus:ring-2"
+            className="px-8 py-4 border-4 pixel-border font-bold text-base sm:text-lg md:text-xl transition-all duration-200 focus:outline-none focus:ring-2"
             style={{
               borderColor: '#3E7CAC',
               backgroundColor: '#3E7CAC',
@@ -266,7 +266,7 @@ export function KeybindingsSettings({ onClose, embedded = false }: KeybindingsSe
 
       {!embedded && (
         <div 
-          className="mt-6 p-3 border-2 rounded transition-all"
+          className="mt-6 p-4 sm:p-5 border-2 rounded transition-all"
           style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 58, 99, 0.35)' }}
           onMouseEnter={(e) => { 
             e.currentTarget.style.borderColor = 'rgba(62, 124, 172, 0.8)';
@@ -277,10 +277,10 @@ export function KeybindingsSettings({ onClose, embedded = false }: KeybindingsSe
             e.currentTarget.style.backgroundColor = 'rgba(0, 58, 99, 0.35)';
           }}
         >
-          <p className="text-xs sm:text-sm text-foreground/80">
+          <p className="text-sm sm:text-base md:text-lg text-foreground/80">
             <strong className="text-foreground font-semibold">{t(language, 'keybindings.defaultLayout')}</strong> Q W E (top row), A S D F (middle row), Y X C (bottom row)
           </p>
-          <p className="text-xs sm:text-sm text-foreground/70 mt-1">
+          <p className="text-sm sm:text-base md:text-lg text-foreground/70 mt-2">
             {t(language, 'keybindings.customize')}
           </p>
         </div>
