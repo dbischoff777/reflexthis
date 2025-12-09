@@ -3,7 +3,7 @@
 'use client';
 
 import React, { useRef, useState, useMemo, useCallback, memo, Suspense, useEffect } from 'react';
-import { Canvas, useFrame, ThreeEvent } from '@react-three/fiber';
+import { Canvas, useFrame, ThreeEvent, useThree } from '@react-three/fiber';
 import { RoundedBox, Environment, Text, Float } from '@react-three/drei';
 import { 
   EffectComposer, 
@@ -24,6 +24,60 @@ import {
   getLODRadius,
   getLODSegments,
 } from '@/lib/webglOptimizations';
+
+// ============================================================================
+// WEBGL CONTEXT LOST HANDLER
+// ============================================================================
+
+/**
+ * Component that handles WebGL context lost/restored events
+ * Prevents crashes and provides graceful degradation
+ */
+function WebGLContextHandler() {
+  const { gl } = useThree();
+  const contextLostRef = useRef(false);
+
+  useEffect(() => {
+    const canvas = gl.domElement;
+    if (!canvas) return;
+
+    const handleContextLost = (event: Event) => {
+      event.preventDefault();
+      contextLostRef.current = true;
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('[WebGL] Context lost - attempting recovery...');
+      }
+    };
+
+    const handleContextRestored = () => {
+      contextLostRef.current = false;
+      
+      // React Three Fiber will automatically reinitialize the renderer
+      // Just clear any cached resources that might be stale
+      if (gl.extensions) {
+        // Clear extension cache to force re-initialization
+        Object.keys(gl.extensions).forEach(key => {
+          delete (gl.extensions as Record<string, unknown>)[key];
+        });
+      }
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.info('[WebGL] Context restored - renderer will reinitialize');
+      }
+    };
+
+    canvas.addEventListener('webglcontextlost', handleContextLost);
+    canvas.addEventListener('webglcontextrestored', handleContextRestored);
+
+    return () => {
+      canvas.removeEventListener('webglcontextlost', handleContextLost);
+      canvas.removeEventListener('webglcontextrestored', handleContextRestored);
+    };
+  }, [gl]);
+
+  return null;
+}
 
 // ============================================================================
 // DYNAMIC BLOOM COMPONENT (responds to combo milestones)
@@ -2496,6 +2550,7 @@ export const GameButtonGridWebGL = memo(function GameButtonGridWebGL({
         style={{ background: 'transparent' }}
       >
         <Suspense fallback={null}>
+          <WebGLContextHandler />
           {/* Ambient fill light - slightly brighter for better visibility */}
           <ambientLight intensity={0.4} color="#8899cc" />
           
@@ -2657,6 +2712,7 @@ export const GameButton3DWebGL = memo(function GameButton3DWebGL({
         style={{ background: 'transparent' }}
       >
         <Suspense fallback={null}>
+          <WebGLContextHandler />
           <ambientLight intensity={0.3} color="#8899bb" />
           <directionalLight position={[3, 4, 5]} intensity={1.2} castShadow />
           <directionalLight position={[-2, 2, 3]} intensity={0.5} color="#6688cc" />

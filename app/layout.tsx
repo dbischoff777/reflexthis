@@ -77,7 +77,7 @@ export default function RootLayout({
         <link rel="preload" href="/logo/ReflexIcon.jpg" as="image" />
         <link rel="preload" href="/animation/ReflexIconAnimated.mp4" as="video" />
         <link rel="prefetch" href="/animation/menu-background-animated.mp4" as="video" />
-        <link rel="prefetch" href="/game" />
+        <link rel="prefetch" href="/game" as="document" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${rajdhani.variable} antialiased`}
