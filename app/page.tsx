@@ -359,11 +359,11 @@ function LandingPageContent() {
 
     const preloadImage = (src: string, onProgress?: (progress: number) => void) =>
       new Promise<void>((resolve) => {
-        const img = new Image();
+        const img = new Image() as HTMLImageElement;
         let progress = 0;
         
         // Track loading progress if supported
-        if ('decode' in img) {
+        if ('decode' in img && typeof img.decode === 'function') {
           img.decode()
             .then(() => {
               progress = 100;
