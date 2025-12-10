@@ -50,56 +50,70 @@ export const DIFFICULTY_PRESETS: Record<DifficultyPreset, DifficultyConfig> = {
 
 /**
  * Calculate highlight duration based on score and difficulty preset
+ * @param adaptiveMultiplier Optional adaptive difficulty multiplier (default: 1.0)
  */
 export function getHighlightDurationForDifficulty(
   score: number,
-  preset: DifficultyPreset
+  preset: DifficultyPreset,
+  adaptiveMultiplier: number = 1.0
 ): number {
   const config = DIFFICULTY_PRESETS[preset];
-  const speedReduction = Math.min(0.8, score * 0.001 * config.speedIncrease);
+  // Apply adaptive multiplier: < 1.0 = easier (longer duration), > 1.0 = harder (shorter duration)
+  const adjustedSpeedIncrease = config.speedIncrease * adaptiveMultiplier;
+  const speedReduction = Math.min(0.8, score * 0.001 * adjustedSpeedIncrease);
   const duration = config.baseDuration * (1 - speedReduction);
-  return Math.max(config.minDuration, duration);
+  // Further adjust by multiplier: lower multiplier = longer duration (easier)
+  const finalDuration = duration / adaptiveMultiplier;
+  return Math.max(config.minDuration, finalDuration);
 }
 
 /**
  * Get number of buttons to highlight based on score and difficulty preset
+ * @param adaptiveMultiplier Optional adaptive difficulty multiplier (default: 1.0)
  */
 export function getButtonsToHighlightForDifficulty(
   score: number,
-  preset: DifficultyPreset
+  preset: DifficultyPreset,
+  adaptiveMultiplier: number = 1.0
 ): number {
   const config = DIFFICULTY_PRESETS[preset];
+  const adjustedMaxButtons = Math.min(10, Math.ceil(config.maxButtons * adaptiveMultiplier));
   
   if (preset === 'easy') {
     // Easy: Start with 1, occasionally 2 after score 30
     if (score < 30) return 1;
-    return Math.random() < 0.3 ? 2 : 1;
+    const shouldIncrease = adaptiveMultiplier > 1.2;
+    return Math.random() < (shouldIncrease ? 0.5 : 0.3) ? 2 : 1;
   }
   
   if (preset === 'medium') {
-    // Medium: Original progressive behavior
-    if (score <= 50) return 1;
-    if (score <= 150) return Math.random() < 0.5 ? 1 : 2;
-    return Math.floor(Math.random() * config.maxButtons) + 1;
+    // Medium: Original progressive behavior, adjusted by adaptive multiplier
+    const adjustedScore = score * adaptiveMultiplier;
+    if (adjustedScore <= 50) return 1;
+    if (adjustedScore <= 150) return Math.random() < 0.5 ? 1 : 2;
+    return Math.floor(Math.random() * adjustedMaxButtons) + 1;
   }
   
   if (preset === 'hard') {
     // Hard: Multiple buttons appear sooner
-    if (score < 20) return 1;
-    if (score < 50) return Math.random() < 0.5 ? 1 : 2;
-    return Math.floor(Math.random() * config.maxButtons) + 1;
+    const adjustedScore = score * adaptiveMultiplier;
+    if (adjustedScore < 20) return 1;
+    if (adjustedScore < 50) return Math.random() < 0.5 ? 1 : 2;
+    return Math.floor(Math.random() * adjustedMaxButtons) + 1;
   }
   
   if (preset === 'nightmare') {
     // Nightmare: Multiple buttons appear almost immediately
-    if (score < 10) return 1;
-    if (score < 30) return Math.random() < 0.6 ? 2 : 1;
-    return Math.floor(Math.random() * config.maxButtons) + 1;
+    const adjustedScore = score * adaptiveMultiplier;
+    if (adjustedScore < 10) return 1;
+    if (adjustedScore < 30) return Math.random() < 0.6 ? 2 : 1;
+    return Math.floor(Math.random() * adjustedMaxButtons) + 1;
   }
   
   // Default: Original progressive behavior (should not reach here)
-  if (score <= 50) return 1;
-  if (score <= 150) return Math.random() < 0.5 ? 1 : 2;
-  return Math.floor(Math.random() * config.maxButtons) + 1;
+  const adjustedScore = score * adaptiveMultiplier;
+  if (adjustedScore <= 50) return 1;
+  if (adjustedScore <= 150) return Math.random() < 0.5 ? 1 : 2;
+  return Math.floor(Math.random() * adjustedMaxButtons) + 1;
 }
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, useEffect } from 'react';
 import { GameMode } from '@/lib/gameModes';
 import { DifficultyPreset } from '@/lib/difficulty';
 import { getRandomButtons } from '@/lib/gameUtils';
@@ -9,6 +9,7 @@ import {
   getHighlightDurationForDifficulty,
 } from '@/lib/difficulty';
 import { playSound } from '@/lib/soundUtils';
+import { useGameState } from '@/lib/GameContext';
 
 interface UseHighlightButtonsOptions {
   gameOver: boolean;
@@ -73,17 +74,27 @@ export function useHighlightButtons({
   currentHighlightedRef,
   highlightStartTimeRef,
 }: UseHighlightButtonsOptions) {
+  const { adaptiveDifficultyMultiplier } = useGameState();
+  const adaptiveMultiplierRef = useRef(adaptiveDifficultyMultiplier);
+  
+  // Keep ref in sync with state
+  useEffect(() => {
+    adaptiveMultiplierRef.current = adaptiveDifficultyMultiplier;
+  }, [adaptiveDifficultyMultiplier]);
+  
   const highlightNewButtons = useCallback(function highlightNewButtonsInternal() {
     if (gameOver || isProcessingRef.current || !isReady || isPausedRef.current) return;
 
     clearHighlightTimer();
     isProcessingRef.current = true;
 
+    // Capture multiplier at the time buttons are highlighted to prevent mid-highlight changes
+    const currentMultiplier = adaptiveMultiplierRef.current;
     let newHighlighted: number[] = [];
 
     if (gameMode === 'oddOneOut') {
       // Odd One Out mode: always show a small cluster of buttons and pick a single correct target
-      const baseCount = getButtonsToHighlightForDifficulty(score, difficulty);
+      const baseCount = getButtonsToHighlightForDifficulty(score, difficulty, currentMultiplier);
       // Clamp to 3–6 buttons for better visual discrimination
       const buttonCount = Math.min(6, Math.max(3, baseCount));
       newHighlighted = getRandomButtons(buttonCount, 10);
@@ -94,7 +105,7 @@ export function useHighlightButtons({
         setOddOneOutTarget(null);
       }
     } else {
-      const buttonCount = getButtonsToHighlightForDifficulty(score, difficulty);
+      const buttonCount = getButtonsToHighlightForDifficulty(score, difficulty, currentMultiplier);
       newHighlighted = getRandomButtons(
         buttonCount,
         10,
@@ -138,13 +149,14 @@ export function useHighlightButtons({
     playSound('highlight', soundEnabled);
 
     // Set timer to clear highlight and penalize if not pressed in time
-    const duration = getHighlightDurationForDifficulty(score, difficulty);
+    // Use captured multiplier to prevent changes during highlight
+    const duration = getHighlightDurationForDifficulty(score, difficulty, currentMultiplier);
     setHighlightDuration(duration);
     
     // Determine if bonus was added - track it locally since state updates are async
     const expectedCount = gameMode === 'oddOneOut' 
-      ? Math.min(6, Math.max(3, getButtonsToHighlightForDifficulty(score, difficulty)))
-      : getButtonsToHighlightForDifficulty(score, difficulty);
+      ? Math.min(6, Math.max(3, getButtonsToHighlightForDifficulty(score, difficulty, currentMultiplier)))
+      : getButtonsToHighlightForDifficulty(score, difficulty, currentMultiplier);
     const hasBonus = newHighlighted.length > expectedCount;
     
     setBonusHighlightDuration(hasBonus ? Math.max(200, duration * 0.6) : null);
@@ -212,6 +224,8 @@ export function useHighlightButtons({
     lastHighlightedRef,
     currentHighlightedRef,
     highlightStartTimeRef,
+    // Note: adaptiveDifficultyMultiplier intentionally NOT in deps to prevent mid-highlight changes
+    // We use a ref to capture the current value when buttons are highlighted
   ]);
 
   return { highlightNewButtons };

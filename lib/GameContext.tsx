@@ -10,6 +10,7 @@ import type { Language } from '@/lib/i18n';
 import { checkAndUnlockAchievements } from '@/lib/achievements';
 import { localStorageBatcher } from '@/lib/localStorageBatch';
 import { ScoreCalculator, ScoringFactors } from '@/lib/scoring';
+import { AdaptiveDifficulty, DifficultyChangeLog } from '@/lib/adaptiveDifficulty';
 
 export interface ReactionTimeStats {
   current: number | null;
@@ -63,6 +64,8 @@ export interface GameState {
   startGame: () => void;
   endGame: () => void;
   lastScoreBreakdown: ScoringFactors | null;
+  adaptiveDifficultyChangeLog: DifficultyChangeLog[];
+  adaptiveDifficultyMultiplier: number;
 }
 
 const GameContext = createContext<GameState | undefined>(undefined);
@@ -108,10 +111,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [highContrastMode, setHighContrastModeState] = useState(false);
   const [newlyUnlockedAchievements, setNewlyUnlockedAchievements] = useState<string[]>([]);
   const [language, setLanguageState] = useState<Language>('en');
+  const [adaptiveDifficultyMultiplier, setAdaptiveDifficultyMultiplier] = useState(1.0);
 
   const gameStartTimeRef = useRef<number | null>(null);
   const achievementClearTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const scoreCalculatorRef = useRef<ScoreCalculator | null>(null);
+  const adaptiveDifficultyRef = useRef<AdaptiveDifficulty | null>(null);
   const [lastScoreBreakdown, setLastScoreBreakdown] = useState<ScoringFactors | null>(null);
   const [reactionTimeStats, setReactionTimeStats] = useState<ReactionTimeStats>({
     current: null,
@@ -407,8 +412,71 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }
   }, [difficulty, gameMode]);
 
+  // Initialize adaptive difficulty system
+  useEffect(() => {
+    if (!adaptiveDifficultyRef.current) {
+      adaptiveDifficultyRef.current = new AdaptiveDifficulty(difficulty);
+    } else {
+      // Update if difficulty changed
+      adaptiveDifficultyRef.current.stop();
+      adaptiveDifficultyRef.current.reset();
+      adaptiveDifficultyRef.current = new AdaptiveDifficulty(difficulty);
+    }
+    
+    // Check if disabled in localStorage (opt-out)
+    if (typeof window !== 'undefined') {
+      const savedConfig = localStorage.getItem('reflexthis_adaptiveDifficulty_enabled');
+      if (savedConfig === 'false' && adaptiveDifficultyRef.current) {
+        adaptiveDifficultyRef.current.updateConfig({ enabled: false });
+      } else if (adaptiveDifficultyRef.current) {
+        // Enabled by default, start it
+        adaptiveDifficultyRef.current.updateConfig({ enabled: true });
+        adaptiveDifficultyRef.current.start();
+      }
+    } else if (adaptiveDifficultyRef.current) {
+      // Start by default if no localStorage
+      adaptiveDifficultyRef.current.start();
+    }
+  }, [difficulty]);
+
+  // Start adaptive difficulty when game starts
+  useEffect(() => {
+    if (isGameStarted && !gameOver && !isPaused && adaptiveDifficultyRef.current) {
+      const config = (adaptiveDifficultyRef.current as any).config;
+      if (config?.enabled) {
+        adaptiveDifficultyRef.current.start();
+      }
+    } else if (adaptiveDifficultyRef.current) {
+      adaptiveDifficultyRef.current.stop();
+    }
+  }, [isGameStarted, gameOver, isPaused]);
+
+  // Update adaptive difficulty multiplier periodically
+  useEffect(() => {
+    if (!adaptiveDifficultyRef.current) return;
+    
+    const interval = setInterval(() => {
+      if (adaptiveDifficultyRef.current) {
+        const multiplier = adaptiveDifficultyRef.current.getDifficultyMultiplier();
+        setAdaptiveDifficultyMultiplier(multiplier);
+      }
+    }, 500); // Update every 500ms
+    
+    return () => clearInterval(interval);
+  }, []);
+
   // Increment score with advanced multi-factor scoring system
   const incrementScore = useCallback((reactionTime: number) => {
+    // Record action for adaptive difficulty
+    if (adaptiveDifficultyRef.current) {
+      adaptiveDifficultyRef.current.recordAction({
+        timestamp: Date.now(),
+        reactionTime,
+        isCorrect: true,
+        isMiss: false,
+      });
+    }
+
     // Update reaction time stats
     setReactionTimeStats((prev) => {
       const newTimes = [...prev.allTimes, reactionTime];
@@ -467,6 +535,19 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const decrementLives = useCallback(() => {
     // Don't decrement if already game over
     if (gameOver) return;
+    
+    // Record miss action for adaptive difficulty and update multiplier immediately
+    if (adaptiveDifficultyRef.current) {
+      adaptiveDifficultyRef.current.recordAction({
+        timestamp: Date.now(),
+        reactionTime: null,
+        isCorrect: false,
+        isMiss: true,
+      });
+      // Immediately update multiplier after recording error
+      const multiplier = adaptiveDifficultyRef.current.getDifficultyMultiplier();
+      setAdaptiveDifficultyMultiplier(multiplier);
+    }
     
     // Reset combo on error
     setCombo(0);
@@ -591,6 +672,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
       setIsGameStarted(true);
       setIsPaused(false);
       gameStartTimeRef.current = Date.now(); // Track game start time
+      
+      // Start adaptive difficulty when game starts
+      if (adaptiveDifficultyRef.current) {
+        const config = (adaptiveDifficultyRef.current as any).config;
+        if (config?.enabled) {
+          adaptiveDifficultyRef.current.start();
+        }
+      }
     }
   }, [isGameStarted, gameOver]);
 
@@ -623,6 +712,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
     // Reset score calculator
     if (scoreCalculatorRef.current) {
       scoreCalculatorRef.current.reset();
+    }
+    // Reset and restart adaptive difficulty
+    if (adaptiveDifficultyRef.current) {
+      adaptiveDifficultyRef.current.stop();
+      adaptiveDifficultyRef.current.reset();
+      const config = (adaptiveDifficultyRef.current as any).config;
+      if (config?.enabled) {
+        adaptiveDifficultyRef.current.start();
+      }
     }
     gameStartTimeRef.current = Date.now(); // Track game start time
     // Music will restart automatically via useEffect when gameOver becomes false and isGameStarted is true
@@ -673,6 +771,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
     endGame,
     newlyUnlockedAchievements,
     lastScoreBreakdown,
+    adaptiveDifficultyChangeLog: adaptiveDifficultyRef.current?.getChangeLog() || [],
+    adaptiveDifficultyMultiplier,
   }), [
     score,
     lives,
