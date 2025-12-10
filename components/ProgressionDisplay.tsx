@@ -43,7 +43,7 @@ export function ProgressionDisplay() {
           <div className="space-y-2">
             <div className="flex justify-between text-xs sm:text-sm text-muted-foreground">
               <span>{progress.currentXP} / {levelConfig?.xpRequired || 0} XP</span>
-              <span>{xpRequired} XP to Level {progress.level + 1}</span>
+              <span>{Math.max(0, (levelConfig?.xpRequired || 0) - progress.currentXP)} XP to Level {progress.level + 1}</span>
             </div>
             <div className="w-full h-4 sm:h-5 border-2 pixel-border" style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)', borderColor: '#3E7CAC' }}>
               <div

@@ -366,7 +366,7 @@ export function getUserProgress(): UserProgress {
  */
 export function getXPRequiredForNextLevel(): number {
   const progress = loadUserProgress();
-  const nextLevelConfig = getLevelConfig(progress.level);
+  const nextLevelConfig = getLevelConfig(progress.level + 1);
   return nextLevelConfig?.xpRequired || 0;
 }
 
