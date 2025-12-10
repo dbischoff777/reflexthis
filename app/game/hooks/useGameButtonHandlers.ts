@@ -97,13 +97,20 @@ export function useGameButtonHandlers({
   // Handle button press (Reflex / Survival / Nightmare modes)
   const handleReflexButtonPress = useCallback(
     (buttonId: number) => {
-      if (gameOver || isPausedRef.current || !isReady || !highlightedButtons.length || isProcessingRef.current) {
+      // Check both state and ref for highlighted buttons to handle race conditions in fast modes like nightmare
+      // The ref is updated synchronously and won't have stale state issues
+      const hasHighlightedButtons = highlightedButtons.length > 0 || currentHighlightedRef.current.length > 0;
+      
+      if (gameOver || isPausedRef.current || !isReady || !hasHighlightedButtons || isProcessingRef.current) {
         return;
       }
 
       const isBonusHit = bonusActive && bonusButtonId === buttonId;
 
-      if (highlightedButtons.includes(buttonId)) {
+      // Check both state and ref to handle cases where state hasn't updated yet or has been cleared
+      const isHighlighted = highlightedButtons.includes(buttonId) || currentHighlightedRef.current.includes(buttonId);
+
+      if (isHighlighted) {
         // Calculate reaction time
         const reactionTime = highlightStartTimeRef.current
           ? Date.now() - highlightStartTimeRef.current
@@ -192,7 +199,11 @@ export function useGameButtonHandlers({
         }
 
         // Remove this button from highlighted buttons
-        const updatedHighlighted = highlightedButtons.filter(
+        // Use ref as source of truth to handle race conditions in fast modes
+        const sourceButtons = currentHighlightedRef.current.length > 0 
+          ? currentHighlightedRef.current 
+          : highlightedButtons;
+        const updatedHighlighted = sourceButtons.filter(
           (id) => id !== buttonId
         );
         setHighlightedButtons(updatedHighlighted);
