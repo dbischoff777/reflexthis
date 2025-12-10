@@ -93,10 +93,15 @@ export function TutorialOverlay({
           <div className="flex gap-2">
             <button
               onClick={onSkip}
-              className="px-3 py-2 text-sm border-2 pixel-border transition"
-              style={{
-                borderColor: '#3E7CAC',
-                backgroundColor: 'rgba(62, 124, 172, 0.2)',
+              className="px-4 py-2 text-sm sm:text-base border-4 pixel-border font-bold bg-primary text-black transition-all duration-100 hover:bg-purple-600 hover:text-white active:scale-95"
+              style={{ borderColor: '#ffffff' }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = '#00ffff';
+                e.currentTarget.style.color = '#ffffff';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = '#ffffff';
+                e.currentTarget.style.color = '#000000';
               }}
             >
               {t(language, 'tutorial.skip')}
