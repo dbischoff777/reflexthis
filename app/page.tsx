@@ -797,7 +797,7 @@ function LandingPageContent() {
             {t(language, 'landing.subtitle')}
           </p>
           {/* Main title */}
-          <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-bold text-primary text-glow mb-2 sm:mb-4 tracking-tight px-4 sm:px-6 py-2 sm:py-3 block w-full border-3 sm:border-4 border-primary rounded-lg">
+          <h1 className={`text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-bold text-primary text-glow mb-2 sm:mb-4 tracking-tight px-4 sm:px-6 py-2 sm:py-3 block w-full border-3 sm:border-4 border-primary rounded-lg relative overflow-hidden ${reducedEffects ? '' : 'hero-title-anim'}`}>
             {t(language, 'landing.title')}
           </h1>
         </div>
