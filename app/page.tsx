@@ -817,8 +817,6 @@ function LandingPageContent() {
           onClose={() => {
             setShowStats(false);
             setStatsMode(undefined);
-            // Show mode selector when closing stats modal
-            setShowMode(true);
           }} 
         />
 
@@ -873,7 +871,8 @@ function LandingPageContent() {
 
             <RippleButton
               onClick={() => {
-                setShowSettings(true);
+                setShowStats(true);
+                setStatsMode(undefined);
               }}
               rippleColor="rgba(0, 255, 255, 0.3)"
               style={{
@@ -891,7 +890,7 @@ function LandingPageContent() {
               }}
             >
               <span className="truncate">
-                {t(language, 'landing.settings')}
+                {t(language, 'landing.viewStats')}
               </span>
             </RippleButton>
 
@@ -917,6 +916,32 @@ function LandingPageContent() {
               </span>
             </RippleButton>
             
+            <RippleButton
+              onClick={() => {
+                setShowSettings(true);
+              }}
+              rippleColor="rgba(0, 255, 255, 0.3)"
+              style={{
+                borderColor: '#3E7CAC',
+                backgroundColor: '#003A63',
+              }}
+              className="inline-flex items-center justify-center min-w-[64px] sm:min-w-[72px] min-h-[64px] sm:min-h-[72px] px-3 sm:px-4 py-3 sm:py-4 border-4 text-foreground transition-all duration-100 focus:outline-none focus:ring-2 focus:ring-primary pixel-border overflow-hidden"
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = '#00ffff';
+                e.currentTarget.style.backgroundColor = 'rgba(0, 255, 255, 0.2)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = '#3E7CAC';
+                e.currentTarget.style.backgroundColor = '#003A63';
+              }}
+              aria-label={t(language, 'landing.settings')}
+            >
+              <svg className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.89 3.31.876 2.42 2.42a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.89 1.543-.876 3.31-2.42 2.42a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.89-3.31-.876-2.42-2.42a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.89-1.543.876-3.31 2.42-2.42.996.575 2.296.02 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </RippleButton>
+
             {/* Music Toggle Button - In button row next to Exit Game */}
             <RippleButton
               onClick={toggleMusic}
@@ -925,7 +950,7 @@ function LandingPageContent() {
                 borderColor: '#3E7CAC',
                 backgroundColor: '#003A63',
               }}
-              className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 border-4 text-foreground transition-all duration-100 focus:outline-none focus:ring-2 focus:ring-primary pixel-border"
+              className="inline-flex items-center justify-center min-w-[64px] sm:min-w-[72px] min-h-[64px] sm:min-h-[72px] px-3 sm:px-4 py-3 sm:py-4 border-4 text-foreground transition-all duration-100 focus:outline-none focus:ring-2 focus:ring-primary pixel-border"
               onMouseEnter={(e) => {
                 e.currentTarget.style.borderColor = '#00ffff';
                 e.currentTarget.style.backgroundColor = 'rgba(0, 255, 255, 0.2)';

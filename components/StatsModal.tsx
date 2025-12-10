@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { BackdropTransition, ModalTransition } from '@/components/Transition';
-import { SessionStatsDisplay } from '@/components/SessionStatsDisplay';
+import { StatisticsHub } from '@/components/StatisticsHub';
 import { SessionStatistics, calculateSessionStatisticsFromSessions, getGameSessions } from '@/lib/sessionStats';
 import { useGameState } from '@/lib/GameContext';
 import { t } from '@/lib/i18n';
@@ -54,16 +54,19 @@ export function StatsModal({ show, stats, onClose, gameMode: initialGameMode }: 
   }, [show, onClose]);
 
   return (
-    <BackdropTransition show={show} duration={200}>
-      <div 
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 pixel-border p-4"
-        onClick={onClose}
-      >
-        <ModalTransition show={show} duration={250}>
+    <>
+      <BackdropTransition show={show} duration={200}>
+        <div 
+          className="fixed inset-0 z-50 bg-black/80 pixel-border" 
+          onClick={onClose}
+        />
+      </BackdropTransition>
+      <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+        <ModalTransition show={show} duration={300}>
           <div 
             className={cn(
-              'border-4 pixel-border',
-              'max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col',
+              'border-4 pixel-border pointer-events-auto',
+              'p-4 sm:p-6 md:p-8 max-w-4xl w-full mx-auto max-h-[90vh] overflow-hidden flex flex-col',
               'shadow-[0_0_20px_rgba(62,124,172,0.4)]'
             )}
             style={{
@@ -110,14 +113,14 @@ export function StatsModal({ show, stats, onClose, gameMode: initialGameMode }: 
               
               {/* Mode Filter Selector */}
               <div className="flex flex-wrap gap-2 items-center">
-                <span className="text-sm font-semibold text-foreground/80">
+                <span className="text-sm sm:text-base md:text-lg font-semibold text-foreground/80">
                   {t(language, 'mode.select.title')}:
                 </span>
                 <div className="flex flex-wrap gap-2">
                   <button
                     onClick={() => setSelectedMode(undefined)}
                     className={cn(
-                      'px-3 py-1.5 text-xs sm:text-sm font-semibold border-2 pixel-border transition-all duration-200',
+                      'px-3 py-1.5 text-sm sm:text-base font-semibold border-2 pixel-border transition-all duration-200',
                       'focus:outline-none focus:ring-2 focus:ring-primary',
                       selectedMode === undefined
                         ? 'bg-primary text-primary-foreground'
@@ -136,7 +139,7 @@ export function StatsModal({ show, stats, onClose, gameMode: initialGameMode }: 
                         key={mode}
                         onClick={() => setSelectedMode(mode)}
                         className={cn(
-                          'px-3 py-1.5 text-xs sm:text-sm font-semibold border-2 pixel-border transition-all duration-200',
+                          'px-3 py-1.5 text-sm sm:text-base font-semibold border-2 pixel-border transition-all duration-200',
                           'focus:outline-none focus:ring-2 focus:ring-primary',
                           isSelected
                             ? 'bg-primary text-primary-foreground'
@@ -158,14 +161,14 @@ export function StatsModal({ show, stats, onClose, gameMode: initialGameMode }: 
               </div>
             </div>
 
-            {/* Stats Content - Remove title since modal header has it */}
-            <div className="p-4 sm:p-6 min-h-0 overflow-y-auto w-full">
-              <SessionStatsDisplay stats={filteredStats} hideTitle gameMode={selectedMode} />
+            {/* Statistics Hub Content */}
+            <div className="min-h-0 overflow-hidden w-full flex flex-col">
+              <StatisticsHub stats={filteredStats} gameMode={selectedMode} />
             </div>
           </div>
         </ModalTransition>
       </div>
-    </BackdropTransition>
+    </>
   );
 }
 

@@ -347,6 +347,24 @@ const en: TranslationDict = {
   'stats.recommendation.hardEndurance': 'Your longest Hard run is {seconds}s – aim for 90s to earn the Hard Endurance achievement.',
   'stats.recommendation.comboFocus': 'Focus on keeping your combo alive; every extra hit dramatically boosts your score.',
 
+  // Statistics Hub
+  'hub.tab.challenges': 'Challenges',
+  'hub.tab.progression': 'Progression',
+  'hub.tab.quests': 'Quests',
+  'hub.tab.difficultyTimeline': 'Difficulty Timeline',
+  'hub.tab.whatsNew': "What's New",
+  'hub.tab.stats': 'Statistics',
+  'hub.challenges.title': 'Daily & Weekly Challenges',
+  'hub.challenges.placeholder': 'Challenges coming soon!',
+  'hub.progression.title': 'XP & Levels',
+  'hub.progression.placeholder': 'Progression system coming soon!',
+  'hub.quests.title': 'Quests',
+  'hub.quests.placeholder': 'Quests coming soon!',
+  'hub.difficultyTimeline.title': 'Difficulty Timeline',
+  'hub.difficultyTimeline.placeholder': 'Difficulty timeline coming soon!',
+  'hub.whatsNew.title': "What's New",
+  'hub.whatsNew.placeholder': "What's new section coming soon!",
+
   // Ready Screen Tutorial Tips
   'ready.tip.reflex.1': 'Hit cyan buttons fast',
   'ready.tip.reflex.2': 'Gold = bonus (heals + score)',
@@ -760,6 +778,24 @@ const de: TranslationDict = {
   'stats.recommendation.goHard': 'Deine Kombos und Punktzahlen sind stark. Der Schwierigkeitsgrad Schwer ist bereit für dich.',
   'stats.recommendation.hardEndurance': 'Dein längster Schwer-Lauf beträgt {seconds}s – peile 90s an, um den „Harte Ausdauer“-Erfolg zu erhalten.',
   'stats.recommendation.comboFocus': 'Halte deine Kombo am Leben; jeder zusätzliche Treffer steigert deine Punkte deutlich.',
+
+  // Statistics Hub
+  'hub.tab.challenges': 'Herausforderungen',
+  'hub.tab.progression': 'Fortschritt',
+  'hub.tab.quests': 'Quests',
+  'hub.tab.difficultyTimeline': 'Schwierigkeits-Zeitstrahl',
+  'hub.tab.whatsNew': 'Neuigkeiten',
+  'hub.tab.stats': 'Statistiken',
+  'hub.challenges.title': 'Tägliche & Wöchentliche Herausforderungen',
+  'hub.challenges.placeholder': 'Herausforderungen kommen bald!',
+  'hub.progression.title': 'XP & Level',
+  'hub.progression.placeholder': 'Fortschrittssystem kommt bald!',
+  'hub.quests.title': 'Quests',
+  'hub.quests.placeholder': 'Quests kommen bald!',
+  'hub.difficultyTimeline.title': 'Schwierigkeits-Zeitstrahl',
+  'hub.difficultyTimeline.placeholder': 'Schwierigkeits-Zeitstrahl kommt bald!',
+  'hub.whatsNew.title': 'Neuigkeiten',
+  'hub.whatsNew.placeholder': 'Neuigkeiten-Bereich kommt bald!',
 
   // Ready Screen Tutorial Tips
   'ready.tip.reflex.1': 'Triff die leuchtenden Buttons schnell',

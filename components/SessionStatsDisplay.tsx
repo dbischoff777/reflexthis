@@ -115,7 +115,7 @@ export function SessionStatsDisplay({ stats, hideTitle = false, gameMode }: Sess
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={cn(
-              'relative flex-1 px-3 sm:px-4 py-2 text-sm font-semibold transition-all duration-200 rounded-t-md',
+              'relative flex-1 px-3 sm:px-4 py-2 text-sm sm:text-base font-semibold transition-all duration-200 rounded-t-md',
               activeTab === tab.id
                 ? 'text-foreground border-b-2'
                 : 'text-foreground/70 hover:text-foreground border-b-2 border-transparent'
@@ -141,33 +141,33 @@ export function SessionStatsDisplay({ stats, hideTitle = false, gameMode }: Sess
             {/* Overview Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
           <div className="p-2 sm:p-3 border-2 pixel-border" style={{ backgroundColor: 'rgba(0, 58, 99, 0.6)', borderColor: '#3E7CAC' }}>
-            <p className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">{t(language, 'stats.overview.totalGames')}</p>
-            <p className="text-xl sm:text-2xl font-bold text-foreground">{stats.totalGames}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground mb-0.5 sm:mb-1">{t(language, 'stats.overview.totalGames')}</p>
+            <p className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">{stats.totalGames}</p>
           </div>
           
           <div className="p-2 sm:p-3 border-2 pixel-border" style={{ backgroundColor: 'rgba(0, 58, 99, 0.6)', borderColor: '#3E7CAC' }}>
-            <p className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">{t(language, 'stats.overview.playtime')}</p>
-            <p className="text-xl sm:text-2xl font-bold text-foreground">{formatPlaytime(stats.totalPlaytime)}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground mb-0.5 sm:mb-1">{t(language, 'stats.overview.playtime')}</p>
+            <p className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">{formatPlaytime(stats.totalPlaytime)}</p>
           </div>
           
           <div className="p-2 sm:p-3 border-2 pixel-border" style={{ backgroundColor: 'rgba(0, 58, 99, 0.6)', borderColor: '#3E7CAC' }}>
-            <p className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">{t(language, 'stats.overview.today')}</p>
-            <p className="text-xl sm:text-2xl font-bold text-secondary">{stats.gamesPlayedToday}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground mb-0.5 sm:mb-1">{t(language, 'stats.overview.today')}</p>
+            <p className="text-xl sm:text-2xl md:text-3xl font-bold text-secondary">{stats.gamesPlayedToday}</p>
           </div>
           
           <div className="p-2 sm:p-3 border-2 pixel-border" style={{ backgroundColor: 'rgba(0, 58, 99, 0.6)', borderColor: '#3E7CAC' }}>
-            <p className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">{t(language, 'stats.overview.bestScore')}</p>
-            <p className="text-xl sm:text-2xl font-bold text-foreground">{stats.bestScore}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground mb-0.5 sm:mb-1">{t(language, 'stats.overview.bestScore')}</p>
+            <p className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">{stats.bestScore}</p>
           </div>
           
           <div className="p-2 sm:p-3 border-2 pixel-border" style={{ backgroundColor: 'rgba(0, 58, 99, 0.6)', borderColor: '#3E7CAC' }}>
-            <p className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">{t(language, 'stats.overview.bestCombo')}</p>
-            <p className="text-xl sm:text-2xl font-bold text-secondary">{stats.bestCombo}x</p>
+            <p className="text-xs sm:text-sm text-muted-foreground mb-0.5 sm:mb-1">{t(language, 'stats.overview.bestCombo')}</p>
+            <p className="text-xl sm:text-2xl md:text-3xl font-bold text-secondary">{stats.bestCombo}x</p>
           </div>
           
           <div className="p-2 sm:p-3 border-2 pixel-border" style={{ backgroundColor: 'rgba(0, 58, 99, 0.6)', borderColor: '#3E7CAC' }}>
-            <p className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">{t(language, 'stats.overview.avgScore')}</p>
-            <p className="text-xl sm:text-2xl font-bold text-foreground">{Math.round(stats.averageScore)}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground mb-0.5 sm:mb-1">{t(language, 'stats.overview.avgScore')}</p>
+            <p className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">{Math.round(stats.averageScore)}</p>
           </div>
             </div>
 
@@ -176,8 +176,8 @@ export function SessionStatsDisplay({ stats, hideTitle = false, gameMode }: Sess
               <div className="grid grid-cols-2 gap-2 sm:gap-3">
             {stats.averageReactionTime !== null && (
               <div className="p-2 sm:p-3 border-2 pixel-border" style={{ backgroundColor: 'rgba(0, 58, 99, 0.6)', borderColor: '#3E7CAC' }}>
-                <p className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">{t(language, 'stats.overview.avgReaction')}</p>
-                <p className="text-lg sm:text-xl font-bold text-foreground">
+                <p className="text-xs sm:text-sm text-muted-foreground mb-0.5 sm:mb-1">{t(language, 'stats.overview.avgReaction')}</p>
+                <p className="text-xl sm:text-2xl font-bold text-foreground">
                   {formatTime(stats.averageReactionTime)}
                 </p>
               </div>
@@ -185,8 +185,8 @@ export function SessionStatsDisplay({ stats, hideTitle = false, gameMode }: Sess
             
             {stats.fastestReactionTime !== null && (
               <div className="p-2 sm:p-3 border-2 pixel-border" style={{ backgroundColor: 'rgba(0, 58, 99, 0.6)', borderColor: '#3E7CAC' }}>
-                <p className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">{t(language, 'stats.overview.fastest')}</p>
-                <p className="text-lg sm:text-xl font-bold text-chart-3">
+                <p className="text-xs sm:text-sm text-muted-foreground mb-0.5 sm:mb-1">{t(language, 'stats.overview.fastest')}</p>
+                <p className="text-xl sm:text-2xl font-bold text-chart-3">
                   {formatTime(stats.fastestReactionTime)}
                 </p>
               </div>
@@ -198,10 +198,10 @@ export function SessionStatsDisplay({ stats, hideTitle = false, gameMode }: Sess
             {meta.rank && (
               <div className="grid gap-2 sm:gap-3 sm:grid-cols-[minmax(0,1.2fr)_minmax(0,1.6fr)]">
             <div className="p-2 sm:p-3 border-2 pixel-border text-left" style={{ backgroundColor: 'rgba(0, 58, 99, 0.6)', borderColor: '#3E7CAC' }}>
-              <p className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">{t(language, 'stats.overview.currentRank')}</p>
-              <p className="text-base sm:text-lg font-bold text-foreground">{meta.rank.name}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground mb-0.5 sm:mb-1">{t(language, 'stats.overview.currentRank')}</p>
+              <p className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">{meta.rank.name}</p>
               {meta.rank.nextName && meta.rank.nextMinScore !== undefined && (
-                <p className="mt-0.5 sm:mt-1 text-[10px] sm:text-[11px] text-foreground/70">
+                <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm text-foreground/70">
                   {t(language, 'stats.overview.nextRank')} <span className="font-semibold">{meta.rank.nextName}</span> {t(language, 'stats.overview.atScore')}{' '}
                   <span className="font-mono">{meta.rank.nextMinScore}</span> {t(language, 'stats.overview.score')}
                 </p>
@@ -209,10 +209,10 @@ export function SessionStatsDisplay({ stats, hideTitle = false, gameMode }: Sess
             </div>
             {meta.recommendation && (
               <div className="p-2 sm:p-3 border-2 pixel-border text-left" style={{ backgroundColor: 'rgba(0, 58, 99, 0.6)', borderColor: '#3E7CAC' }}>
-                <p className="text-[10px] sm:text-xs font-semibold text-foreground mb-0.5 sm:mb-1 uppercase tracking-wide">
+                <p className="text-xs sm:text-sm font-semibold text-foreground mb-0.5 sm:mb-1 uppercase tracking-wide">
                   {t(language, 'stats.overview.suggestedGoal')}
                 </p>
-                <p className="text-[10px] sm:text-xs text-foreground/80 wrap-break-word">
+                <p className="text-sm sm:text-base text-foreground/80 wrap-break-word">
                   {translateRecommendation(language, meta.recommendation)}
                 </p>
               </div>
@@ -235,7 +235,7 @@ export function SessionStatsDisplay({ stats, hideTitle = false, gameMode }: Sess
                         key={a.id}
                         className={cn(
                           'p-2 sm:p-3 border rounded pixel-border w-full',
-                          'text-xs sm:text-[13px] flex flex-col gap-1.5'
+                          'text-sm sm:text-base flex flex-col gap-1.5'
                         )}
                         style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 58, 99, 0.5)', width: '100%' }}
                       >
@@ -246,7 +246,7 @@ export function SessionStatsDisplay({ stats, hideTitle = false, gameMode }: Sess
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-0.5">
-                                <span className="font-semibold text-foreground wrap-break-word">
+                                <span className="text-sm sm:text-base font-semibold text-foreground wrap-break-word">
                                   {(() => {
                                     const key = `achievement.${a.id}.title`;
                                     const translated = t(language, key);
@@ -254,12 +254,12 @@ export function SessionStatsDisplay({ stats, hideTitle = false, gameMode }: Sess
                                   })()}
                                 </span>
                                 {a.achieved && (
-                                  <span className="text-[10px] px-1.5 py-0.5 border border-chart-3 bg-chart-3/20 text-chart-3 rounded pixel-border shrink-0">
+                                  <span className="text-xs px-1.5 py-0.5 border border-chart-3 bg-chart-3/20 text-chart-3 rounded pixel-border shrink-0">
                                     {t(language, 'stats.achievements.unlocked')}
                                   </span>
                                 )}
                               </div>
-                              <p className="text-[11px] text-foreground/70 wrap-break-word">
+                              <p className="text-xs sm:text-sm text-foreground/70 wrap-break-word">
                                 {(() => {
                                   const key = `achievement.${a.id}.description`;
                                   const translated = t(language, key);
@@ -269,10 +269,10 @@ export function SessionStatsDisplay({ stats, hideTitle = false, gameMode }: Sess
                             </div>
                           </div>
                           <div className="flex flex-col items-end gap-0.5 shrink-0">
-                            <span className="text-[10px] px-1.5 py-0.5 border rounded uppercase tracking-wide" style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 0, 0, 0.4)' }}>
+                            <span className="text-xs px-1.5 py-0.5 border rounded uppercase tracking-wide" style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 0, 0, 0.4)' }}>
                               {rarityLabel}
                             </span>
-                            <span className="text-[11px] text-muted-foreground font-mono">
+                            <span className="text-xs sm:text-sm text-muted-foreground font-mono">
                               {a.current}/{a.target}
                             </span>
                           </div>
@@ -297,7 +297,7 @@ export function SessionStatsDisplay({ stats, hideTitle = false, gameMode }: Sess
               </div>
             ) : (
               <div className="flex items-center justify-center min-h-[200px]">
-                <p className="text-sm text-muted-foreground text-center">
+                <p className="text-sm sm:text-base text-muted-foreground text-center">
                   {t(language, 'stats.achievements.noAchievements')}
                 </p>
               </div>
@@ -310,7 +310,7 @@ export function SessionStatsDisplay({ stats, hideTitle = false, gameMode }: Sess
           <div className="space-y-3 sm:space-y-4 w-full" style={{ width: '100%', minWidth: '100%' }}>
             {stats.recentGames.length > 0 ? (
               <div className="block w-full space-y-1.5 sm:space-y-2 max-h-[calc(100vh-400px)] sm:max-h-[calc(100vh-450px)] overflow-y-auto rounded-md p-2 sm:p-3" style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)', borderColor: '#3E7CAC', borderWidth: '1px', borderStyle: 'solid', width: '100%', minWidth: '100%', maxWidth: '100%', flexShrink: 0, boxSizing: 'border-box' }}>
-                  <div className="hidden sm:grid grid-cols-[3fr_2fr_2fr] text-[11px] uppercase tracking-wide text-foreground/60 px-2 pb-1" style={{ borderBottomColor: '#3E7CAC', borderBottomWidth: '1px', borderBottomStyle: 'solid', width: '100%', minWidth: '100%', maxWidth: '100%', display: 'grid', boxSizing: 'border-box' }}>
+                  <div className="hidden sm:grid grid-cols-[3fr_2fr_2fr] text-xs sm:text-sm uppercase tracking-wide text-foreground/60 px-2 pb-1" style={{ borderBottomColor: '#3E7CAC', borderBottomWidth: '1px', borderBottomStyle: 'solid', width: '100%', minWidth: '100%', maxWidth: '100%', display: 'grid', boxSizing: 'border-box' }}>
                     <span>{t(language, 'stats.history.scoreCombo')}</span>
                     <span>{t(language, 'stats.history.reaction')}</span>
                     <span className="text-right">{t(language, 'stats.history.date')}</span>
@@ -318,7 +318,7 @@ export function SessionStatsDisplay({ stats, hideTitle = false, gameMode }: Sess
                   {stats.recentGames.map((game) => (
                     <div
                       key={game.id}
-                      className="grid grid-cols-[3fr_2fr_2fr] items-center gap-2 px-2 py-1.5 border rounded text-xs sm:text-sm"
+                      className="grid grid-cols-[3fr_2fr_2fr] items-center gap-2 px-2 py-1.5 border rounded text-sm sm:text-base"
                       style={{ backgroundColor: 'rgba(0, 58, 99, 0.5)', borderColor: '#3E7CAC', width: '100%', minWidth: '100%', maxWidth: '100%', display: 'grid', boxSizing: 'border-box' }}
                     >
                       <div className="flex items-center gap-2 min-w-0">
@@ -326,17 +326,17 @@ export function SessionStatsDisplay({ stats, hideTitle = false, gameMode }: Sess
                           {game.score}
                         </span>
                         {game.bestCombo > 0 && (
-                          <span className="text-[11px] text-muted-foreground whitespace-nowrap">
+                          <span className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">
                             {game.bestCombo}x {t(language, 'stats.history.combo')}
                           </span>
                         )}
                       </div>
-                      <div className="text-[11px] text-muted-foreground">
+                      <div className="text-xs sm:text-sm text-muted-foreground">
                         {game.averageReactionTime
                           ? formatTime(game.averageReactionTime)
                           : '--'}
                       </div>
-                      <span className="text-[11px] text-muted-foreground text-right">
+                      <span className="text-xs sm:text-sm text-muted-foreground text-right">
                         {new Date(game.timestamp).toLocaleDateString()}
                       </span>
                     </div>
@@ -344,7 +344,7 @@ export function SessionStatsDisplay({ stats, hideTitle = false, gameMode }: Sess
               </div>
             ) : (
               <div className="flex items-center justify-center min-h-[200px]">
-                <p className="text-sm text-muted-foreground text-center">
+                <p className="text-sm sm:text-base text-muted-foreground text-center">
                   {t(language, 'stats.history.noHistory')}
                 </p>
               </div>
