@@ -30,11 +30,11 @@ const en: TranslationDict = {
   'ready.default.desc': 'Test your reflexes.',
 
   // Landing Page
-  'landing.selectMode': 'Select Game Mode',
+  'landing.selectMode': 'Select Game',
   'landing.chooseGame': 'Choose Your Game',
   
   // Mode selector
-  'mode.select.title': 'Select Game Mode',
+  'mode.select.title': 'Select Game',
   'mode.reflex.name': 'Reflex',
   'mode.sequence.name': 'Sequence',
   'mode.survival.name': 'Survival',

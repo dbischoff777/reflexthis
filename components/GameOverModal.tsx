@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { t } from '@/lib/i18n';
@@ -11,17 +11,17 @@ import {
   calculateSessionStatistics,
   calculateSessionStatisticsFromSessions,
   getGameSessions,
-  type GameSession,
 } from '@/lib/sessionStats';
-import {
-  getMetaProgression,
-  getMetaProgressionFromSessions,
-  type AchievementProgress,
-} from '@/lib/progression';
 import { ReactionTimeGraph } from '@/components/ReactionTimeGraph';
 import { GameMode } from '@/lib/gameModes';
 import { DifficultyPreset } from '@/lib/difficulty';
-import { getAchievementById } from '@/lib/achievements';
+import { getAchievementById, getAchievementProgress, type Achievement } from '@/lib/achievements';
+
+// Type for achievement progress display
+type AchievementProgress = Achievement & {
+  unlocked: boolean;
+  progress: { current: number; target: number };
+};
 
 interface GameOverModalProps {
   score: number;
@@ -88,6 +88,9 @@ export function GameOverModal({
   const [displayedScore, setDisplayedScore] = useState(0);
   const [isCounting, setIsCounting] = useState(true);
   const [activeTab, setActiveTab] = useState<TabType>('overview');
+  // Cache newly unlocked achievements for this modal instance so they don't reset on re-render
+  const cachedNewAchievements = useRef<AchievementProgress[] | null>(null);
+  const hasActivatedAchievementsTab = useRef(false);
   const coachingTip = getCoachingTip(score, bestCombo, reactionTimeStats, language);
   const [metaSummary, setMetaSummary] = useState<{
     rankName: string | null;
@@ -134,6 +137,12 @@ export function GameOverModal({
 
   // Load latest rank information, newly unlocked achievements, and previous best
   useEffect(() => {
+    // If we've already cached achievements for this modal instance, reuse them
+    if (cachedNewAchievements.current) {
+      setNewAchievements(cachedNewAchievements.current);
+      return;
+    }
+
     const sessions = getGameSessions();
 
     // Get current game session (most recent)
@@ -142,13 +151,14 @@ export function GameOverModal({
       setGameDuration(currentSession.duration);
     }
 
-    // Meta after this run (all sessions)
+    // Get achievement progress after this run
     const statsAfter = calculateSessionStatisticsFromSessions(sessions);
-    const metaAfter = getMetaProgressionFromSessions(statsAfter, sessions);
+    const achievementsAfter = getAchievementProgress(statsAfter, sessions);
 
+    // Set meta summary (rank functionality removed - not implemented)
     setMetaSummary({
-      rankName: metaAfter.rank?.name ?? null,
-      nextRank: metaAfter.rank?.nextName ?? null,
+      rankName: null,
+      nextRank: null,
     });
 
     // Use newly unlocked achievements from props if available, otherwise fall back to calculation
@@ -156,11 +166,11 @@ export function GameOverModal({
       // Convert achievement IDs to AchievementProgress objects
       const sessionsForProgress = getGameSessions();
       const statsForProgress = calculateSessionStatisticsFromSessions(sessionsForProgress);
-      const metaForProgress = getMetaProgressionFromSessions(statsForProgress, sessionsForProgress);
+      const achievementsForProgress = getAchievementProgress(statsForProgress, sessionsForProgress);
       
       // Create a map of achievement IDs to their progress data
       const achievementMap = new Map(
-        metaForProgress.achievements.map(a => [a.id, a])
+        achievementsForProgress.map(a => [a.id, a])
       );
       
       // Convert IDs to AchievementProgress objects
@@ -172,37 +182,36 @@ export function GameOverModal({
           // Fallback: get achievement data directly if not in progress map
           const achievement = getAchievementById(id);
           if (achievement) {
+            const stats = calculateSessionStatistics();
+            const allSessions = getGameSessions();
+            const achievementProgress = achievement.getProgress(stats, allSessions);
             return {
-              id: achievement.id,
-              title: achievement.title,
-              description: achievement.description,
-              achieved: true,
-              current: achievement.target,
-              target: achievement.target,
-              category: achievement.category,
-              icon: achievement.icon,
-              rarity: achievement.rarity,
+              ...achievement,
+              unlocked: true,
+              progress: achievementProgress,
             };
           }
           return null;
         })
         .filter((a): a is AchievementProgress => a !== null);
       
+      cachedNewAchievements.current = convertedAchievements;
       setNewAchievements(convertedAchievements);
     } else {
       // Fallback: calculate newly unlocked achievements by comparing before/after
       const sessionsBefore = sessions.length > 1 ? sessions.slice(0, -1) : [];
       const statsBefore = calculateSessionStatisticsFromSessions(sessionsBefore);
-      const metaBefore = getMetaProgressionFromSessions(statsBefore, sessionsBefore);
+      const achievementsBefore = getAchievementProgress(statsBefore, sessionsBefore);
 
       const unlockedBefore = new Set(
-        metaBefore.achievements.filter((a) => a.achieved).map((a) => a.id)
+        achievementsBefore.filter((a) => a.unlocked).map((a) => a.id)
       );
-      const unlockedNow = metaAfter.achievements.filter((a) => a.achieved);
+      const unlockedNow = achievementsAfter.filter((a) => a.unlocked);
       const newlyUnlocked = unlockedNow.filter(
         (a) => !unlockedBefore.has(a.id)
       );
 
+      cachedNewAchievements.current = newlyUnlocked;
       setNewAchievements(newlyUnlocked);
     }
 
@@ -223,6 +232,14 @@ export function GameOverModal({
       });
     }
   }, [newlyUnlockedAchievementIds]);
+
+  // If there are new achievements, jump to the achievements tab once per modal open
+  useEffect(() => {
+    if (newAchievements.length > 0 && !hasActivatedAchievementsTab.current) {
+      setActiveTab('achievements');
+      hasActivatedAchievementsTab.current = true;
+    }
+  }, [newAchievements.length]);
 
 
   // Tab content components
@@ -573,7 +590,7 @@ export function GameOverModal({
         </div>
 
         {/* Tab Content */}
-        <div className="mb-4 min-h-[180px]">
+        <div className="mb-4 min-h-[180px] max-h-[60vh] overflow-y-auto pr-1">
           {activeTab === 'overview' && <OverviewTab />}
           {activeTab === 'details' && <DetailsTab />}
           {activeTab === 'achievements' && <AchievementsTab />}

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { SessionStatistics, formatPlaytime, getGameSessions } from '@/lib/sessionStats';
-import { getMetaProgression, getMetaProgressionFromSessions } from '@/lib/progression';
+import { getAchievementProgress } from '@/lib/achievements';
 import { cn } from '@/lib/utils';
 import { t, type Language } from '@/lib/i18n';
 import { useGameState } from '@/lib/GameContext';
@@ -23,6 +23,11 @@ type TabType = 'overview' | 'achievements' | 'history';
 export function SessionStatsDisplay({ stats, hideTitle = false, gameMode }: SessionStatsDisplayProps) {
   const { language } = useGameState();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
+  
+  // Get achievement progress
+  const allSessions = getGameSessions();
+  const sessions = gameMode ? allSessions.filter(s => s.gameMode === gameMode) : allSessions;
+  const achievements = getAchievementProgress(stats, sessions);
 
   const translateRecommendation = (language: Language, recommendation: string): string => {
     if (!recommendation) return '';
@@ -86,15 +91,6 @@ export function SessionStatsDisplay({ stats, hideTitle = false, gameMode }: Sess
     if (time === null) return '--';
     return `${Math.round(time)}ms`;
   };
-
-  // Get meta progression - filter by gameMode if provided
-  const meta = gameMode
-    ? (() => {
-        const allSessions = getGameSessions();
-        const modeSessions = allSessions.filter(s => s.gameMode === gameMode);
-        return getMetaProgressionFromSessions(stats, modeSessions);
-      })()
-    : getMetaProgression(stats);
 
   const tabs: { id: TabType; label: string }[] = [
     { id: 'overview', label: t(language, 'stats.tab.overview') },
@@ -193,42 +189,16 @@ export function SessionStatsDisplay({ stats, hideTitle = false, gameMode }: Sess
             )}
               </div>
             )}
-
-            {/* Rank & Recommendation */}
-            {meta.rank && (
-              <div className="grid gap-2 sm:gap-3 sm:grid-cols-[minmax(0,1.2fr)_minmax(0,1.6fr)]">
-            <div className="p-2 sm:p-3 border-2 pixel-border text-left" style={{ backgroundColor: 'rgba(0, 58, 99, 0.6)', borderColor: '#3E7CAC' }}>
-              <p className="text-xs sm:text-sm text-muted-foreground mb-0.5 sm:mb-1">{t(language, 'stats.overview.currentRank')}</p>
-              <p className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">{meta.rank.name}</p>
-              {meta.rank.nextName && meta.rank.nextMinScore !== undefined && (
-                <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm text-foreground/70">
-                  {t(language, 'stats.overview.nextRank')} <span className="font-semibold">{meta.rank.nextName}</span> {t(language, 'stats.overview.atScore')}{' '}
-                  <span className="font-mono">{meta.rank.nextMinScore}</span> {t(language, 'stats.overview.score')}
-                </p>
-              )}
-            </div>
-            {meta.recommendation && (
-              <div className="p-2 sm:p-3 border-2 pixel-border text-left" style={{ backgroundColor: 'rgba(0, 58, 99, 0.6)', borderColor: '#3E7CAC' }}>
-                <p className="text-xs sm:text-sm font-semibold text-foreground mb-0.5 sm:mb-1 uppercase tracking-wide">
-                  {t(language, 'stats.overview.suggestedGoal')}
-                </p>
-                <p className="text-sm sm:text-base text-foreground/80 wrap-break-word">
-                  {translateRecommendation(language, meta.recommendation)}
-                </p>
-              </div>
-            )}
-              </div>
-            )}
           </div>
         )}
 
         {/* Achievements Tab */}
         {activeTab === 'achievements' && (
           <div className="space-y-3 sm:space-y-4 w-full" style={{ width: '100%', minWidth: '100%' }}>
-            {meta.achievements.length > 0 ? (
+            {achievements.length > 0 ? (
               <div className="block w-full space-y-1.5 sm:space-y-2 max-h-[calc(100vh-400px)] sm:max-h-[calc(100vh-450px)] overflow-y-auto rounded-md p-2 sm:p-3" style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)', borderColor: '#3E7CAC', borderWidth: '1px', borderStyle: 'solid', width: '100%', minWidth: '100%', maxWidth: '100%', flexShrink: 0, boxSizing: 'border-box' }}>
-                  {meta.achievements.map((a) => {
-                    const progressPercent = Math.round((a.current / a.target) * 100);
+                  {achievements.map((a) => {
+                    const progressPercent = Math.round((a.progress.current / a.progress.target) * 100);
                     const rarityLabel = t(language, `rarity.${a.rarity}`);
                     return (
                       <div
@@ -253,7 +223,7 @@ export function SessionStatsDisplay({ stats, hideTitle = false, gameMode }: Sess
                                     return translated === key ? a.title : translated;
                                   })()}
                                 </span>
-                                {a.achieved && (
+                                {a.unlocked && (
                                   <span className="text-xs px-1.5 py-0.5 border border-chart-3 bg-chart-3/20 text-chart-3 rounded pixel-border shrink-0">
                                     {t(language, 'stats.achievements.unlocked')}
                                   </span>
@@ -273,11 +243,11 @@ export function SessionStatsDisplay({ stats, hideTitle = false, gameMode }: Sess
                               {rarityLabel}
                             </span>
                             <span className="text-xs sm:text-sm text-muted-foreground font-mono">
-                              {a.current}/{a.target}
+                              {a.progress.current}/{a.progress.target}
                             </span>
                           </div>
                         </div>
-                        {!a.achieved && (
+                        {!a.unlocked && (
                           <div className="h-1.5 border mt-1 overflow-hidden rounded-full" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)', borderColor: '#3E7CAC', borderWidth: '1px', borderStyle: 'solid' }}>
                             <div
                               className={cn(

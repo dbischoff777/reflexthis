@@ -1,33 +1,18 @@
 'use client';
 
-import React, { useEffect, useRef, useCallback, useState, useMemo, startTransition } from 'react';
+import { useEffect, useRef, useCallback, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useGameState } from '@/lib/GameContext';
 import { GameButtonGridWebGL } from '@/components/GameButton3DWebGL';
 import { OrientationHandler } from '@/components/OrientationHandler';
 import { ScreenFlash } from '@/components/ScreenFlash';
-import { getRandomButtons } from '@/lib/gameUtils';
-import {
-  getButtonsToHighlightForDifficulty,
-  getHighlightDurationForDifficulty,
-  DifficultyPreset,
-} from '@/lib/difficulty';
-import { GameMode } from '@/lib/gameModes';
-import {
-  generateSequence,
-  getSequenceLength,
-  getSequenceTiming,
-  checkSequence,
-} from '@/lib/sequenceUtils';
-import { playSound, setGamePageActive, stopMenuMusic } from '@/lib/soundUtils';
+import { setGamePageActive, stopMenuMusic } from '@/lib/soundUtils';
 import { useKeyboardControls } from '@/hooks/useKeyboardControls';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import { RetroHudWidgets } from '@/components/RetroHudWidgets';
-// DynamicAmbience removed - effects now handled by 3D BackgroundGrid in GameButton3DWebGL
 import { PerformanceFeedback } from '@/components/PerformanceFeedback';
 import { AchievementNotification } from '@/components/AchievementNotification';
-import { ComboDisplay } from '@/components/ComboDisplay';
 import { VerticalComboMeter } from '@/components/VerticalComboMeter';
 import { getKeybindings, getKeyDisplayName, DEFAULT_KEYBINDINGS } from '@/lib/keybindings';
 import { t } from '@/lib/i18n';
@@ -46,6 +31,7 @@ import { useGameButtonHandlers } from './hooks/useGameButtonHandlers';
 import { useSequenceMode } from './hooks/useSequenceMode';
 import { useMobileHandlers } from './hooks/useMobileHandlers';
 import { useGameInitialization } from './hooks/useGameInitialization';
+import { loadChallenge } from '@/lib/challenges';
 
 // Lazy load heavy modal components
 const GameOverModal = lazy(() => import('@/components/GameOverModal').then(m => ({ default: m.GameOverModal })));
@@ -100,6 +86,7 @@ export default function GamePage() {
   const isProcessingRef = useRef(false);
   const currentHighlightedRef = useRef<number[]>([]);
   const highlightStartTimeRef = useRef<number | null>(null);
+  const activeChallengeRef = useRef<{ id: string; type: 'daily' | 'weekly' } | null>(null);
   // State version of highlightStartTime for memo dependency tracking
   // (ref alone doesn't trigger re-renders, causing stale values in memoized data)
   const [highlightStartTimeState, setHighlightStartTimeState] = useState<number | null>(null);
@@ -422,6 +409,32 @@ export default function GamePage() {
 
   // OLD HANDLERS REMOVED - Now using useGameButtonHandlers hook
   
+  // Check for active challenge on mount - must happen before game initialization
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !isReady) {
+      const challengeData = sessionStorage.getItem('reflexthis_activeChallenge');
+      if (challengeData) {
+        try {
+          const challenge = JSON.parse(challengeData);
+          activeChallengeRef.current = challenge;
+          
+          // Load challenge to get parameters
+          const challengeDetails = loadChallenge(challenge.id);
+          if (challengeDetails) {
+            // Set game mode and difficulty from challenge
+            // These will be used when the game initializes
+            setGameMode(challengeDetails.parameters.gameMode);
+            setDifficulty(challengeDetails.parameters.difficulty);
+          }
+        } catch (error) {
+          console.error('Error loading challenge:', error);
+          // Clear invalid challenge data
+          sessionStorage.removeItem('reflexthis_activeChallenge');
+        }
+      }
+    }
+  }, [setGameMode, setDifficulty, isReady]);
+
   // Game initialization hook
   const { handleReady, hasInitializedRef } = useGameInitialization({
     isLoading,

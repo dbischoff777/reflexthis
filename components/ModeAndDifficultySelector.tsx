@@ -280,10 +280,10 @@ export function ModeAndDifficultySelector({
             style={{
               backgroundColor: hoveredDifficulty === localDifficulty
                 ? localDifficulty === 'nightmare' 
-                  ? '#8B0000' // Dark red for nightmare hover
-                  : '#C5A5E0' // Lighter purple for hover
+                  ? '#000000' // Black for nightmare hover
+                  : '#73488A' // Dark purple for hover
                 : localDifficulty === 'nightmare'
-                  ? '#4A0000' // Very dark red for nightmare regular
+                  ? '#000000' // Black for nightmare regular
                   : '#AF89C9', // Lavender purple for regular
             }}
           >
@@ -313,31 +313,6 @@ export function ModeAndDifficultySelector({
               </div>
             </div>
           </button>
-          
-          {/* Tooltip */}
-          {hoveredDifficulty === localDifficulty && (
-            <div 
-              className={cn(
-                'absolute z-50 w-64 sm:w-72 p-4 border-4 pixel-border',
-                'shadow-[0_0_20px_rgba(62,124,172,0.4)] text-left',
-                'bottom-full left-1/2 -translate-x-1/2 mb-2',
-                'sm:bottom-auto sm:left-full sm:top-0 sm:translate-x-2 sm:translate-y-0',
-                'animate-in fade-in slide-in-from-bottom-2 duration-200'
-              )}
-              style={{
-                borderColor: localDifficulty === 'nightmare' ? '#DC2626' : '#3E7CAC',
-                backgroundColor: localDifficulty === 'nightmare' ? '#1F0000' : '#003A63',
-              }}
-            >
-              <p className="text-sm font-semibold text-foreground mb-2">{getDifficultyDescription(localDifficulty)}</p>
-              {localDifficulty === 'nightmare' ? (
-                <p className="text-xs text-red-300 font-semibold mb-1">
-                  ⚠️ {t(language, 'difficulty.only')} {t(language, 'mode.nightmare.name')}
-                </p>
-              ) : null}
-              <p className="text-xs text-foreground/80">{t(language, 'difficulty.cycle.hint')}</p>
-            </div>
-          )}
         </div>
       </div>
     </div>

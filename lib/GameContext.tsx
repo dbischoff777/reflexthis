@@ -11,6 +11,8 @@ import { checkAndUnlockAchievements } from '@/lib/achievements';
 import { localStorageBatcher } from '@/lib/localStorageBatch';
 import { ScoreCalculator, ScoringFactors } from '@/lib/scoring';
 import { AdaptiveDifficulty, DifficultyChangeLog } from '@/lib/adaptiveDifficulty';
+import { submitChallengeResult } from '@/lib/challenges';
+import { calculateXP, addXP, getUserProgress } from '@/lib/progression';
 
 export interface ReactionTimeStats {
   current: number | null;
@@ -42,6 +44,7 @@ export interface GameState {
   reducedEffects: boolean;
   highContrastMode: boolean;
   newlyUnlockedAchievements: string[];
+  levelUpInfo: { level: number; rewards?: import('@/lib/progression').LevelReward[] } | null;
   language: Language;
   toggleSound: () => void;
   toggleMusic: () => void;
@@ -110,11 +113,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [reducedEffects, setReducedEffectsState] = useState(false);
   const [highContrastMode, setHighContrastModeState] = useState(false);
   const [newlyUnlockedAchievements, setNewlyUnlockedAchievements] = useState<string[]>([]);
+  const [levelUpInfo, setLevelUpInfo] = useState<{ level: number; rewards?: import('@/lib/progression').LevelReward[] } | null>(null);
   const [language, setLanguageState] = useState<Language>('en');
   const [adaptiveDifficultyMultiplier, setAdaptiveDifficultyMultiplier] = useState(1.0);
 
   const gameStartTimeRef = useRef<number | null>(null);
   const achievementClearTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const levelUpClearTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const scoreCalculatorRef = useRef<ScoreCalculator | null>(null);
   const adaptiveDifficultyRef = useRef<AdaptiveDifficulty | null>(null);
   const [lastScoreBreakdown, setLastScoreBreakdown] = useState<ScoringFactors | null>(null);
@@ -582,21 +587,82 @@ export function GameProvider({ children }: { children: ReactNode }) {
         setHighScore(score);
       }
       
-      // Save game session
-      if (gameStartTimeRef.current) {
-        const duration = Date.now() - gameStartTimeRef.current;
-        saveGameSession({
-          id: `game_${Date.now()}`,
-          score,
-          bestCombo: bestCombo > 0 ? bestCombo : combo,
-          averageReactionTime: reactionTimeStats.average,
-          fastestReactionTime: reactionTimeStats.fastest,
-          totalPresses: reactionTimeStats.allTimes.length,
-          difficulty,
-          gameMode,
-          timestamp: Date.now(),
-          duration,
-        });
+        // Save game session
+        if (gameStartTimeRef.current) {
+          const duration = Date.now() - gameStartTimeRef.current;
+          saveGameSession({
+            id: `game_${Date.now()}`,
+            score,
+            bestCombo: bestCombo > 0 ? bestCombo : combo,
+            averageReactionTime: reactionTimeStats.average,
+            fastestReactionTime: reactionTimeStats.fastest,
+            totalPresses: reactionTimeStats.allTimes.length,
+            difficulty,
+            gameMode,
+            timestamp: Date.now(),
+            duration,
+          });
+          
+          // Calculate accuracy
+          const totalPresses = reactionTimeStats.allTimes.length;
+          const misses = 5 - lives;
+          const accuracy = totalPresses > 0 ? totalPresses / (totalPresses + misses) : 0;
+
+          // Submit challenge result if this was a challenge game
+          let isChallenge = false;
+          if (typeof window !== 'undefined') {
+            const challengeData = sessionStorage.getItem('reflexthis_activeChallenge');
+            if (challengeData) {
+              try {
+                const challenge = JSON.parse(challengeData);
+                isChallenge = true;
+                const userId = 'local-user'; // In a real app, this would be from auth
+                submitChallengeResult(
+                  challenge.id,
+                  userId,
+                  score,
+                  {
+                    reactionTime: reactionTimeStats.average || undefined,
+                    accuracy,
+                  }
+                );
+                
+                // Clear challenge from sessionStorage
+                sessionStorage.removeItem('reflexthis_activeChallenge');
+              } catch (error) {
+                console.error('Error submitting challenge result:', error);
+              }
+            }
+          }
+
+          // Award XP
+          const xpGained = calculateXP({
+            score,
+            accuracy,
+            difficulty,
+            gameMode,
+            duration,
+            isChallenge,
+          });
+
+          // Add XP to user progress
+          const levelUpResult = addXP(xpGained, 'game_completion');
+          
+          // Handle level-up notification
+          if (levelUpResult.leveledUp && levelUpResult.newLevel) {
+            setLevelUpInfo({
+              level: levelUpResult.newLevel,
+              rewards: levelUpResult.rewards,
+            });
+            
+            // Clear level-up notification after 5 seconds
+            if (levelUpClearTimeoutRef.current) {
+              clearTimeout(levelUpClearTimeoutRef.current);
+            }
+            levelUpClearTimeoutRef.current = setTimeout(() => {
+              setLevelUpInfo(null);
+            }, 5000);
+          }
         
         // Update session statistics - use requestIdleCallback for non-critical updates
         const updateStats = () => {
@@ -770,6 +836,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     startGame,
     endGame,
     newlyUnlockedAchievements,
+    levelUpInfo,
     lastScoreBreakdown,
     adaptiveDifficultyChangeLog: adaptiveDifficultyRef.current?.getChangeLog() || [],
     adaptiveDifficultyMultiplier,
@@ -816,6 +883,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     startGame,
     endGame,
     newlyUnlockedAchievements,
+    levelUpInfo,
     lastScoreBreakdown,
   ]);
 

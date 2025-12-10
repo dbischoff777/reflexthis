@@ -855,13 +855,15 @@ function LandingPageContent() {
                 e.preventDefault();
                 setShowMode(true);
               }}
-              className="group relative inline-flex items-center justify-center flex-1 min-w-0 min-h-[64px] sm:min-h-[72px] px-3 sm:px-4 py-3 sm:py-4 text-sm sm:text-base md:text-lg font-bold border-4 bg-primary text-black transition-all duration-100 hover:bg-purple-600 active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary pixel-border whitespace-nowrap overflow-hidden"
+              className="group relative inline-flex items-center justify-center flex-1 min-w-0 min-h-[64px] sm:min-h-[72px] px-3 sm:px-4 py-3 sm:py-4 text-sm sm:text-base md:text-lg font-bold border-4 bg-primary text-black transition-all duration-100 hover:bg-purple-600 hover:text-white active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary pixel-border whitespace-nowrap overflow-hidden"
               style={{ borderColor: '#ffffff' }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.borderColor = '#00ffff';
+                e.currentTarget.style.color = '#ffffff';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.borderColor = '#ffffff';
+                e.currentTarget.style.color = '#000000';
               }}
             >
               <span className="relative z-10 truncate">

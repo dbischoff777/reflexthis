@@ -7,6 +7,8 @@ import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { GameMode } from '@/lib/gameModes';
 import { SessionStatsDisplay } from '@/components/SessionStatsDisplay';
+import { ChallengesDisplay } from '@/components/ChallengesDisplay';
+import { ProgressionDisplay } from '@/components/ProgressionDisplay';
 
 interface StatisticsHubProps {
   stats: SessionStatistics;
@@ -61,25 +63,11 @@ export function StatisticsHub({ stats, gameMode }: StatisticsHubProps) {
       {/* Tab Content */}
       <div className="flex-1 min-h-0 overflow-y-auto">
         {activeTab === 'challenges' && (
-          <div className="p-4 space-y-4">
-            <h3 className="text-lg sm:text-xl font-bold text-foreground">{t(language, 'hub.challenges.title')}</h3>
-            <div className="space-y-3">
-              <div className="p-4 border-2 pixel-border" style={{ backgroundColor: 'rgba(0, 58, 99, 0.6)', borderColor: '#3E7CAC' }}>
-                <p className="text-sm sm:text-base text-muted-foreground">{t(language, 'hub.challenges.placeholder')}</p>
-              </div>
-            </div>
-          </div>
+          <ChallengesDisplay />
         )}
 
         {activeTab === 'progression' && (
-          <div className="p-4 space-y-4">
-            <h3 className="text-lg sm:text-xl font-bold text-foreground">{t(language, 'hub.progression.title')}</h3>
-            <div className="space-y-3">
-              <div className="p-4 border-2 pixel-border" style={{ backgroundColor: 'rgba(0, 58, 99, 0.6)', borderColor: '#3E7CAC' }}>
-                <p className="text-sm sm:text-base text-muted-foreground">{t(language, 'hub.progression.placeholder')}</p>
-              </div>
-            </div>
-          </div>
+          <ProgressionDisplay />
         )}
 
         {activeTab === 'quests' && (

@@ -162,7 +162,7 @@ export function StatsModal({ show, stats, onClose, gameMode: initialGameMode }: 
             </div>
 
             {/* Statistics Hub Content */}
-            <div className="min-h-0 overflow-hidden w-full flex flex-col">
+            <div className="min-h-0 overflow-y-auto w-full flex flex-col flex-1">
               <StatisticsHub stats={filteredStats} gameMode={selectedMode} />
             </div>
           </div>
