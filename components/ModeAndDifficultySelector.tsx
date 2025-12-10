@@ -216,7 +216,10 @@ export function ModeAndDifficultySelector({
                     {mode === 'oddOneOut' && t(language, 'mode.odd.name')}
                   </span>
                   {bestScore !== null && (
-                    <span className="text-xs sm:text-sm text-white/80 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+                    <span className={cn(
+                      "text-sm sm:text-base font-semibold drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]",
+                      isHovered && !isButtonDisabled ? "text-black" : "text-white/80"
+                    )}>
                       {t(language, 'mode.bestScore')}: {bestScore.toLocaleString()}
                     </span>
                   )}
@@ -278,39 +281,36 @@ export function ModeAndDifficultySelector({
               backgroundColor: hoveredDifficulty === localDifficulty
                 ? localDifficulty === 'nightmare' 
                   ? '#8B0000' // Dark red for nightmare hover
-                  : '#A855F7' // Bright purple for hover (different from game mode buttons)
+                  : '#C5A5E0' // Lighter purple for hover
                 : localDifficulty === 'nightmare'
                   ? '#4A0000' // Very dark red for nightmare regular
-                  : '#7C3AED', // Purple for regular (different from game mode buttons)
+                  : '#AF89C9', // Lavender purple for regular
             }}
           >
-            <div className="flex flex-col items-center justify-center flex-1 px-2 overflow-hidden">
-              {/* Icon or stars for difficulty */}
-              <div className="flex items-center justify-center flex-1 pb-1 w-full max-h-[60%] overflow-hidden">
-                {localDifficulty === 'nightmare' ? (
-                  <span className="text-4xl sm:text-5xl md:text-6xl leading-none block">{difficultyIcons[localDifficulty]}</span>
-                ) : (
-                  <span className="text-2xl sm:text-3xl md:text-4xl leading-none block text-center">{difficultyStars[localDifficulty]}</span>
-                )}
+            <div className="flex flex-col items-center justify-center flex-1 px-2 overflow-hidden gap-2">
+              {/* "Select Difficulty" - Big font in center */}
+              <span className="font-bold text-lg sm:text-xl md:text-2xl lg:text-3xl text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)] text-center shrink-0">
+                {t(language, 'difficulty.select.title')}
+              </span>
+              
+              {/* Stars/Icon and Difficulty name - Small font at bottom */}
+              <div className="flex flex-col items-center justify-center gap-1 shrink-0">
+                {/* Icon or stars for difficulty */}
+                <div className="flex items-center justify-center">
+                  {localDifficulty === 'nightmare' ? (
+                    <span className="text-xl sm:text-2xl md:text-3xl leading-none block">{difficultyIcons[localDifficulty]}</span>
+                  ) : (
+                    <span className="text-lg sm:text-xl md:text-2xl leading-none block text-center">{difficultyStars[localDifficulty]}</span>
+                  )}
+                </div>
+                {/* Difficulty name */}
+                <span className="font-semibold text-xs sm:text-sm md:text-base text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] text-center">
+                  {localDifficulty === 'easy' && t(language, 'difficulty.name.easy')}
+                  {localDifficulty === 'medium' && t(language, 'difficulty.name.medium')}
+                  {localDifficulty === 'hard' && t(language, 'difficulty.name.hard')}
+                  {localDifficulty === 'nightmare' && t(language, 'difficulty.name.nightmare')}
+                </span>
               </div>
-              {/* Text label */}
-              <span className="font-bold text-base sm:text-lg md:text-xl lg:text-2xl text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)] text-center shrink-0">
-                {localDifficulty === 'easy' && t(language, 'difficulty.name.easy')}
-                {localDifficulty === 'medium' && t(language, 'difficulty.name.medium')}
-                {localDifficulty === 'hard' && t(language, 'difficulty.name.hard')}
-                {localDifficulty === 'nightmare' && t(language, 'difficulty.name.nightmare')}
-              </span>
-              <span className={cn(
-                "text-xs sm:text-sm drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] mt-1 text-center",
-                localDifficulty === 'nightmare' 
-                  ? "text-red-300 font-semibold" 
-                  : "text-white/80"
-              )}>
-                {localDifficulty === 'nightmare' 
-                  ? t(language, 'difficulty.only') + ' ' + t(language, 'mode.nightmare.name')
-                  : t(language, 'difficulty.select.title')
-                }
-              </span>
             </div>
           </button>
           

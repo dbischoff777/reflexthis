@@ -328,10 +328,13 @@ export function GameOverModal({
               <div>
                 <p className="text-muted-foreground mb-2 text-base">{t(language, 'gameover.comparison.score')}</p>
                 <div className="flex items-center gap-2">
-                  <p className={cn(
-                    'text-xl sm:text-2xl font-bold',
-                    score > previousBest.score ? 'text-chart-3' : score < previousBest.score ? 'text-chart-5' : 'text-foreground'
-                  )}>
+                  <p 
+                    className={cn(
+                      'text-xl sm:text-2xl font-bold',
+                      score > previousBest.score ? 'text-chart-3' : score < previousBest.score ? '' : 'text-foreground'
+                    )}
+                    style={score < previousBest.score ? { color: '#C084FC' } : undefined}
+                  >
                     {score > previousBest.score ? '↑' : score < previousBest.score ? '↓' : '='} {score.toLocaleString()}
                   </p>
                   <p className="text-muted-foreground text-base">vs {previousBest.score.toLocaleString()}</p>
@@ -340,10 +343,13 @@ export function GameOverModal({
               <div>
                 <p className="text-muted-foreground mb-2 text-base">{t(language, 'gameover.comparison.combo')}</p>
                 <div className="flex items-center gap-2">
-                  <p className={cn(
-                    'text-xl sm:text-2xl font-bold',
-                    bestCombo > previousBest.bestCombo ? 'text-chart-3' : bestCombo < previousBest.bestCombo ? 'text-chart-5' : 'text-foreground'
-                  )}>
+                  <p 
+                    className={cn(
+                      'text-xl sm:text-2xl font-bold',
+                      bestCombo > previousBest.bestCombo ? 'text-chart-3' : bestCombo < previousBest.bestCombo ? '' : 'text-foreground'
+                    )}
+                    style={bestCombo < previousBest.bestCombo ? { color: '#C084FC' } : undefined}
+                  >
                     {bestCombo > previousBest.bestCombo ? '↑' : bestCombo < previousBest.bestCombo ? '↓' : '='} {bestCombo}x
                   </p>
                   <p className="text-muted-foreground text-base">vs {previousBest.bestCombo}x</p>
@@ -353,10 +359,13 @@ export function GameOverModal({
                 <div>
                   <p className="text-muted-foreground mb-2 text-base">{t(language, 'gameover.comparison.avgReaction')}</p>
                   <div className="flex items-center gap-2">
-                    <p className={cn(
-                      'text-xl sm:text-2xl font-bold',
-                      reactionTimeStats.average < previousBest.averageReaction ? 'text-chart-3' : reactionTimeStats.average > previousBest.averageReaction ? 'text-chart-5' : 'text-foreground'
-                    )}>
+                    <p 
+                      className={cn(
+                        'text-xl sm:text-2xl font-bold',
+                        reactionTimeStats.average < previousBest.averageReaction ? 'text-chart-3' : reactionTimeStats.average > previousBest.averageReaction ? '' : 'text-foreground'
+                      )}
+                      style={reactionTimeStats.average > previousBest.averageReaction ? { color: '#C084FC' } : undefined}
+                    >
                       {reactionTimeStats.average < previousBest.averageReaction ? '↑' : reactionTimeStats.average > previousBest.averageReaction ? '↓' : '='} {Math.round(reactionTimeStats.average)}ms
                     </p>
                     <p className="text-muted-foreground text-base">vs {Math.round(previousBest.averageReaction)}ms</p>
@@ -426,7 +435,7 @@ export function GameOverModal({
             {reactionTimeStats.slowest !== null && (
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">{t(language, 'gameover.details.slowest')}</span>
-                <span className="font-semibold text-chart-5">
+                <span className="font-semibold" style={{ color: '#C084FC' }}>
                   {Math.round(reactionTimeStats.slowest)}ms
                 </span>
               </div>
