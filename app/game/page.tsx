@@ -716,7 +716,10 @@ export default function GamePage() {
         <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-20 flex flex-col items-center gap-2">
           {/* Sequence status */}
           {gameMode === 'sequence' && (
-            <div className="bg-card/95 border-4 border-primary pixel-border px-5 py-3 shadow-[0_0_20px_rgba(0,255,255,0.6)]">
+            <div
+              className="border-4 pixel-border px-5 py-3 shadow-[0_0_18px_rgba(62,124,172,0.5)]"
+              style={{ backgroundColor: 'rgba(0, 58, 99, 0.9)', borderColor: '#3E7CAC' }}
+            >
               {isShowingSequence ? (
                 <div className="text-sm sm:text-base md:text-lg font-bold text-primary text-glow">
                   {t(language, 'ready.sequence.watch')}

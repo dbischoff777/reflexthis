@@ -143,10 +143,15 @@ export function GameOverModal({
       return;
     }
 
-    const sessions = getGameSessions();
+    const allSessions = getGameSessions();
+    const sessions = gameMode ? allSessions.filter((s) => s.gameMode === gameMode) : allSessions;
 
     // Get current game session (most recent)
-    const currentSession = sessions.length > 0 ? sessions[sessions.length - 1] : null;
+    const currentSession = sessions.length > 0
+      ? sessions[sessions.length - 1]
+      : allSessions.length > 0
+        ? allSessions[allSessions.length - 1]
+        : null;
     if (currentSession) {
       setGameDuration(currentSession.duration);
     }
@@ -164,7 +169,7 @@ export function GameOverModal({
     // Use newly unlocked achievements from props if available, otherwise fall back to calculation
     if (newlyUnlockedAchievementIds.length > 0) {
       // Convert achievement IDs to AchievementProgress objects
-      const sessionsForProgress = getGameSessions();
+      const sessionsForProgress = sessions;
       const statsForProgress = calculateSessionStatisticsFromSessions(sessionsForProgress);
       const achievementsForProgress = getAchievementProgress(statsForProgress, sessionsForProgress);
       
