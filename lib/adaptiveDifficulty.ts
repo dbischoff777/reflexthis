@@ -50,7 +50,7 @@ const DEFAULT_CONFIG: AdaptiveDifficultyConfig = {
   minActionsBeforeAdjustment: 3, // Lower threshold to start adjusting sooner
   targetAccuracy: 0.75,
   difficultyFloor: 0.3,
-  difficultyCeiling: 1.5,
+  difficultyCeiling: 1.5, // Will be refined per preset in constructor
 };
 
 export class AdaptiveDifficulty {
@@ -86,6 +86,16 @@ export class AdaptiveDifficulty {
       nightmare: 0.06, // Least sensitive on nightmare
     };
     this.config.sensitivityFactor = presetSensitivity[preset];
+
+    // Set preset-specific adaptive difficulty ceilings to keep scaling fair
+    // Easy: small headroom, Medium: moderate, Hard: full, Nightmare: slightly reduced
+    const presetCeiling: Record<DifficultyPreset, number> = {
+      easy: 1.2,       // Up to ~20% harder than easy baseline
+      medium: 1.3,     // Up to ~30% harder than medium baseline
+      hard: 1.5,       // Allow full global headroom on hard
+      nightmare: 1.4,  // Slightly capped to avoid over-punishing on an already brutal base
+    };
+    this.config.difficultyCeiling = presetCeiling[preset];
   }
 
   /**
