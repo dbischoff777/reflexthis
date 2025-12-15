@@ -32,6 +32,7 @@ import { useSequenceMode } from './hooks/useSequenceMode';
 import { useMobileHandlers } from './hooks/useMobileHandlers';
 import { useGameInitialization } from './hooks/useGameInitialization';
 import { loadChallenge } from '@/lib/challenges';
+import { GameModeTitle } from '@/components/GameModeTitle';
 
 // Lazy load heavy modal components
 const GameOverModal = lazy(() => import('@/components/GameOverModal').then(m => ({ default: m.GameOverModal })));
@@ -98,6 +99,10 @@ export default function GamePage() {
   const [buttonPressFeedback, setButtonPressFeedback] = useState<Record<number, 'correct' | 'incorrect' | null>>({});
   const [buttonReactionTimes, setButtonReactionTimes] = useState<Record<number, number | null>>({});
   const [oddOneOutTarget, setOddOneOutTarget] = useState<number | null>(null);
+  
+  // Multi-hit combo state: tracks required hits (2-3) and current hit count per button
+  const [buttonHitRequirements, setButtonHitRequirements] = useState<Record<number, number>>({});
+  const [buttonHitCounts, setButtonHitCounts] = useState<Record<number, number>>({});
   
   // Track previous values for performance feedback
   const previousComboRef = useRef(0);
@@ -175,11 +180,13 @@ export default function GamePage() {
     highlightStartTimeRef.current = null;
     setHighlightStartTimeState(null);
     setHighlightDuration(0);
+    setButtonHitRequirements({});
+    setButtonHitCounts({});
     isProcessingRef.current = false;
   }, [pauseGame, clearHighlightTimer, setHighlightedButtons]);
 
   // Highlight new buttons hook
-  const { highlightNewButtons } = useHighlightButtons({
+  const { highlightNewButtons, currentPattern } = useHighlightButtons({
     gameOver,
     isReady,
     isPausedRef,
@@ -201,6 +208,7 @@ export default function GamePage() {
     setHighlightStartTimeState,
     setScreenShake,
     setScreenFlash,
+    setButtonHitRequirements,
     decrementLives,
     clearHighlightTimer,
     setTimer,
@@ -334,11 +342,18 @@ export default function GamePage() {
   // Memoized button data for 3D grid to prevent unnecessary re-renders
   // Only recalculates when button states actually change
   const buttonGridData = useMemo(() => {
+    const pattern = currentPattern?.current;
+    const patternButtons = pattern?.buttons || [];
+    
     return Array.from({ length: 10 }, (_, i) => {
       const id = i + 1;
       const feedback = buttonPressFeedback[id];
       const isHighlighted = highlightedButtons.includes(id);
       const isOddTarget = gameMode === 'oddOneOut' && oddOneOutTarget === id;
+      const isPatternButton = patternButtons.includes(id);
+      const requiredHits = buttonHitRequirements[id] || 1;
+      const currentHits = buttonHitCounts[id] || 0;
+      const remainingHits = requiredHits > 1 ? requiredHits - currentHits : 0;
       // Only pass highlightStartTime when we have both a highlighted button AND a valid timestamp
       // This prevents undefined from being used in arithmetic (Date.now() - highlightStartTime)
       const validHighlightTime = isHighlighted && highlightStartTimeState !== null
@@ -349,12 +364,15 @@ export default function GamePage() {
         highlighted: isHighlighted,
         isBonus: bonusActive && bonusButtonId === id,
         isOddTarget,
+        isPatternButton,
         highlightStartTime: validHighlightTime,
         pressFeedback: (feedback === 'correct' ? 'success' : feedback === 'incorrect' ? 'error' : null) as 'success' | 'error' | null,
         reactionTime: buttonReactionTimes[id] ?? null,
+        requiredHits,
+        remainingHits,
       };
     });
-  }, [highlightedButtons, buttonPressFeedback, highlightStartTimeState, gameMode, oddOneOutTarget, bonusActive, bonusButtonId, buttonReactionTimes]);
+  }, [highlightedButtons, buttonPressFeedback, highlightStartTimeState, gameMode, oddOneOutTarget, bonusActive, bonusButtonId, buttonReactionTimes, currentPattern, buttonHitRequirements, buttonHitCounts]);
 
   // Keep a ref of the paused state for use in callbacks/timers
   useEffect(() => {
@@ -384,6 +402,9 @@ export default function GamePage() {
     currentHighlightedRef,
     nextHighlightTimerRef,
     latencyMonitorRef,
+    currentPatternRef: currentPattern,
+    buttonHitRequirements,
+    buttonHitCounts,
     setButtonPressFeedback,
     setButtonReactionTimes,
     setCurrentReactionTime,
@@ -400,6 +421,7 @@ export default function GamePage() {
     setFastStreakCount,
     setFastStreakActive,
     setLives,
+    setButtonHitCounts,
     incrementScore,
     decrementLives,
     clearHighlightTimer,
@@ -734,7 +756,12 @@ export default function GamePage() {
         </div>
         
         {/* 3D WebGL Button Grid - Larger, more prominent */}
-        <div className="w-full max-w-7xl mx-auto px-2 sm:px-4">
+        <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 relative">
+          {/* Game Mode Title and Icon - Positioned outside canvas border at top-left */}
+          {isReady && !gameOver && (
+            <GameModeTitle gameMode={gameMode} reducedEffects={reducedEffects} />
+          )}
+          
           <div
             className="w-full game-area-3d relative mx-auto"
             style={{

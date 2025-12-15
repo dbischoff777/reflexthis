@@ -67,7 +67,8 @@ export const BackgroundGrid = memo(function BackgroundGrid({ gameState, highligh
         
         void main() {
           // Vertical gradient (darker at top)
-          float vGrad = smoothstep(0.0, 1.0, vUv.y);
+          // Use clamp to prevent precision issues near 0.0 and 1.0
+          float vGrad = clamp(smoothstep(0.0, 1.0, vUv.y), 0.0, 1.0);
           vec3 baseColor = mix(uColor2, uColor1, vGrad * 0.7);
           
           // Game over darkening
@@ -101,11 +102,16 @@ export const BackgroundGrid = memo(function BackgroundGrid({ gameState, highligh
           // Center glow (where buttons are) - enhanced by combo
           vec2 center = vec2(0.5, 0.45);
           float centerDist = length((vUv - center) * vec2(1.0, 1.5));
-          float centerGlow = smoothstep(0.8, 0.2, centerDist) * (0.15 + uComboGlow * 0.25);
+          // Prevent division by zero by ensuring edge parameters are not equal (0.8 > 0.2, so this is safe)
+          float centerGlow = smoothstep(0.8, max(0.2, 0.201), centerDist) * (0.15 + uComboGlow * 0.25);
           
           // Edge vignette - darker when game over
           float vignetteStrength = 0.3 + uGameOver * 0.2;
-          float vignette = smoothstep(0.0, vignetteStrength, vUv.x) * smoothstep(1.0, 1.0 - vignetteStrength, vUv.x);
+          // Prevent division by zero by ensuring vignetteStrength is never 0
+          float safeVignetteStrength = max(vignetteStrength, 0.001);
+          float vignetteX1 = smoothstep(0.0, safeVignetteStrength, vUv.x);
+          float vignetteX2 = smoothstep(1.0, max(1.0 - safeVignetteStrength, 0.999), vUv.x);
+          float vignette = vignetteX1 * vignetteX2;
           vignette *= smoothstep(0.0, 0.2, vUv.y) * smoothstep(1.0, 0.8, vUv.y);
           
           // Edge warning glow (urgency)
@@ -120,13 +126,25 @@ export const BackgroundGrid = memo(function BackgroundGrid({ gameState, highligh
             float distFromCenter = length((vUv - center) * vec2(1.2, 1.0));
             
             // Create ring shape
-            celebrationRing = smoothstep(ringRadius - ringWidth, ringRadius, distFromCenter) *
-                             smoothstep(ringRadius + ringWidth, ringRadius, distFromCenter);
+            // Prevent division by zero by ensuring minimum width and safe edge differences
+            float minRingWidth = max(ringWidth, 0.001);
+            float safeRingRadius = max(ringRadius, 0.001);
+            float innerEdge = safeRingRadius - minRingWidth;
+            float outerEdge = safeRingRadius + minRingWidth;
+            // First smoothstep: inner edge to center (normal)
+            // Second smoothstep: outer edge to center (inverted - edge0 > edge1 is intentional)
+            // Ensure minimum difference to prevent division by zero
+            float safeInner = max(innerEdge, safeRingRadius - minRingWidth + 0.0001);
+            float safeOuter = min(outerEdge, safeRingRadius + minRingWidth - 0.0001);
+            celebrationRing = smoothstep(safeInner, safeRingRadius, distFromCenter) *
+                             smoothstep(safeOuter, safeRingRadius, distFromCenter);
             celebrationRing *= uCelebration * 1.5; // Brightness controlled by intensity
             
             // Add radial burst lines emanating from center
             float angle = atan(vUv.y - center.y, vUv.x - center.x);
             float rays = abs(sin(angle * 8.0)) * 0.5 + 0.5;
+            // Original was inverted smoothstep (edge0 > edge1 is intentional for fade effect)
+            // The difference is always 0.3, so edges are never equal - safe from division by zero
             float rayFade = smoothstep(ringRadius + 0.1, ringRadius - 0.2, distFromCenter);
             rays *= rayFade * uCelebration * (1.0 - uCelebrationProgress * 0.5);
             celebrationRing += rays * 0.4;
@@ -163,9 +181,11 @@ export const BackgroundGrid = memo(function BackgroundGrid({ gameState, highligh
           color = mix(color, gameOverColor * 0.3, uGameOver * 0.4);
           
           // Alpha with edge fade
-          float alpha = (0.85 + uIntensity * 0.1) * vignette;
-          alpha = max(alpha, edgeGlow * 0.8); // Keep edge glow visible
-          alpha = max(alpha, celebrationRing * 0.5); // Keep celebration visible
+          // Clamp values to prevent precision issues
+          float alpha = clamp((0.85 + uIntensity * 0.1) * vignette, 0.0, 1.0);
+          alpha = max(alpha, clamp(edgeGlow * 0.8, 0.0, 1.0)); // Keep edge glow visible
+          alpha = max(alpha, clamp(celebrationRing * 0.5, 0.0, 1.0)); // Keep celebration visible
+          alpha = clamp(alpha, 0.0, 1.0); // Final clamp to ensure valid range
           
           gl_FragColor = vec4(color, alpha);
         }

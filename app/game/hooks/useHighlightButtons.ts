@@ -10,6 +10,7 @@ import {
 } from '@/lib/difficulty';
 import { playSound } from '@/lib/soundUtils';
 import { useGameState } from '@/lib/GameContext';
+import { generatePattern, Pattern, PatternType } from '@/lib/patternGenerator';
 
 interface UseHighlightButtonsOptions {
   gameOver: boolean;
@@ -33,6 +34,7 @@ interface UseHighlightButtonsOptions {
   setHighlightStartTimeState: (time: number | null) => void;
   setScreenShake: (shake: boolean) => void;
   setScreenFlash: (flash: 'error' | 'success' | 'combo-5' | 'combo-10' | 'combo-20' | 'combo-30' | 'combo-50' | null) => void;
+  setButtonHitRequirements: React.Dispatch<React.SetStateAction<Record<number, number>>>;
   decrementLives: () => void;
   clearHighlightTimer: () => void;
   setTimer: (callback: () => void, delay: number) => NodeJS.Timeout;
@@ -41,6 +43,7 @@ interface UseHighlightButtonsOptions {
   lastHighlightedRef: React.MutableRefObject<number[]>;
   currentHighlightedRef: React.MutableRefObject<number[]>;
   highlightStartTimeRef: React.MutableRefObject<number | null>;
+  currentPatternRef?: React.MutableRefObject<Pattern | null>;
 }
 
 export function useHighlightButtons({
@@ -65,6 +68,7 @@ export function useHighlightButtons({
   setHighlightStartTimeState,
   setScreenShake,
   setScreenFlash,
+  setButtonHitRequirements,
   decrementLives,
   clearHighlightTimer,
   setTimer,
@@ -73,6 +77,7 @@ export function useHighlightButtons({
   lastHighlightedRef,
   currentHighlightedRef,
   highlightStartTimeRef,
+  currentPatternRef,
 }: UseHighlightButtonsOptions) {
   const { adaptiveDifficultyMultiplier } = useGameState();
   const adaptiveMultiplierRef = useRef(adaptiveDifficultyMultiplier);
@@ -81,6 +86,10 @@ export function useHighlightButtons({
   useEffect(() => {
     adaptiveMultiplierRef.current = adaptiveDifficultyMultiplier;
   }, [adaptiveDifficultyMultiplier]);
+  
+  // Create pattern ref if not provided
+  const internalPatternRef = useRef<Pattern | null>(null);
+  const patternRef = currentPatternRef || internalPatternRef;
   
   const highlightNewButtons = useCallback(function highlightNewButtonsInternal() {
     if (gameOver || isProcessingRef.current || !isReady || isPausedRef.current) return;
@@ -93,50 +102,102 @@ export function useHighlightButtons({
     let newHighlighted: number[] = [];
 
     if (gameMode === 'oddOneOut') {
-      // Odd One Out mode: always show a small cluster of buttons and pick a single correct target
+      // Odd One Out mode: use the same pattern system for the layout, then pick a single correct target
       const baseCount = getButtonsToHighlightForDifficulty(score, difficulty, currentMultiplier);
       // Clamp to 3–6 buttons for better visual discrimination
       const buttonCount = Math.min(6, Math.max(3, baseCount));
-      newHighlighted = getRandomButtons(buttonCount, 10);
+
+      const usePatterns = score > 50 || Math.random() < 0.6;
+
+      if (usePatterns) {
+        const pattern = generatePattern(buttonCount, score, lastHighlightedRef.current);
+        newHighlighted = pattern.buttons;
+        patternRef.current = pattern;
+      } else {
+        newHighlighted = getRandomButtons(buttonCount, 10);
+        patternRef.current = null;
+      }
+
       if (newHighlighted.length > 0) {
         const targetIndex = Math.floor(Math.random() * newHighlighted.length);
-        setOddOneOutTarget(newHighlighted[targetIndex]);
+        const targetId = newHighlighted[targetIndex];
+        setOddOneOutTarget(targetId);
+
+        // No multi-hit logic in odd-one-out mode
+        setButtonHitRequirements({});
       } else {
         setOddOneOutTarget(null);
+        setButtonHitRequirements({});
       }
     } else {
       const buttonCount = getButtonsToHighlightForDifficulty(score, difficulty, currentMultiplier);
-      newHighlighted = getRandomButtons(
-        buttonCount,
-        10,
-        lastHighlightedRef.current
-      );
-      setOddOneOutTarget(null);
-
-      // Occasionally spawn a bonus button in reflex / survival / nightmare
-      let bonusWasAdded = false;
-      if ((gameMode === 'reflex' || gameMode === 'survival' || gameMode === 'nightmare') && Math.random() < 0.18) {
-        const available = Array.from({ length: 10 }, (_, i) => i + 1).filter(
-          (id) => !newHighlighted.includes(id)
+      
+      // Use patterns for all non-oddOneOut, non-sequence modes that rely on this hook
+      // (60% chance, or always at higher scores)
+      const usePatterns =
+        (gameMode === 'reflex' ||
+          gameMode === 'survival' ||
+          gameMode === 'nightmare') &&
+        (score > 50 || Math.random() < 0.6);
+      
+      if (usePatterns) {
+        // Generate pattern-based highlights
+        // For patterns, ignore target button count - let the pattern use its natural button count
+        const pattern = generatePattern(buttonCount, score, lastHighlightedRef.current);
+        newHighlighted = pattern.buttons;
+        patternRef.current = pattern;
+        
+        // Don't add bonus buttons when using patterns - patterns need to be preserved exactly
+        setBonusButtonId(null);
+        setBonusActive(false);
+      } else {
+        // Fallback to random selection
+        newHighlighted = getRandomButtons(
+          buttonCount,
+          10,
+          lastHighlightedRef.current
         );
-        if (available.length > 0) {
-          const idx = Math.floor(Math.random() * available.length);
-          const bonusId = available[idx];
-          newHighlighted = [...newHighlighted, bonusId];
-          setBonusButtonId(bonusId);
-          setBonusActive(true);
-          bonusWasAdded = true;
+        patternRef.current = null;
+        
+        // Occasionally spawn a bonus button in reflex / survival / nightmare (only for random, not patterns)
+        let bonusWasAdded = false;
+        if ((gameMode === 'reflex' || gameMode === 'survival' || gameMode === 'nightmare') && Math.random() < 0.18) {
+          const available = Array.from({ length: 10 }, (_, i) => i + 1).filter(
+            (id) => !newHighlighted.includes(id)
+          );
+          if (available.length > 0) {
+            const idx = Math.floor(Math.random() * available.length);
+            const bonusId = available[idx];
+            newHighlighted = [...newHighlighted, bonusId];
+            setBonusButtonId(bonusId);
+            setBonusActive(true);
+            bonusWasAdded = true;
+          } else {
+            setBonusButtonId(null);
+            setBonusActive(false);
+          }
         } else {
           setBonusButtonId(null);
           setBonusActive(false);
         }
-      } else {
-        setBonusButtonId(null);
-        setBonusActive(false);
       }
+      
+      setOddOneOutTarget(null);
     }
 
     lastHighlightedRef.current = newHighlighted;
+
+    // Assign multi-hit requirements (30% chance per button, 2–3 hits) for all modes
+    // that use this hook, except for sequence (which has its own sequence logic).
+    if (gameMode !== 'sequence' && gameMode !== 'oddOneOut') {
+      const hitRequirements: Record<number, number> = {};
+      newHighlighted.forEach((buttonId) => {
+        if (Math.random() < 0.3) {
+          hitRequirements[buttonId] = Math.random() < 0.5 ? 2 : 3;
+        }
+      });
+      setButtonHitRequirements(hitRequirements);
+    }
 
     setHighlightedButtons(newHighlighted);
     currentHighlightedRef.current = newHighlighted;
@@ -169,6 +230,8 @@ export function useHighlightButtons({
         highlightStartTimeRef.current = null;
         setHighlightStartTimeState(null);
         setOddOneOutTarget(null);
+        patternRef.current = null; // Clear pattern when buttons expire
+        setButtonHitRequirements({}); // Clear hit requirements when buttons expire
         
         // Trigger screen shake for missed buttons (respect comfort settings)
         if (screenShakeEnabled && !reducedEffects) {
@@ -228,6 +291,9 @@ export function useHighlightButtons({
     // We use a ref to capture the current value when buttons are highlighted
   ]);
 
-  return { highlightNewButtons };
+  return { 
+    highlightNewButtons,
+    currentPattern: patternRef,
+  };
 }
 

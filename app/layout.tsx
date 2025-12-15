@@ -75,8 +75,8 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         {/* Resource hints for critical splash screen assets */}
         <link rel="preload" href="/logo/ReflexIcon.jpg" as="image" />
-        <link rel="preload" href="/animation/ReflexIconAnimated.mp4" as="video" />
-        <link rel="preload" href="/animation/menu-background-animated.mp4" as="video" />
+        <link rel="prefetch" href="/animation/ReflexIconAnimated.mp4" />
+        <link rel="prefetch" href="/animation/menu-background-animated.mp4" />
         <link rel="prefetch" href="/game" as="document" />
       </head>
       <body

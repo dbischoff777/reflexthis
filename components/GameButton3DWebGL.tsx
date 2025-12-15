@@ -221,10 +221,12 @@ export const GameButtonGridWebGL = memo(function GameButtonGridWebGL({
                   highlighted={buttonData.highlighted}
                   isBonus={buttonData.isBonus}
                   isOddTarget={buttonData.isOddTarget}
+                  isPatternButton={buttonData.isPatternButton}
                   highlightStartTime={buttonData.highlightStartTime}
                   highlightDuration={highlightDuration}
                   pressFeedback={buttonData.pressFeedback}
                   reactionTime={buttonData.reactionTime ?? null}
+                  remainingHits={buttonData.remainingHits}
                   gameMode={gameState?.gameMode}
                   onPress={() => handlePress(index)}
                   disabled={disabled}

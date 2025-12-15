@@ -59,7 +59,7 @@ export interface GameState {
   resumeGame: () => void;
   setDifficulty: (difficulty: DifficultyPreset) => void;
   setGameMode: (mode: GameMode) => void;
-  incrementScore: (reactionTime: number) => void;
+  incrementScore: (reactionTime: number, patternBonusMultiplier?: number) => void;
   decrementLives: () => void;
   setHighlightedButtons: (buttonIds: number[]) => void;
   setLives: (lives: number) => void;
@@ -471,7 +471,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Increment score with advanced multi-factor scoring system
-  const incrementScore = useCallback((reactionTime: number) => {
+  const incrementScore = useCallback((reactionTime: number, patternBonusMultiplier: number = 1.0) => {
     // Record action for adaptive difficulty
     if (adaptiveDifficultyRef.current) {
       adaptiveDifficultyRef.current.recordAction({
@@ -512,11 +512,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
       if (scoreCalculatorRef.current) {
         const scoringFactors = scoreCalculatorRef.current.calculateScore(reactionTime, true, newCombo);
         setLastScoreBreakdown(scoringFactors);
-        setScore((prev) => prev + scoringFactors.totalScore);
+        // Apply pattern bonus multiplier to total score
+        const finalScore = Math.floor(scoringFactors.totalScore * patternBonusMultiplier);
+        setScore((prev) => prev + finalScore);
       } else {
         // Fallback to old system if calculator not initialized
         const comboMultiplier = getComboMultiplier(newCombo);
-        const pointsGained = Math.floor(1 * comboMultiplier);
+        const pointsGained = Math.floor(1 * comboMultiplier * patternBonusMultiplier);
         setScore((prev) => prev + pointsGained);
       }
       

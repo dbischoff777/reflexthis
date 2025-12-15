@@ -4,6 +4,7 @@ import { useCallback } from 'react';
 import { startTransition } from 'react';
 import { GameMode } from '@/lib/gameModes';
 import { playSound } from '@/lib/soundUtils';
+import type { Pattern } from '@/lib/patternGenerator';
 
 interface UseGameButtonHandlersOptions {
   gameOver: boolean;
@@ -27,6 +28,9 @@ interface UseGameButtonHandlersOptions {
   currentHighlightedRef: React.MutableRefObject<number[]>;
   nextHighlightTimerRef: React.MutableRefObject<NodeJS.Timeout | null>;
   latencyMonitorRef?: React.MutableRefObject<{ recordFeedback: (buttonId: number) => void } | undefined>;
+  currentPatternRef?: React.MutableRefObject<Pattern | null>;
+  buttonHitRequirements: Record<number, number>;
+  buttonHitCounts: Record<number, number>;
   setButtonPressFeedback: React.Dispatch<React.SetStateAction<Record<number, 'correct' | 'incorrect' | null>>>;
   setButtonReactionTimes: React.Dispatch<React.SetStateAction<Record<number, number | null>>>;
   setCurrentReactionTime: (time: number | null) => void;
@@ -43,7 +47,8 @@ interface UseGameButtonHandlersOptions {
   setFastStreakCount: React.Dispatch<React.SetStateAction<number>>;
   setFastStreakActive: (active: boolean) => void;
   setLives: (lives: number) => void;
-  incrementScore: (reactionTime: number) => void;
+  setButtonHitCounts: React.Dispatch<React.SetStateAction<Record<number, number>>>;
+  incrementScore: (reactionTime: number, patternBonusMultiplier?: number) => void;
   decrementLives: () => void;
   clearHighlightTimer: () => void;
   highlightNewButtons: () => void;
@@ -72,6 +77,9 @@ export function useGameButtonHandlers({
   currentHighlightedRef,
   nextHighlightTimerRef,
   latencyMonitorRef,
+  currentPatternRef,
+  buttonHitRequirements,
+  buttonHitCounts,
   setButtonPressFeedback,
   setButtonReactionTimes,
   setCurrentReactionTime,
@@ -88,6 +96,7 @@ export function useGameButtonHandlers({
   setFastStreakCount,
   setFastStreakActive,
   setLives,
+  setButtonHitCounts,
   incrementScore,
   decrementLives,
   clearHighlightTimer,
@@ -139,12 +148,21 @@ export function useGameButtonHandlers({
           });
         }, 300);
 
-        // Increment score, with a small bonus multiplier when a fast-streak objective is active
+        // Get pattern bonus multiplier if pattern is active
+        // Pattern bonus applies to each button press in the pattern
+        const patternBonus = currentPatternRef?.current?.bonusMultiplier || 1.0;
+        
+        // Increment score, with pattern bonus and fast-streak bonus
+        // Note: reactionTime is used for scoring calculation, not directly as points
         if (fastStreakActive) {
-          incrementScore(Math.max(1, Math.floor(reactionTime * 0.8)));
+          incrementScore(Math.max(1, Math.floor(reactionTime * 0.8)), patternBonus);
         } else {
-          incrementScore(reactionTime);
+          incrementScore(reactionTime, patternBonus);
         }
+        
+        // Clear pattern when all buttons in pattern are pressed
+        // (updatedHighlighted.length === 0 means all buttons were pressed)
+        // Pattern will also be cleared if buttons expire (handled in useHighlightButtons)
         // Success flash (respect comfort settings)
         if (screenFlashEnabled) {
           setScreenFlash('success');
@@ -198,26 +216,48 @@ export function useGameButtonHandlers({
           }
         }
 
-        // Remove this button from highlighted buttons
-        // Use ref as source of truth to handle race conditions in fast modes
-        const sourceButtons = currentHighlightedRef.current.length > 0 
-          ? currentHighlightedRef.current 
-          : highlightedButtons;
-        const updatedHighlighted = sourceButtons.filter(
-          (id) => id !== buttonId
-        );
-        setHighlightedButtons(updatedHighlighted);
-        currentHighlightedRef.current = updatedHighlighted;
+        // Check if this button requires multiple hits
+        const requiredHits = buttonHitRequirements[buttonId] || 1;
+        const currentHits = buttonHitCounts[buttonId] || 0;
+        const newHitCount = currentHits + 1;
 
-        // If all highlighted buttons are pressed, reset highlight time
-        if (updatedHighlighted.length === 0) {
-          highlightStartTimeRef.current = null;
-          setHighlightStartTimeState(null);
-          setHighlightDuration(0);
-          clearHighlightTimer();
-          nextHighlightTimerRef.current = setTimer(() => {
-            highlightNewButtons();
-          }, 500);
+        // Update hit count
+        setButtonHitCounts((prev) => ({ ...prev, [buttonId]: newHitCount }));
+
+        // Only remove button if all required hits are completed
+        if (newHitCount >= requiredHits) {
+          // Remove this button from highlighted buttons
+          // Use ref as source of truth to handle race conditions in fast modes
+          const sourceButtons = currentHighlightedRef.current.length > 0 
+            ? currentHighlightedRef.current 
+            : highlightedButtons;
+          const updatedHighlighted = sourceButtons.filter(
+            (id) => id !== buttonId
+          );
+          setHighlightedButtons(updatedHighlighted);
+          currentHighlightedRef.current = updatedHighlighted;
+
+          // Clear hit tracking for this button
+          setButtonHitCounts((prev) => {
+            const next = { ...prev };
+            delete next[buttonId];
+            return next;
+          });
+
+          // If all highlighted buttons are pressed, reset highlight time and clear pattern
+          if (updatedHighlighted.length === 0) {
+            highlightStartTimeRef.current = null;
+            setHighlightStartTimeState(null);
+            setHighlightDuration(0);
+            clearHighlightTimer();
+            // Clear pattern when all buttons are pressed
+            if (currentPatternRef?.current) {
+              currentPatternRef.current = null;
+            }
+            nextHighlightTimerRef.current = setTimer(() => {
+              highlightNewButtons();
+            }, 500);
+          }
         }
       } else {
         // Wrong button pressed - show feedback, screen shake, and error particles
@@ -360,7 +400,7 @@ export function useGameButtonHandlers({
           setIsNewBestReaction(false);
         }, 100);
 
-        // Clear this round and schedule next cluster
+        // Clear this round and schedule next cluster (no multi-hit in odd-one-out)
         setHighlightedButtons([]);
         currentHighlightedRef.current = [];
         highlightStartTimeRef.current = null;

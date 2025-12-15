@@ -26,11 +26,13 @@ export const ButtonMesh = memo(function ButtonMesh({
   buttonIndex,
   highlighted,
   isOddTarget = false,
+  isPatternButton = false,
   isBonus = false,
   highlightStartTime,
   highlightDuration,
   pressFeedback,
   reactionTime = null,
+  remainingHits = 0,
   gameMode,
   onPress,
   disabled,
@@ -45,6 +47,7 @@ export const ButtonMesh = memo(function ButtonMesh({
   const meshRef = useRef<THREE.Mesh>(null);
   const materialRef = useRef<THREE.MeshPhysicalMaterial>(null);
   const textRef = useRef<THREE.Mesh>(null);
+  const hitCountTextRef = useRef<THREE.Mesh>(null);
   const groupRef = useRef<THREE.Group>(null);
   const rippleOffset = useRef(0);
   
@@ -581,6 +584,12 @@ export const ButtonMesh = memo(function ButtonMesh({
     if (textRef.current) {
       textRef.current.position.z = currentDepth.current + 0.01;
     }
+     
+     // Update multi-hit indicator position to follow button surface
+     // The button's front face is at currentDepth.current, so position text above it
+     if (hitCountTextRef.current) {
+       hitCountTextRef.current.position.z = currentDepth.current + 0.05;
+     }
     
     // Calculate ripple effect from nearby button presses
     let totalRipple = 0;
@@ -787,6 +796,24 @@ export const ButtonMesh = memo(function ButtonMesh({
           fontWeight="bold"
         >
           {keyLabel || buttonIndex}
+        </Text>
+      )}
+      
+      {/* Multi-hit indicator - shows remaining hits */}
+      {highlighted && remainingHits > 0 && (
+        <Text
+          ref={hitCountTextRef}
+          position={[0, -0.4, BASE_DEPTH + 0.02]}
+          fontSize={0.35}
+          color="#ffaa00"
+          anchorX="center"
+          anchorY="middle"
+          outlineWidth={0.02}
+          outlineColor="#000000"
+          fillOpacity={1}
+          fontWeight="bold"
+        >
+          {remainingHits}
         </Text>
       )}
     </group>

@@ -44,6 +44,8 @@ export interface GameButtonGridWebGLProps {
     pressFeedback?: 'success' | 'error' | null;
     reactionTime?: number | null;
     isOddTarget?: boolean;
+    isPatternButton?: boolean;
+    remainingHits?: number;
   }>;
   highlightDuration: number;
   onPress: (index: number) => void;
@@ -66,10 +68,12 @@ export interface ButtonMeshProps {
   highlighted: boolean;
   isOddTarget?: boolean;
   isBonus?: boolean;
+  isPatternButton?: boolean;
   highlightStartTime?: number;
   highlightDuration: number;
   pressFeedback?: 'success' | 'error' | null;
   reactionTime?: number | null;
+  remainingHits?: number;
   gameMode?: string;
   onPress: () => void;
   disabled?: boolean;
