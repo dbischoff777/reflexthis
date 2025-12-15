@@ -64,7 +64,7 @@ export function getSequenceLengthForDifficulty(
   // Rebalanced growth: keep early game sequences stable for longer,
   // then increase length more gradually as score climbs.
   // - No growth before score 50
-  // - After that, grow in steps of 25 score, scaled by preset rate
+  // - After that, grow in steps of 50 score, scaled by preset rate
   const adjustedScore = Math.max(0, score - 50);
   const steps = Math.floor(adjustedScore / 50);
   const increase = steps * config.sequenceIncreaseRate;
