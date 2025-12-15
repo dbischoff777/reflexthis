@@ -204,6 +204,7 @@ export const GameButtonGridWebGL = memo(function GameButtonGridWebGL({
                 index,
                 highlighted: false,
                 isBonus: false,
+                isDistractor: false,
                 isOddTarget: false,
                 pressFeedback: null,
                 reactionTime: null,
@@ -219,6 +220,7 @@ export const GameButtonGridWebGL = memo(function GameButtonGridWebGL({
                   key={index}
                   buttonIndex={index}
                   highlighted={buttonData.highlighted}
+                  isDistractor={buttonData.isDistractor}
                   isBonus={buttonData.isBonus}
                   isOddTarget={buttonData.isOddTarget}
                   isPatternButton={buttonData.isPatternButton}

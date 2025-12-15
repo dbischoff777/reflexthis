@@ -99,6 +99,7 @@ export default function GamePage() {
   const [buttonPressFeedback, setButtonPressFeedback] = useState<Record<number, 'correct' | 'incorrect' | null>>({});
   const [buttonReactionTimes, setButtonReactionTimes] = useState<Record<number, number | null>>({});
   const [oddOneOutTarget, setOddOneOutTarget] = useState<number | null>(null);
+  const [sequenceDistractorButtons, setSequenceDistractorButtons] = useState<number[]>([]);
   
   // Multi-hit combo state: tracks required hits (2-3) and current hit count per button
   const [buttonHitRequirements, setButtonHitRequirements] = useState<Record<number, number>>({});
@@ -290,6 +291,7 @@ export default function GamePage() {
     highlightedButtons,
     latencyMonitorRef,
     setHighlightedButtons,
+    setSequenceDistractorButtons,
     setButtonPressFeedback,
     setScreenShake,
     setScreenFlash,
@@ -348,7 +350,10 @@ export default function GamePage() {
     return Array.from({ length: 10 }, (_, i) => {
       const id = i + 1;
       const feedback = buttonPressFeedback[id];
-      const isHighlighted = highlightedButtons.includes(id);
+      const isPrimaryHighlight = highlightedButtons.includes(id);
+      const isDistractorHighlight =
+        gameMode === 'sequence' && isShowingSequence && sequenceDistractorButtons.includes(id);
+      const isHighlighted = isPrimaryHighlight || isDistractorHighlight;
       const isOddTarget = gameMode === 'oddOneOut' && oddOneOutTarget === id;
       const isPatternButton = patternButtons.includes(id);
       const requiredHits = buttonHitRequirements[id] || 1;
@@ -362,6 +367,7 @@ export default function GamePage() {
       return {
         index: id,
         highlighted: isHighlighted,
+        isDistractor: isDistractorHighlight,
         isBonus: bonusActive && bonusButtonId === id,
         isOddTarget,
         isPatternButton,

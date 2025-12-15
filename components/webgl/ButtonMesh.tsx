@@ -25,6 +25,7 @@ import {
 export const ButtonMesh = memo(function ButtonMesh({
   buttonIndex,
   highlighted,
+  isDistractor = false,
   isOddTarget = false,
   isPatternButton = false,
   isBonus = false,
@@ -163,8 +164,11 @@ export const ButtonMesh = memo(function ButtonMesh({
         urgencyColorRef.current.setRGB(
           THEME_COLORS.secondary.r,
           THEME_COLORS.secondary.g,
-          THEME_COLORS.secondary.b
+          THEME_COLORS.b
         );
+      } else if (isDistractor && gameMode === 'sequence') {
+        // Sequence distractor: soft purple highlight
+        urgencyColorRef.current.setRGB(0.8, 0.4, 1.0);
       } else {
         const urgencyColor = getUrgencyColor(progress.current);
         urgencyColorRef.current.setRGB(urgencyColor.r, urgencyColor.g, urgencyColor.b);
@@ -276,6 +280,8 @@ export const ButtonMesh = memo(function ButtonMesh({
         ? { r: 1.0, g: 0.84, b: 0.2 } // gold
         : isOddTarget
         ? THEME_COLORS.secondary
+        : isDistractor && gameMode === 'sequence'
+        ? { r: 0.8, g: 0.4, b: 1.0 } // distinct purple for distractor track
         : getUrgencyColor(progress.current);
       const pulse = Math.sin(pulsePhase.current) * 0.05 + 0.95;
       

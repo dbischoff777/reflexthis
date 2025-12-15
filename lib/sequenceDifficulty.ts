@@ -61,7 +61,13 @@ export function getSequenceLengthForDifficulty(
   preset: DifficultyPreset
 ): number {
   const config = SEQUENCE_DIFFICULTY_PRESETS[preset];
-  const increase = Math.floor(score / 10) * config.sequenceIncreaseRate;
+  // Rebalanced growth: keep early game sequences stable for longer,
+  // then increase length more gradually as score climbs.
+  // - No growth before score 50
+  // - After that, grow in steps of 25 score, scaled by preset rate
+  const adjustedScore = Math.max(0, score - 50);
+  const steps = Math.floor(adjustedScore / 50);
+  const increase = steps * config.sequenceIncreaseRate;
   const length = Math.floor(config.startingSequenceLength + increase);
   return Math.min(length, config.maxSequenceLength);
 }

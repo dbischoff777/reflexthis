@@ -40,6 +40,7 @@ export interface GameButtonGridWebGLProps {
     index: number;
     highlighted: boolean;
     isBonus?: boolean;
+    isDistractor?: boolean;
     highlightStartTime?: number;
     pressFeedback?: 'success' | 'error' | null;
     reactionTime?: number | null;
@@ -66,6 +67,7 @@ export interface GameButtonGridWebGLProps {
 export interface ButtonMeshProps {
   buttonIndex: number;
   highlighted: boolean;
+  isDistractor?: boolean;
   isOddTarget?: boolean;
   isBonus?: boolean;
   isPatternButton?: boolean;

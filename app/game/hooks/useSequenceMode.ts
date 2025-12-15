@@ -25,6 +25,7 @@ interface UseSequenceModeOptions {
   highlightedButtons: number[];
   latencyMonitorRef?: React.MutableRefObject<{ recordFeedback: (buttonId: number) => void } | undefined>;
   setHighlightedButtons: (buttons: number[]) => void;
+  setSequenceDistractorButtons: (buttons: number[]) => void;
   setButtonPressFeedback: React.Dispatch<React.SetStateAction<Record<number, 'correct' | 'incorrect' | null>>>;
   setScreenShake: (shake: boolean) => void;
   setScreenFlash: (flash: 'error' | 'success' | 'combo-5' | 'combo-10' | 'combo-20' | 'combo-30' | 'combo-50' | null) => void;
@@ -52,6 +53,7 @@ export function useSequenceMode({
   highlightedButtons,
   latencyMonitorRef,
   setHighlightedButtons,
+  setSequenceDistractorButtons,
   setButtonPressFeedback,
   setScreenShake,
   setScreenFlash,
@@ -67,6 +69,9 @@ export function useSequenceMode({
   const [playerSequence, setPlayerSequence] = useState<number[]>([]);
   const [isShowingSequence, setIsShowingSequence] = useState(false);
   const [isWaitingForInput, setIsWaitingForInput] = useState(false);
+  // Optional secondary track for multi-track sequences (shown with different color)
+  const [distractorSequence, setDistractorSequence] = useState<number[]>([]);
+  const [useMultiTrack, setUseMultiTrack] = useState(false);
 
   // Show sequence to player
   const showSequence = useCallback(() => {
@@ -81,29 +86,52 @@ export function useSequenceMode({
     const sequenceLength = getSequenceLength(score, difficulty);
     const newSequence = generateSequence(sequenceLength);
     setSequence(newSequence);
+
+    // Enable multi-track sequences (interleaved "second track") at higher performance.
+    // Players still need to replay only the primary sequence; the second track adds visual noise.
+    const shouldUseMultiTrack =
+      sequenceLength >= 4 && // Avoid complexity on very short sequences
+      score >= 150 &&         // Only after some progress
+      Math.random() < 0.6;   // Not every round, to keep it special
+
+    setUseMultiTrack(shouldUseMultiTrack);
+    if (shouldUseMultiTrack) {
+      // Generate a second, independent track of equal length
+      const newDistractor = generateSequence(sequenceLength);
+      setDistractorSequence(newDistractor);
+    } else {
+      setDistractorSequence([]);
+    }
     
     const { displayDuration, gapDuration } = getSequenceTiming(difficulty);
     
-    // Show sequence one button at a time
+    // Show sequence one button at a time (optionally with a simultaneous second "track")
     const showNextButton = (index: number) => {
       if (index >= newSequence.length) {
         // Sequence complete, wait for player input
         setIsShowingSequence(false);
         setIsWaitingForInput(true);
         setHighlightedButtons([]);
+        setSequenceDistractorButtons([]);
         isProcessingRef.current = false;
         playSound('highlight', soundEnabled);
         return;
       }
       
-      // Highlight current button in sequence
+      // Highlight current step: primary sequence + optional distractor simultaneously
       setHighlightedButtons([newSequence[index]]);
+      if (useMultiTrack && distractorSequence.length === newSequence.length) {
+        setSequenceDistractorButtons([distractorSequence[index]]);
+      } else {
+        setSequenceDistractorButtons([]);
+      }
       playSound('highlight', soundEnabled);
-      
-      // Schedule next button or completion
+
+      // Schedule next step or completion
       sequenceTimerRef.current = setTimer(() => {
         setHighlightedButtons([]);
-        
+        setSequenceDistractorButtons([]);
+
         if (index < newSequence.length - 1) {
           // Gap before next button
           setTimer(() => {
@@ -115,6 +143,7 @@ export function useSequenceMode({
             setIsShowingSequence(false);
             setIsWaitingForInput(true);
             setHighlightedButtons([]);
+            setSequenceDistractorButtons([]);
             isProcessingRef.current = false;
           }, gapDuration);
         }
@@ -125,7 +154,7 @@ export function useSequenceMode({
     setTimer(() => {
       showNextButton(0);
     }, 200);
-  }, [score, difficulty, gameOver, isReady, soundEnabled, clearHighlightTimer, setTimer, isPausedRef, isProcessingRef, setHighlightedButtons, sequenceTimerRef]);
+  }, [score, difficulty, gameOver, isReady, soundEnabled, clearHighlightTimer, setTimer, isPausedRef, isProcessingRef, setHighlightedButtons, sequenceTimerRef, useMultiTrack, distractorSequence.length]);
   
   // Handle button press in sequence mode
   const handleSequenceButtonPress = useCallback(
@@ -150,7 +179,10 @@ export function useSequenceMode({
             }, 300);
           });
 
-          incrementScore(0); // No reaction time in sequence mode
+          // Sequence mode doesn't use per-button reaction time, but the scoring
+          // system expects a positive value to award points. Use a synthetic
+          // "baseline" reaction time so completing a sequence still grants score.
+          incrementScore(300);
           
           // Update previous values for feedback tracking
           previousComboRef.current = combo;
@@ -298,6 +330,8 @@ export function useSequenceMode({
     setPlayerSequence([]);
     setIsShowingSequence(false);
     setIsWaitingForInput(false);
+    setDistractorSequence([]);
+    setUseMultiTrack(false);
   }, []);
 
   return {
