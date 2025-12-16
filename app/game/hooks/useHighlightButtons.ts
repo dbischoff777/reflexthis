@@ -92,7 +92,9 @@ export function useHighlightButtons({
   const patternRef = currentPatternRef || internalPatternRef;
   
   const highlightNewButtons = useCallback(function highlightNewButtonsInternal() {
-    if (gameOver || isProcessingRef.current || !isReady || isPausedRef.current) return;
+    // Early exit if game is over, processing, not ready, paused, or in sequence mode
+    // Sequence mode has its own highlight logic and should not use this hook
+    if (gameOver || isProcessingRef.current || !isReady || isPausedRef.current || gameMode === 'sequence') return;
 
     clearHighlightTimer();
     isProcessingRef.current = true;
@@ -187,9 +189,11 @@ export function useHighlightButtons({
 
     lastHighlightedRef.current = newHighlighted;
 
-    // Assign multi-hit requirements (30% chance per button, 2–3 hits) for all modes
-    // that use this hook, except for sequence (which has its own sequence logic).
-    if (gameMode !== 'sequence' && gameMode !== 'oddOneOut') {
+      // Assign multi-hit requirements (30% chance per button, 2–3 hits) for all modes
+      // that use this hook, except for sequence (which has its own sequence logic).
+      // Note: gameMode is typed to exclude 'sequence' in this hook, but we check defensively
+      // to prevent issues if mode changes between timer setup and execution
+      if (gameMode !== 'oddOneOut') {
       const hitRequirements: Record<number, number> = {};
       newHighlighted.forEach((buttonId) => {
         if (Math.random() < 0.3) {
@@ -223,8 +227,10 @@ export function useHighlightButtons({
     setBonusHighlightDuration(hasBonus ? Math.max(200, duration * 0.6) : null);
 
     timerRef.current = setTimer(() => {
-      // Check if game is still active before processing timer callback
-      if (gameOver || isPausedRef.current || !isReady) {
+      // Check if game is still active and mode hasn't changed before processing timer callback
+      // Note: Defensive check for mode changes - timer could fire after mode switch
+      const currentMode = gameMode as GameMode;
+      if (gameOver || isPausedRef.current || !isReady || currentMode === 'sequence') {
         return;
       }
       
@@ -255,8 +261,10 @@ export function useHighlightButtons({
         // the highlight callback will see gameOver and exit early.
         decrementLives();
         
-        // Only schedule next highlight if game is still active
-        if (!gameOver) {
+        // Only schedule next highlight if game is still active and mode hasn't changed
+        // Note: Defensive check for mode changes - timer could fire after mode switch
+        const currentMode = gameMode as GameMode;
+        if (!gameOver && currentMode !== 'sequence') {
           nextHighlightTimerRef.current = setTimer(() => {
             highlightNewButtonsInternal();
           }, 1000);
@@ -268,7 +276,7 @@ export function useHighlightButtons({
     isReady,
     isPausedRef,
     isProcessingRef,
-    gameMode,
+    gameMode, // Include gameMode to prevent stale closures and ensure mode changes are detected
     score,
     difficulty,
     soundEnabled,

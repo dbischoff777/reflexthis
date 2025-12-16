@@ -4,6 +4,7 @@ import { useEffect, useRef, useCallback, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useGameState } from '@/lib/GameContext';
+import { GameMode } from '@/lib/gameModes';
 import { GameButtonGridWebGL } from '@/components/GameButton3DWebGL';
 import { OrientationHandler } from '@/components/OrientationHandler';
 import { ScreenFlash } from '@/components/ScreenFlash';
@@ -356,7 +357,14 @@ export default function GamePage() {
       !isShowingSequence &&
       !isWaitingForInput
     ) {
-      // Clear any reflex/survival/nightmare state when switching to sequence mode
+      // Clear any reflex/survival/nightmare/oddOneOut state when switching to sequence mode
+      // This ensures no highlight timers from other modes interfere with sequence mode
+      clearHighlightTimer();
+      // Clear any pending next highlight timers
+      if (nextHighlightTimerRef.current) {
+        clearTimer(nextHighlightTimerRef.current);
+        nextHighlightTimerRef.current = null;
+      }
       setHighlightedButtons([]);
       currentHighlightedRef.current = [];
       highlightStartTimeRef.current = null;
@@ -367,7 +375,6 @@ export default function GamePage() {
       setOddOneOutTarget(null);
       setBonusButtonId(null);
       setBonusActive(false);
-      clearHighlightTimer();
       
       showSequence();
     }
@@ -390,6 +397,8 @@ export default function GamePage() {
     setBonusButtonId,
     setBonusActive,
     clearHighlightTimer,
+    clearTimer,
+    nextHighlightTimerRef,
   ]);
 
   // Memoized keybinding map for control hints - only recalculates when keybindings change
@@ -547,6 +556,11 @@ export default function GamePage() {
     if ((gameMode === 'reflex' || gameMode === 'nightmare' || gameMode === 'oddOneOut') && !gameOver && isReady && !isPaused) {
       // Clear any sequence mode state if switching from sequence mode
       if (sequence.length > 0 || isShowingSequence || isWaitingForInput) {
+        // Clear sequence timer to prevent conflicts
+        if (sequenceTimerRef.current) {
+          clearTimer(sequenceTimerRef.current);
+          sequenceTimerRef.current = null;
+        }
         resetSequence();
       }
       
@@ -562,7 +576,7 @@ export default function GamePage() {
         clearHighlightTimer();
       };
     }
-  }, [gameMode, gameOver, isReady, isPaused, highlightNewButtons, clearHighlightTimer, sequence.length, isShowingSequence, isWaitingForInput, resetSequence]);
+  }, [gameMode, gameOver, isReady, isPaused, highlightNewButtons, clearHighlightTimer, clearTimer, sequence.length, isShowingSequence, isWaitingForInput, resetSequence, sequenceTimerRef]);
 
   // Sync ref with state
   useEffect(() => {
@@ -588,7 +602,7 @@ export default function GamePage() {
 
       return () => clearTimer(restartTimer);
     }
-  }, [gameMode, gameOver, isReady, isPaused, highlightedButtons.length, highlightNewButtons]);
+  }, [gameMode, gameOver, isReady, isPaused, highlightedButtons.length, highlightNewButtons, clearTimer]);
 
   // Ensure survival mode always has 1 life (but not when game is over)
   useEffect(() => {

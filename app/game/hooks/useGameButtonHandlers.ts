@@ -254,8 +254,10 @@ export function useGameButtonHandlers({
             if (currentPatternRef?.current) {
               currentPatternRef.current = null;
             }
-            // Only schedule next highlight if game is still active
-            if (!gameOver) {
+            // Only schedule next highlight if game is still active and mode hasn't changed
+            // Note: Defensive check for mode changes - timer could fire after mode switch
+            const currentMode = gameMode as GameMode;
+            if (!gameOver && currentMode !== 'sequence') {
               nextHighlightTimerRef.current = setTimer(() => {
                 highlightNewButtons();
               }, 500);
@@ -303,9 +305,11 @@ export function useGameButtonHandlers({
         
         // Let GameContext handle whether the player actually loses a life,
         // including survival-mode shields and revives. Only schedule the next
-        // highlight if the game is still active.
+        // highlight if the game is still active and mode hasn't changed.
+        // Note: Defensive check for mode changes - timer could fire after mode switch
         decrementLives();
-        if (!gameOver) {
+        const currentMode = gameMode as GameMode;
+        if (!gameOver && currentMode !== 'sequence') {
           nextHighlightTimerRef.current = setTimer(() => {
             highlightNewButtons();
           }, 1000);
@@ -410,8 +414,10 @@ export function useGameButtonHandlers({
         clearHighlightTimer();
         setOddOneOutTarget(null);
 
-        // Only schedule next highlight if game is still active
-        if (!gameOver) {
+        // Only schedule next highlight if game is still active and mode hasn't changed
+        // Note: Defensive check for mode changes - timer could fire after mode switch
+        const currentMode = gameMode as GameMode;
+        if (!gameOver && currentMode !== 'sequence') {
           nextHighlightTimerRef.current = setTimer(() => {
             highlightNewButtons();
           }, 700);
@@ -455,8 +461,10 @@ export function useGameButtonHandlers({
         const livesAfterDecrement = lives - 1;
         decrementLives();
 
-        // Only schedule next highlight if game is still active
-        if (!gameOver && livesAfterDecrement > 0) {
+        // Only schedule next highlight if game is still active, mode hasn't changed, and player has lives
+        // Note: Defensive check for mode changes - timer could fire after mode switch
+        const currentMode = gameMode as GameMode;
+        if (!gameOver && livesAfterDecrement > 0 && currentMode !== 'sequence') {
           nextHighlightTimerRef.current = setTimer(() => {
             highlightNewButtons();
           }, 1000);

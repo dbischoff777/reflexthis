@@ -92,7 +92,7 @@ export function useSequenceMode({
     const shouldUseMultiTrack =
       sequenceLength >= 4 && // Avoid complexity on very short sequences
       score >= 150 &&         // Only after some progress
-      Math.random() < 0.6;   // Not every round, to keep it special
+      Math.random() < 0.35;   // Not every round, to keep it special
 
     setUseMultiTrack(shouldUseMultiTrack);
     if (shouldUseMultiTrack) {
