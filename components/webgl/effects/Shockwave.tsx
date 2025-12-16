@@ -41,7 +41,8 @@ export const Shockwave = memo(function Shockwave({ trigger, position }: Shockwav
           
           // Expanding ring
           float ringPos = uProgress * 1.5;
-          float ringWidth = 0.15 * (1.0 - uProgress);
+          // Clamp ringWidth so it never becomes exactly 0 to avoid division-by-zero in smoothstep
+          float ringWidth = max(0.001, 0.15 * (1.0 - uProgress));
           float ring = smoothstep(ringPos - ringWidth, ringPos, dist) * 
                        smoothstep(ringPos + ringWidth, ringPos, dist);
           

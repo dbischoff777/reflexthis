@@ -266,7 +266,7 @@ export function ModeAndDifficultySelector({
             className={cn(
               'relative w-full aspect-square rounded-2xl transition-all duration-200',
               'min-h-[140px] sm:min-h-[160px] md:min-h-[180px] lg:min-h-[200px]',
-              'flex flex-col items-center justify-center overflow-hidden',
+              'flex flex-col overflow-hidden',
               'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
               // 3D effect with shadows - matching mode buttons
               'shadow-[0_8px_16px_rgba(0,0,0,0.4),0_4px_8px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)]',
@@ -287,30 +287,26 @@ export function ModeAndDifficultySelector({
                   : '#AF89C9', // Lavender purple for regular
             }}
           >
-            <div className="flex flex-col items-center justify-center flex-1 px-2 overflow-hidden gap-2">
-              {/* "Select Difficulty" - Big font in center */}
-              <span className="font-bold text-lg sm:text-xl md:text-2xl lg:text-3xl text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)] text-center shrink-0">
+            {/* Icon area - match mode button icon sizing */}
+            <div className="flex-1 relative flex items-center justify-center overflow-hidden px-3 pt-3 sm:px-4 sm:pt-4 md:px-5 md:pt-5">
+              <img
+                src="/buttons/difficultyIcon.png"
+                alt={t(language, 'difficulty.select.title')}
+                className="w-full h-full max-w-[95%] max-h-[95%] object-contain transition-opacity duration-200"
+                draggable={false}
+              />
+            </div>
+            {/* Text beneath icon */}
+            <div className="flex flex-col items-center justify-center py-2 sm:py-3 md:py-4 pointer-events-none shrink-0 gap-1">
+              <span className="font-bold text-base sm:text-lg md:text-xl lg:text-2xl text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)] text-center">
                 {t(language, 'difficulty.select.title')}
               </span>
-              
-              {/* Stars/Icon and Difficulty name - Small font at bottom */}
-              <div className="flex flex-col items-center justify-center gap-1 shrink-0">
-                {/* Icon or stars for difficulty */}
-                <div className="flex items-center justify-center">
-                  {localDifficulty === 'nightmare' ? (
-                    <span className="text-xl sm:text-2xl md:text-3xl leading-none block">{difficultyIcons[localDifficulty]}</span>
-                  ) : (
-                    <span className="text-lg sm:text-xl md:text-2xl leading-none block text-center">{difficultyStars[localDifficulty]}</span>
-                  )}
-                </div>
-                {/* Difficulty name */}
-                <span className="font-semibold text-xs sm:text-sm md:text-base text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] text-center">
-                  {localDifficulty === 'easy' && t(language, 'difficulty.name.easy')}
-                  {localDifficulty === 'medium' && t(language, 'difficulty.name.medium')}
-                  {localDifficulty === 'hard' && t(language, 'difficulty.name.hard')}
-                  {localDifficulty === 'nightmare' && t(language, 'difficulty.name.nightmare')}
-                </span>
-              </div>
+              <span className="font-semibold text-xs sm:text-sm md:text-base text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] text-center">
+                {localDifficulty === 'easy' && t(language, 'difficulty.name.easy')}
+                {localDifficulty === 'medium' && t(language, 'difficulty.name.medium')}
+                {localDifficulty === 'hard' && t(language, 'difficulty.name.hard')}
+                {localDifficulty === 'nightmare' && t(language, 'difficulty.name.nightmare')}
+              </span>
             </div>
           </button>
         </div>
