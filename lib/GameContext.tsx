@@ -25,6 +25,9 @@ export interface ReactionTimeStats {
 export interface GameState {
   score: number;
   lives: number;
+  // Combo-based protection (primarily used in survival mode)
+  comboShieldAvailable: boolean;
+  reviveAvailable: boolean; // True if player has earned a second chance (combo >= 50 and hasn't used it yet)
   highlightedButtons: number[];
   gameOver: boolean;
   isPaused: boolean;
@@ -92,6 +95,7 @@ const STORAGE_KEYS = {
 export function GameProvider({ children }: { children: ReactNode }) {
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(5);
+  const [comboShieldAvailable, setComboShieldAvailable] = useState(false);
   const [highlightedButtons, setHighlightedButtons] = useState<number[]>([]);
   const [gameOver, setGameOver] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
@@ -116,6 +120,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [levelUpInfo, setLevelUpInfo] = useState<{ level: number; rewards?: import('@/lib/progression').LevelReward[] } | null>(null);
   const [language, setLanguageState] = useState<Language>('en');
   const [adaptiveDifficultyMultiplier, setAdaptiveDifficultyMultiplier] = useState(1.0);
+  // Track best combo within the current run (used for revive logic)
+  const [runBestCombo, setRunBestCombo] = useState(0);
+  // Ensure we only revive once per run
+  const [hasRevivedThisRun, setHasRevivedThisRun] = useState(false);
 
   const gameStartTimeRef = useRef<number | null>(null);
   const achievementClearTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -502,10 +510,26 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setCombo((prevCombo) => {
       const newCombo = prevCombo + 1;
       
-      // Update best combo
+      // Update best combo (global)
       if (newCombo > bestCombo) {
         setBestCombo(newCombo);
         localStorageBatcher.setItem(STORAGE_KEYS.BEST_COMBO, String(newCombo));
+      }
+
+      // Track best combo for the current run (separate from global bestCombo)
+      if (newCombo > runBestCombo) {
+        setRunBestCombo(newCombo);
+      }
+
+      // Survival-only: grant a one-hit combo shield when reaching a combo threshold,
+      // but only once per run until it is consumed.
+      const COMBO_SHIELD_THRESHOLD = 15;
+      if (
+        gameMode === 'survival' &&
+        !comboShieldAvailable &&
+        newCombo >= COMBO_SHIELD_THRESHOLD
+      ) {
+        setComboShieldAvailable(true);
       }
       
       // Calculate score using advanced scoring system
@@ -526,7 +550,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     });
     
     playSound('success', soundEnabled);
-  }, [soundEnabled, bestCombo]);
+  }, [soundEnabled, bestCombo, gameMode, comboShieldAvailable, runBestCombo]);
 
   // Track if game over sound has been played to prevent duplicates
   const gameOverSoundPlayedRef = useRef(false);
@@ -558,7 +582,55 @@ export function GameProvider({ children }: { children: ReactNode }) {
     
     // Reset combo on error
     setCombo(0);
-    
+
+    // Survival mode has special combo-based protection: a one-hit shield
+    // and a potential one-time revive if the player achieved a strong combo.
+    if (gameMode === 'survival') {
+      const SURVIVAL_REVIVE_COMBO_THRESHOLD = 30;
+
+      setLives((prev) => {
+        // If a combo shield is available, consume it instead of losing a life.
+        if (comboShieldAvailable && prev > 0) {
+          setComboShieldAvailable(false);
+          // Treat this as a heavy hit but keep the run going.
+          playSound('lifeLost', soundEnabled);
+          return prev;
+        }
+
+        const newLives = prev - 1;
+
+        // Check if this hit would kill the player
+        if (newLives <= 0) {
+          const canRevive =
+            !hasRevivedThisRun &&
+            runBestCombo >= SURVIVAL_REVIVE_COMBO_THRESHOLD;
+
+          if (canRevive) {
+            // Grant a one-time second chance in this run
+            setHasRevivedThisRun(true);
+            // Bring the player back with 1 life and a celebratory sound
+            playSound('success', soundEnabled);
+            return 1;
+          }
+
+          // No revive available – regular game over
+          setGameOver(true);
+          // Only play game over sound once
+          if (!gameOverSoundPlayedRef.current) {
+            gameOverSoundPlayedRef.current = true;
+            playSound('gameOver', soundEnabled);
+          }
+        } else {
+          playSound('lifeLost', soundEnabled);
+        }
+
+        return newLives;
+      });
+
+      return;
+    }
+
+    // Default behavior for all non-survival modes
     setLives((prev) => {
       const newLives = prev - 1;
       if (newLives <= 0) {
@@ -573,7 +645,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       }
       return newLives;
     });
-  }, [soundEnabled, gameOver]);
+  }, [soundEnabled, gameOver, gameMode, comboShieldAvailable, hasRevivedThisRun, runBestCombo]);
 
   // Check and update high score when game ends, and save session
   useEffect(() => {
@@ -764,6 +836,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setScore(0);
     // Set lives based on game mode: survival = 1, others = 5
     setLives(gameMode === 'survival' ? 1 : 5);
+    // Reset combo-based protection for the new run
+    setComboShieldAvailable(false);
+    setHasRevivedThisRun(false);
+    setRunBestCombo(0);
     setHighlightedButtons([]);
     setGameOver(false);
     setCombo(0);
@@ -794,10 +870,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
     // Music will restart automatically via useEffect when gameOver becomes false and isGameStarted is true
   }, [gameMode]);
 
+  // Calculate revive availability (survival mode only, combo >= 50, not yet used)
+  const reviveAvailable = useMemo(() => {
+    return gameMode === 'survival' && !hasRevivedThisRun && runBestCombo >= 50;
+  }, [gameMode, hasRevivedThisRun, runBestCombo]);
+
   // Memoize context value to prevent unnecessary re-renders
   const contextValue = useMemo(() => ({
     score,
     lives,
+    comboShieldAvailable,
+    reviveAvailable,
     highlightedButtons,
     gameOver,
     isPaused,
@@ -887,6 +970,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
     newlyUnlockedAchievements,
     levelUpInfo,
     lastScoreBreakdown,
+    comboShieldAvailable,
+    reviveAvailable,
+    adaptiveDifficultyMultiplier,
   ]);
 
   return (

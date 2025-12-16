@@ -22,6 +22,9 @@ type RetroHudWidgetsProps = {
   onQuit: () => void;
   onOpenSettings?: () => void;
   scoreBreakdown?: ScoringFactors | null;
+  comboShieldAvailable?: boolean;
+  reviveAvailable?: boolean;
+  gameMode?: string;
 };
 
 type LayoutMode = 'standard' | 'compact' | 'minimal';
@@ -48,6 +51,9 @@ export const RetroHudWidgets = memo(function RetroHudWidgets({
   onQuit,
   onOpenSettings,
   scoreBreakdown,
+  comboShieldAvailable = false,
+  reviveAvailable = false,
+  gameMode,
 }: RetroHudWidgetsProps) {
   const { language } = useGameState();
   const [showBreakdown, setShowBreakdown] = useState(false);
@@ -370,6 +376,51 @@ export const RetroHudWidgets = memo(function RetroHudWidgets({
                 />
               </span>
             </div>
+            
+            {/* Survival Mode Protection Indicators */}
+            {gameMode === 'survival' && (comboShieldAvailable || reviveAvailable) && (
+              <div className="mt-2 flex flex-col gap-1.5">
+                {/* Combo Shield Indicator */}
+                {comboShieldAvailable && (
+                  <div
+                    className="flex items-center gap-2 px-2 py-1 rounded border-2 pixel-border"
+                    style={{
+                      backgroundColor: 'rgba(0, 255, 255, 0.15)',
+                      borderColor: '#00f0ff',
+                      boxShadow: '0 0 12px rgba(0, 240, 255, 0.5)',
+                      animation: 'shield-pulse 2s ease-in-out infinite',
+                    }}
+                  >
+                    <span className="text-lg leading-none" style={{ filter: 'drop-shadow(0 0 4px #00f0ff)' }}>
+                      🛡️
+                    </span>
+                    <span className="text-xs font-bold uppercase tracking-wide" style={{ color: '#00f0ff', textShadow: '0 0 6px #00f0ff' }}>
+                      Shield Active
+                    </span>
+                  </div>
+                )}
+                
+                {/* Revive Available Indicator */}
+                {reviveAvailable && (
+                  <div
+                    className="flex items-center gap-2 px-2 py-1 rounded border-2 pixel-border"
+                    style={{
+                      backgroundColor: 'rgba(0, 255, 159, 0.15)',
+                      borderColor: '#00ff9f',
+                      boxShadow: '0 0 12px rgba(0, 255, 159, 0.5)',
+                      animation: 'revive-pulse 2s ease-in-out infinite',
+                    }}
+                  >
+                    <span className="text-lg leading-none" style={{ filter: 'drop-shadow(0 0 4px #00ff9f)' }}>
+                      ⚡
+                    </span>
+                    <span className="text-xs font-bold uppercase tracking-wide" style={{ color: '#00ff9f', textShadow: '0 0 6px #00ff9f' }}>
+                      Second Chance Ready
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </section>
 
@@ -462,7 +513,10 @@ export const RetroHudWidgets = memo(function RetroHudWidgets({
     prevProps.difficulty === nextProps.difficulty &&
     prevProps.soundEnabled === nextProps.soundEnabled &&
     prevProps.musicEnabled === nextProps.musicEnabled &&
-    prevProps.scoreBreakdown === nextProps.scoreBreakdown
+    prevProps.scoreBreakdown === nextProps.scoreBreakdown &&
+    prevProps.comboShieldAvailable === nextProps.comboShieldAvailable &&
+    prevProps.reviveAvailable === nextProps.reviveAvailable &&
+    prevProps.gameMode === nextProps.gameMode
   );
 });
 

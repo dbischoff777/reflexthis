@@ -223,6 +223,11 @@ export function useHighlightButtons({
     setBonusHighlightDuration(hasBonus ? Math.max(200, duration * 0.6) : null);
 
     timerRef.current = setTimer(() => {
+      // Check if game is still active before processing timer callback
+      if (gameOver || isPausedRef.current || !isReady) {
+        return;
+      }
+      
       // Check if buttons are still highlighted (not pressed)
       if (currentHighlightedRef.current.length > 0) {
         setHighlightedButtons([]);
@@ -245,12 +250,13 @@ export function useHighlightButtons({
           setScreenFlash('error');
           setTimer(() => setScreenFlash(null), reducedEffects ? 150 : 300);
         }
-        // Calculate new lives before calling decrementLives (which updates state async)
-        const livesAfterDecrement = lives - 1;
+        // Let GameContext handle life loss and survival protections.
+        // Always schedule the next highlight; if the game is actually over,
+        // the highlight callback will see gameOver and exit early.
         decrementLives();
-      
-        // Schedule next highlight if player will still have lives after this decrement
-        if (livesAfterDecrement > 0) {
+        
+        // Only schedule next highlight if game is still active
+        if (!gameOver) {
           nextHighlightTimerRef.current = setTimer(() => {
             highlightNewButtonsInternal();
           }, 1000);
@@ -265,7 +271,6 @@ export function useHighlightButtons({
     gameMode,
     score,
     difficulty,
-    lives,
     soundEnabled,
     screenShakeEnabled,
     screenFlashEnabled,

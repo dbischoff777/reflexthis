@@ -129,22 +129,33 @@ export function useSequenceMode({
 
       // Schedule next step or completion
       sequenceTimerRef.current = setTimer(() => {
+        // Check if game is still active before processing
+        if (gameOver || isPausedRef.current || !isReady) {
+          return;
+        }
+        
         setHighlightedButtons([]);
         setSequenceDistractorButtons([]);
 
         if (index < newSequence.length - 1) {
           // Gap before next button
           setTimer(() => {
-            showNextButton(index + 1);
+            // Check again before showing next button
+            if (!gameOver && !isPausedRef.current && isReady) {
+              showNextButton(index + 1);
+            }
           }, gapDuration);
         } else {
           // Sequence complete
           setTimer(() => {
-            setIsShowingSequence(false);
-            setIsWaitingForInput(true);
-            setHighlightedButtons([]);
-            setSequenceDistractorButtons([]);
-            isProcessingRef.current = false;
+            // Check again before completing sequence
+            if (!gameOver && !isPausedRef.current && isReady) {
+              setIsShowingSequence(false);
+              setIsWaitingForInput(true);
+              setHighlightedButtons([]);
+              setSequenceDistractorButtons([]);
+              isProcessingRef.current = false;
+            }
           }, gapDuration);
         }
       }, displayDuration);

@@ -588,6 +588,30 @@
     animation: meter-container-shake 0.5s ease-in-out;
   }
 
+  /* Shield pulse animation for survival mode */
+  @keyframes shield-pulse {
+    0%, 100% {
+      box-shadow: 0 0 12px rgba(0, 240, 255, 0.5), 0 0 24px rgba(0, 240, 255, 0.3);
+      opacity: 1;
+    }
+    50% {
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.8), 0 0 40px rgba(0, 240, 255, 0.5);
+      opacity: 0.9;
+    }
+  }
+
+  /* Revive pulse animation for survival mode */
+  @keyframes revive-pulse {
+    0%, 100% {
+      box-shadow: 0 0 12px rgba(0, 255, 159, 0.5), 0 0 24px rgba(0, 255, 159, 0.3);
+      opacity: 1;
+    }
+    50% {
+      box-shadow: 0 0 20px rgba(0, 255, 159, 0.8), 0 0 40px rgba(0, 255, 159, 0.5);
+      opacity: 0.9;
+    }
+  }
+
   /* Meter fill ripple effect */
   @keyframes meter-fill-ripple {
     0% {

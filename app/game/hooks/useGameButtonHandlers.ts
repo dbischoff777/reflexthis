@@ -254,9 +254,12 @@ export function useGameButtonHandlers({
             if (currentPatternRef?.current) {
               currentPatternRef.current = null;
             }
-            nextHighlightTimerRef.current = setTimer(() => {
-              highlightNewButtons();
-            }, 500);
+            // Only schedule next highlight if game is still active
+            if (!gameOver) {
+              nextHighlightTimerRef.current = setTimer(() => {
+                highlightNewButtons();
+              }, 500);
+            }
           }
         }
       } else {
@@ -298,12 +301,11 @@ export function useGameButtonHandlers({
         setHighlightDuration(0);
         clearHighlightTimer();
         
-        // Calculate new lives before calling decrementLives (which updates state async)
-        const livesAfterDecrement = lives - 1;
+        // Let GameContext handle whether the player actually loses a life,
+        // including survival-mode shields and revives. Only schedule the next
+        // highlight if the game is still active.
         decrementLives();
-        
-        // Schedule next highlight if player will still have lives after this decrement
-        if (livesAfterDecrement > 0) {
+        if (!gameOver) {
           nextHighlightTimerRef.current = setTimer(() => {
             highlightNewButtons();
           }, 1000);
@@ -321,7 +323,6 @@ export function useGameButtonHandlers({
       fastStreakActive,
       gameMode,
       maxLives,
-      lives,
       reactionTimeStats,
       screenShakeEnabled,
       screenFlashEnabled,
@@ -409,9 +410,12 @@ export function useGameButtonHandlers({
         clearHighlightTimer();
         setOddOneOutTarget(null);
 
-        nextHighlightTimerRef.current = setTimer(() => {
-          highlightNewButtons();
-        }, 700);
+        // Only schedule next highlight if game is still active
+        if (!gameOver) {
+          nextHighlightTimerRef.current = setTimer(() => {
+            highlightNewButtons();
+          }, 700);
+        }
       } else {
         // Any wrong press (non-highlighted or non-target highlight) is a mistake
         requestAnimationFrame(() => {
@@ -451,7 +455,8 @@ export function useGameButtonHandlers({
         const livesAfterDecrement = lives - 1;
         decrementLives();
 
-        if (livesAfterDecrement > 0) {
+        // Only schedule next highlight if game is still active
+        if (!gameOver && livesAfterDecrement > 0) {
           nextHighlightTimerRef.current = setTimer(() => {
             highlightNewButtons();
           }, 1000);

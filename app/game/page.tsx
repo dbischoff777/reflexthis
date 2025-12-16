@@ -74,6 +74,8 @@ export default function GamePage() {
     newlyUnlockedAchievements,
     language,
     lastScoreBreakdown,
+    comboShieldAvailable,
+    reviveAvailable,
   } = useGameState();
   
   const maxLives = gameMode === 'survival' ? 1 : 5;
@@ -304,6 +306,44 @@ export default function GamePage() {
     sequenceTimerRef,
   });
 
+  // When the game is over, ensure all game modes stop and clean up state
+  useEffect(() => {
+    if (!gameOver) return;
+
+    // Clear any pending highlight timers (reflex/survival/nightmare/oddOneOut)
+    clearHighlightTimer();
+
+    // Clear sequence mode timer if active
+    if (sequenceTimerRef.current) {
+      clearTimer(sequenceTimerRef.current);
+      sequenceTimerRef.current = null;
+    }
+
+    // Clear currently highlighted buttons and related state
+    setHighlightedButtons([]);
+    currentHighlightedRef.current = [];
+    highlightStartTimeRef.current = null;
+    setHighlightStartTimeState(null);
+    setHighlightDuration(0);
+    setButtonHitRequirements({});
+    setButtonHitCounts({});
+    
+    // Clear sequence mode state
+    if (gameMode === 'sequence') {
+      resetSequence();
+    }
+    
+    // Clear processing flags
+    isProcessingRef.current = false;
+  }, [
+    gameOver,
+    clearHighlightTimer,
+    setHighlightedButtons,
+    clearTimer,
+    gameMode,
+    resetSequence,
+  ]);
+
   // Auto-start sequence mode when ready
   useEffect(() => {
     if (
@@ -316,6 +356,19 @@ export default function GamePage() {
       !isShowingSequence &&
       !isWaitingForInput
     ) {
+      // Clear any reflex/survival/nightmare state when switching to sequence mode
+      setHighlightedButtons([]);
+      currentHighlightedRef.current = [];
+      highlightStartTimeRef.current = null;
+      setHighlightStartTimeState(null);
+      setHighlightDuration(0);
+      setButtonHitRequirements({});
+      setButtonHitCounts({});
+      setOddOneOutTarget(null);
+      setBonusButtonId(null);
+      setBonusActive(false);
+      clearHighlightTimer();
+      
       showSequence();
     }
   }, [
@@ -328,6 +381,15 @@ export default function GamePage() {
     isShowingSequence,
     isWaitingForInput,
     showSequence,
+    setHighlightedButtons,
+    setHighlightStartTimeState,
+    setHighlightDuration,
+    setButtonHitRequirements,
+    setButtonHitCounts,
+    setOddOneOutTarget,
+    setBonusButtonId,
+    setBonusActive,
+    clearHighlightTimer,
   ]);
 
   // Memoized keybinding map for control hints - only recalculates when keybindings change
@@ -483,9 +545,16 @@ export default function GamePage() {
   // Start reflex/nightmare/oddOneOut game when component mounts or game resets (only after ready)
   useEffect(() => {
     if ((gameMode === 'reflex' || gameMode === 'nightmare' || gameMode === 'oddOneOut') && !gameOver && isReady && !isPaused) {
+      // Clear any sequence mode state if switching from sequence mode
+      if (sequence.length > 0 || isShowingSequence || isWaitingForInput) {
+        resetSequence();
+      }
+      
       // Small delay to ensure state is ready
       const startTimer = setTimer(() => {
-        highlightNewButtons();
+        if (!gameOver && isReady && !isPaused) {
+          highlightNewButtons();
+        }
       }, 500);
 
       return () => {
@@ -493,7 +562,7 @@ export default function GamePage() {
         clearHighlightTimer();
       };
     }
-  }, [gameMode, gameOver, isReady, isPaused, highlightNewButtons, clearHighlightTimer]);
+  }, [gameMode, gameOver, isReady, isPaused, highlightNewButtons, clearHighlightTimer, sequence.length, isShowingSequence, isWaitingForInput, resetSequence]);
 
   // Sync ref with state
   useEffect(() => {
@@ -698,6 +767,9 @@ export default function GamePage() {
           onToggleSound={toggleSound}
           onToggleMusic={toggleMusic}
           scoreBreakdown={lastScoreBreakdown}
+          comboShieldAvailable={comboShieldAvailable}
+          reviveAvailable={reviveAvailable}
+          gameMode={gameMode}
           onQuit={() => {
             // Match ESC behavior: pause first and show confirmation
             if (!gameOver && isReady && !isPaused) {
@@ -829,11 +901,19 @@ export default function GamePage() {
             setBonusActive(false);
             setFastStreakCount(0);
             setFastStreakActive(false);
+            setSequenceDistractorButtons([]);
             clearHighlightTimer();
             if (sequenceTimerRef.current) {
               clearTimer(sequenceTimerRef.current);
               sequenceTimerRef.current = null;
             }
+            // Clear all refs and state
+            currentHighlightedRef.current = [];
+            highlightStartTimeRef.current = null;
+            setHighlightStartTimeState(null);
+            setHighlightDuration(0);
+            setButtonHitRequirements({});
+            setButtonHitCounts({});
             isProcessingRef.current = false;
             // Reset game state
             resetGame();
