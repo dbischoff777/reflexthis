@@ -80,10 +80,10 @@ export class AdaptiveDifficulty {
     
     // Adjust sensitivity based on difficulty - easier modes need more aggressive adjustments
     const presetSensitivity: Record<DifficultyPreset, number> = {
-      easy: 0.12,    // More sensitive on easy (players struggling more)
-      medium: 0.10,  // Standard sensitivity
-      hard: 0.08,    // Less sensitive on hard (smaller adjustments)
-      nightmare: 0.06, // Least sensitive on nightmare
+      easy: 0.14,    // More sensitive on easy (players struggling more)
+      medium: 0.12,  // Standard sensitivity
+      hard: 0.10,    // Less sensitive on hard (smaller adjustments)
+      nightmare: 0.66, // Least sensitive on nightmare
     };
     this.config.sensitivityFactor = presetSensitivity[preset];
 
