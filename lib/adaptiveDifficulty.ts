@@ -83,7 +83,7 @@ export class AdaptiveDifficulty {
       easy: 0.14,    // More sensitive on easy (players struggling more)
       medium: 0.12,  // Standard sensitivity
       hard: 0.10,    // Less sensitive on hard (smaller adjustments)
-      nightmare: 0.66, // Least sensitive on nightmare
+      nightmare: 0.06, // Least sensitive on nightmare
     };
     this.config.sensitivityFactor = presetSensitivity[preset];
 
