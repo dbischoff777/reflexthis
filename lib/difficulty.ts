@@ -77,52 +77,54 @@ export function getHighlightDurationForDifficulty(
 }
 
 /**
- * Get number of buttons to highlight based on score and difficulty preset
+ * Get number of buttons to highlight based on combo and difficulty preset
+ * Button count scales with combo: higher combos = more buttons
+ * @param combo Current combo count (used for scaling instead of score)
+ * @param preset Difficulty preset
  * @param adaptiveMultiplier Optional adaptive difficulty multiplier (default: 1.0)
  */
 export function getButtonsToHighlightForDifficulty(
-  score: number,
+  combo: number,
   preset: DifficultyPreset,
   adaptiveMultiplier: number = 1.0
 ): number {
   const config = DIFFICULTY_PRESETS[preset];
   const adjustedMaxButtons = Math.min(10, Math.ceil(config.maxButtons * adaptiveMultiplier));
   
+  // Apply adaptive multiplier to combo for scaling
+  const adjustedCombo = combo * adaptiveMultiplier;
+  
   if (preset === 'easy') {
-    // Easy: Start with 1, occasionally 2 after score 30
-    if (score < 30) return 1;
+    // Easy: Start with 1, occasionally 2 after combo 5
+    if (adjustedCombo < 5) return 1;
     const shouldIncrease = adaptiveMultiplier > 1.2;
     return Math.random() < (shouldIncrease ? 0.5 : 0.3) ? 2 : 1;
   }
   
   if (preset === 'medium') {
-    // Medium: Original progressive behavior, adjusted by adaptive multiplier
-    const adjustedScore = score * adaptiveMultiplier;
-    if (adjustedScore <= 50) return 1;
-    if (adjustedScore <= 150) return Math.random() < 0.5 ? 1 : 2;
+    // Medium: Progressive behavior based on combo
+    if (adjustedCombo <= 8) return 1;
+    if (adjustedCombo <= 15) return Math.random() < 0.5 ? 1 : 2;
     return Math.floor(Math.random() * adjustedMaxButtons) + 1;
   }
   
   if (preset === 'hard') {
     // Hard: Multiple buttons appear sooner
-    const adjustedScore = score * adaptiveMultiplier;
-    if (adjustedScore < 20) return 1;
-    if (adjustedScore < 50) return Math.random() < 0.5 ? 1 : 2;
+    if (adjustedCombo < 4) return 1;
+    if (adjustedCombo < 8) return Math.random() < 0.5 ? 1 : 2;
     return Math.floor(Math.random() * adjustedMaxButtons) + 1;
   }
   
   if (preset === 'nightmare') {
     // Nightmare: Multiple buttons appear almost immediately
-    const adjustedScore = score * adaptiveMultiplier;
-    if (adjustedScore < 10) return 1;
-    if (adjustedScore < 30) return Math.random() < 0.6 ? 2 : 1;
+    if (adjustedCombo < 2) return 1;
+    if (adjustedCombo < 5) return Math.random() < 0.6 ? 2 : 1;
     return Math.floor(Math.random() * adjustedMaxButtons) + 1;
   }
   
   // Default: Original progressive behavior (should not reach here)
-  const adjustedScore = score * adaptiveMultiplier;
-  if (adjustedScore <= 50) return 1;
-  if (adjustedScore <= 150) return Math.random() < 0.5 ? 1 : 2;
+  if (adjustedCombo <= 8) return 1;
+  if (adjustedCombo <= 15) return Math.random() < 0.5 ? 1 : 2;
   return Math.floor(Math.random() * adjustedMaxButtons) + 1;
 }
 

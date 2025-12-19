@@ -112,14 +112,35 @@ export function useHighlightButtons({
     // Capture multiplier at the time buttons are highlighted to prevent mid-highlight changes
     const currentMultiplier = adaptiveMultiplierRef.current;
     let newHighlighted: number[] = [];
+    // Track if bonus button exists (for duration calculation)
+    let hasBonusButton = false;
+
+    // Spawn chance scales with combo: starts at 20% (combo 0) and increases to 60% (combo 100)
+    const calculatePatternSpawnChance = (comboValue: number): number => {
+      // Base chance at combo 0: 20%
+      // Max chance at combo 100: 60%
+      // Smooth scaling between them across the full combo range
+      const baseChance = 0.2;
+      const maxChance = 0.6;
+      const maxCombo = 100;
+      
+      if (comboValue >= maxCombo) {
+        return maxChance;
+      }
+      
+      // Linear interpolation between base and max
+      const progress = comboValue / maxCombo;
+      return baseChance + (maxChance - baseChance) * progress;
+    };
 
     if (gameMode === 'oddOneOut') {
       // Odd One Out mode: use the same pattern system for the layout, then pick a single correct target
-      const baseCount = getButtonsToHighlightForDifficulty(score, difficulty, currentMultiplier);
+      const baseCount = getButtonsToHighlightForDifficulty(combo, difficulty, currentMultiplier);
       // Clamp to 3–6 buttons for better visual discrimination
       const buttonCount = Math.min(6, Math.max(3, baseCount));
 
-      const usePatterns = score > 50 || Math.random() < 0.6;
+      const patternSpawnChance = calculatePatternSpawnChance(combo);
+      const usePatterns = Math.random() < patternSpawnChance;
 
       if (usePatterns) {
         const pattern = generatePattern(buttonCount, score, lastHighlightedRef.current);
@@ -142,41 +163,31 @@ export function useHighlightButtons({
         setButtonHitRequirements({});
       }
     } else {
-      const buttonCount = getButtonsToHighlightForDifficulty(score, difficulty, currentMultiplier);
+      const buttonCount = getButtonsToHighlightForDifficulty(combo, difficulty, currentMultiplier);
       
       // Use patterns for all non-oddOneOut, non-sequence modes that rely on this hook
-      // (60% chance, or always at higher scores)
+      // Spawn chance scales with combo: starts at 40% (combo 0) and increases to 100% (combo 10+)
+      const patternSpawnChance = calculatePatternSpawnChance(combo);
       const usePatterns =
         (gameMode === 'reflex' ||
           gameMode === 'survival' ||
           gameMode === 'nightmare') &&
-        (score > 50 || Math.random() < 0.6);
+        Math.random() < patternSpawnChance;
       
       if (usePatterns) {
         // Generate pattern-based highlights
         // For patterns, ignore target button count - let the pattern use its natural button count
-        const pattern = generatePattern(buttonCount, score, lastHighlightedRef.current);
+        // Check if we should include a bonus button within the pattern (for reflex and nightmare modes)
+        const shouldIncludeBonus = (gameMode === 'reflex' || gameMode === 'nightmare') && Math.random() < 0.18;
+        const pattern = generatePattern(buttonCount, score, lastHighlightedRef.current, shouldIncludeBonus);
         newHighlighted = pattern.buttons;
         patternRef.current = pattern;
         
-        // Allow bonus buttons even with patterns (for reflex and nightmare modes)
-        // Bonus button is added as an extra button, preserving the pattern integrity
-        let bonusWasAdded = false;
-        if ((gameMode === 'reflex' || gameMode === 'nightmare') && Math.random() < 0.18) {
-          const available = Array.from({ length: 10 }, (_, i) => i + 1).filter(
-            (id) => !newHighlighted.includes(id)
-          );
-          if (available.length > 0) {
-            const idx = Math.floor(Math.random() * available.length);
-            const bonusId = available[idx];
-            newHighlighted = [...newHighlighted, bonusId];
-            setBonusButtonId(bonusId);
-            setBonusActive(true);
-            bonusWasAdded = true;
-          } else {
-            setBonusButtonId(null);
-            setBonusActive(false);
-          }
+        // Use the bonus button from the pattern if it exists
+        if (pattern.bonusButtonId !== null) {
+          setBonusButtonId(pattern.bonusButtonId);
+          setBonusActive(true);
+          hasBonusButton = true;
         } else {
           setBonusButtonId(null);
           setBonusActive(false);
@@ -191,7 +202,6 @@ export function useHighlightButtons({
         patternRef.current = null;
         
         // Occasionally spawn a bonus button in reflex / survival / nightmare (only for random, not patterns)
-        let bonusWasAdded = false;
         if ((gameMode === 'reflex' || gameMode === 'survival' || gameMode === 'nightmare') && Math.random() < 0.18) {
           const available = Array.from({ length: 10 }, (_, i) => i + 1).filter(
             (id) => !newHighlighted.includes(id)
@@ -202,7 +212,7 @@ export function useHighlightButtons({
             newHighlighted = [...newHighlighted, bonusId];
             setBonusButtonId(bonusId);
             setBonusActive(true);
-            bonusWasAdded = true;
+            hasBonusButton = true;
           } else {
             setBonusButtonId(null);
             setBonusActive(false);
@@ -260,13 +270,8 @@ export function useHighlightButtons({
     const duration = getHighlightDurationForDifficulty(combo, difficulty, currentMultiplier);
     setHighlightDuration(duration);
     
-    // Determine if bonus was added - track it locally since state updates are async
-    const expectedCount = gameMode === 'oddOneOut' 
-      ? Math.min(6, Math.max(3, getButtonsToHighlightForDifficulty(score, difficulty, currentMultiplier)))
-      : getButtonsToHighlightForDifficulty(score, difficulty, currentMultiplier);
-    const hasBonus = newHighlighted.length > expectedCount;
-    
-    setBonusHighlightDuration(hasBonus ? Math.max(200, duration * 0.6) : null);
+    // Set bonus highlight duration if bonus button exists
+    setBonusHighlightDuration(hasBonusButton ? Math.max(200, duration * 0.6) : null);
 
     timerRef.current = setTimer(() => {
       // Check if game is still active and mode hasn't changed before processing timer callback

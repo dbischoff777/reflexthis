@@ -25,6 +25,7 @@ export interface Pattern {
   type: PatternType;
   buttons: number[];
   bonusMultiplier: number; // Bonus for completing pattern quickly
+  bonusButtonId: number | null; // Optional golden highlight button within the pattern
 }
 
 // Grid layout for pattern generation
@@ -314,12 +315,14 @@ function selectPatternType(
  * @param targetButtonCount - Desired number of buttons in pattern
  * @param score - Current game score (affects pattern selection)
  * @param exclude - Button IDs to exclude (for avoiding recent patterns)
- * @returns Pattern object with buttons and bonus multiplier
+ * @param shouldIncludeBonus - Whether to include a bonus button within the pattern
+ * @returns Pattern object with buttons, bonus multiplier, and optional bonus button
  */
 export function generatePattern(
   targetButtonCount: number,
   score: number = 0,
-  exclude: number[] = []
+  exclude: number[] = [],
+  shouldIncludeBonus: boolean = false
 ): Pattern {
   // Select pattern type
   const patternType = selectPatternType(targetButtonCount, score);
@@ -372,10 +375,19 @@ export function generatePattern(
   // Get bonus multiplier
   const bonusMultiplier = getPatternBonusMultiplier(patternType);
   
+  // Optionally select a bonus button from within the pattern
+  let bonusButtonId: number | null = null;
+  if (shouldIncludeBonus && buttons.length > 0) {
+    // Randomly select one of the pattern buttons as the bonus button
+    const bonusIndex = Math.floor(Math.random() * buttons.length);
+    bonusButtonId = buttons[bonusIndex];
+  }
+  
   return {
     type: patternType,
     buttons,
     bonusMultiplier,
+    bonusButtonId,
   };
 }
 

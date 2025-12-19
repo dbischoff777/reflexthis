@@ -400,8 +400,11 @@ const en: TranslationDict = {
   'tutorial.reflex.2.title': 'Speed fuels combo and score',
   'tutorial.reflex.2.body': 'Faster reactions mean bigger points and stronger combo growth. Keep the streak alive.',
   'tutorial.reflex.2.callout': 'Perfect (<150ms) hits boost combo and scoring the most.',
-  'tutorial.reflex.3.title': 'Pause or adjust settings anytime',
-  'tutorial.reflex.3.body': 'Use Esc to pause, or tap the HUD settings toggle to tweak audio, visuals, or controls.',
+  'tutorial.reflex.3.title': 'Watch for patterns and bonus buttons',
+  'tutorial.reflex.3.body': 'Buttons can spawn in patterns (lines, shapes, sweeps). Higher combos increase pattern spawn chance. Some buttons require multiple hits—keep pressing until they clear.',
+  'tutorial.reflex.4.title': 'Bonus buttons and difficulty scaling',
+  'tutorial.reflex.4.body': 'Golden bonus buttons within patterns give extra score and heal a life. Difficulty scales with combo: more buttons and faster timing as your combo grows (0-100).',
+  'tutorial.reflex.4.callout': 'Tip: Completing patterns gives bonus multipliers to your score!',
 
   // Tutorial Steps - Sequence
   'tutorial.sequence.1.title': 'Watch the sequence carefully',
@@ -417,16 +420,20 @@ const en: TranslationDict = {
   'tutorial.survival.1.body': 'You only get one life here. Every miss ends the run, so focus on accuracy first.',
   'tutorial.survival.2.title': 'Stay consistent',
   'tutorial.survival.2.body': 'Use steady pacing over risky speed. A stable rhythm keeps you alive longer.',
-  'tutorial.survival.3.title': 'Use pause to reset focus',
-  'tutorial.survival.3.body': 'Need a breather? Pause, then jump back in when ready.',
+  'tutorial.survival.3.title': 'Watch for patterns and multi-hits',
+  'tutorial.survival.3.body': 'Buttons spawn in patterns as your combo grows. Some buttons need 2-4 hits depending on difficulty—keep pressing until they clear. Higher combos mean more buttons and faster timing.',
+  'tutorial.survival.4.title': 'Use pause to reset focus',
+  'tutorial.survival.4.body': 'Need a breather? Pause, then jump back in when ready. Remember: difficulty scales with combo, so maintaining your streak gets progressively harder.',
 
   // Tutorial Steps - Nightmare
   'tutorial.nightmare.1.title': 'Faster targets and harsher penalties',
   'tutorial.nightmare.1.body': 'Highlights are quicker and mistakes hurt more. Prioritize correct hits over speed at first.',
   'tutorial.nightmare.2.title': 'Keep the combo alive',
   'tutorial.nightmare.2.body': 'Combos drive your score. Even modest streaks matter—avoid breaks.',
-  'tutorial.nightmare.3.title': 'Leverage settings',
-  'tutorial.nightmare.3.body': 'Reduce effects or enable high contrast if visuals feel busy. This mode tests focus.',
+  'tutorial.nightmare.3.title': 'Patterns, bonuses, and multi-hits',
+  'tutorial.nightmare.3.body': 'Patterns spawn more often at higher combos. Golden bonus buttons give extra score and heal lives. Many buttons require 3-4 hits—be ready to press multiple times.',
+  'tutorial.nightmare.4.title': 'Leverage settings and adapt',
+  'tutorial.nightmare.4.body': 'Reduce effects or enable high contrast if visuals feel busy. Difficulty scales aggressively with combo (0-100), so expect rapid increases in button count and speed.',
 
   // Tutorial Steps - Odd One Out
   'tutorial.odd.1.title': 'Find the button that looks wrong',
@@ -434,8 +441,10 @@ const en: TranslationDict = {
   'tutorial.odd.2.title': 'Differences can be subtle',
   'tutorial.odd.2.body': 'Watch for color, brightness, or animation differences. They get trickier over time.',
   'tutorial.odd.2.callout': 'If unsure, pause briefly—rushing can cost a life.',
-  'tutorial.odd.3.title': 'Speed still matters',
-  'tutorial.odd.3.body': 'You have limited time each round. Decide quickly once you spot the odd target.',
+  'tutorial.odd.3.title': 'Patterns help organize buttons',
+  'tutorial.odd.3.body': 'Buttons spawn in patterns (lines, shapes, clusters) as your combo grows. Use the pattern layout to quickly scan for the odd one out.',
+  'tutorial.odd.4.title': 'Speed and difficulty scaling',
+  'tutorial.odd.4.body': 'You have limited time each round. Difficulty scales with combo: more buttons and faster timing as your combo increases (0-100). Decide quickly once you spot the odd target.',
 };
 
 const de: TranslationDict = {
@@ -832,8 +841,11 @@ const de: TranslationDict = {
   'tutorial.reflex.2.title': 'Geschwindigkeit treibt Kombo und Punkte',
   'tutorial.reflex.2.body': 'Schnellere Reaktionen bedeuten mehr Punkte und stärkeres Kombo-Wachstum. Halte die Serie am Laufen.',
   'tutorial.reflex.2.callout': 'Perfekte (<150ms) Treffer steigern Kombo und Punktzahl am meisten.',
-  'tutorial.reflex.3.title': 'Jederzeit pausieren oder Einstellungen anpassen',
-  'tutorial.reflex.3.body': 'Nutze Esc zum Pausieren oder tippe auf das HUD-Einstellungs-Symbol, um Audio, Optik oder Steuerung anzupassen.',
+  'tutorial.reflex.3.title': 'Achte auf Muster und Bonus-Buttons',
+  'tutorial.reflex.3.body': 'Buttons können in Mustern erscheinen (Linien, Formen, Sweeps). Höhere Kombos erhöhen die Muster-Spawn-Wahrscheinlichkeit. Einige Buttons benötigen mehrere Treffer—drücke weiter, bis sie verschwinden.',
+  'tutorial.reflex.4.title': 'Bonus-Buttons und Schwierigkeitsskalierung',
+  'tutorial.reflex.4.body': 'Goldene Bonus-Buttons in Mustern geben extra Punkte und heilen ein Leben. Die Schwierigkeit skaliert mit der Kombo: mehr Buttons und schnellere Timing, wenn deine Kombo wächst (0-100).',
+  'tutorial.reflex.4.callout': 'Tipp: Das Abschließen von Mustern gibt Bonus-Multiplikatoren auf deine Punktzahl!',
 
   // Tutorial Steps - Sequence
   'tutorial.sequence.1.title': 'Beobachte die Sequenz genau',
@@ -849,16 +861,20 @@ const de: TranslationDict = {
   'tutorial.survival.1.body': 'Du hast hier nur ein Leben. Jeder Fehler beendet den Lauf, also konzentriere dich zuerst auf Genauigkeit.',
   'tutorial.survival.2.title': 'Bleib konstant',
   'tutorial.survival.2.body': 'Nutze gleichmäßiges Tempo statt riskanter Geschwindigkeit. Ein stabiler Rhythmus hält dich länger am Leben.',
-  'tutorial.survival.3.title': 'Nutze Pause, um den Fokus zurückzusetzen',
-  'tutorial.survival.3.body': 'Brauchst du eine Verschnaufpause? Pausiere, dann springe wieder ein, wenn du bereit bist.',
+  'tutorial.survival.3.title': 'Achte auf Muster und Mehrfach-Treffer',
+  'tutorial.survival.3.body': 'Buttons erscheinen in Mustern, wenn deine Kombo wächst. Einige Buttons benötigen 2-4 Treffer je nach Schwierigkeit—drücke weiter, bis sie verschwinden. Höhere Kombos bedeuten mehr Buttons und schnelleres Timing.',
+  'tutorial.survival.4.title': 'Nutze Pause, um den Fokus zurückzusetzen',
+  'tutorial.survival.4.body': 'Brauchst du eine Verschnaufpause? Pausiere, dann springe wieder ein, wenn du bereit bist. Denke daran: Die Schwierigkeit skaliert mit der Kombo, daher wird es mit deiner Serie progressiv härter.',
 
   // Tutorial Steps - Nightmare
   'tutorial.nightmare.1.title': 'Schnellere Ziele und härtere Strafen',
   'tutorial.nightmare.1.body': 'Markierungen sind schneller und Fehler schmerzen mehr. Priorisiere zuerst korrekte Treffer über Geschwindigkeit.',
   'tutorial.nightmare.2.title': 'Halte die Kombo am Leben',
   'tutorial.nightmare.2.body': 'Kombos treiben deine Punktzahl. Selbst bescheidene Serien zählen—vermeide Unterbrechungen.',
-  'tutorial.nightmare.3.title': 'Nutze die Einstellungen',
-  'tutorial.nightmare.3.body': 'Reduziere Effekte oder aktiviere hohen Kontrast, wenn die Optik zu überladen wirkt. Dieser Modus testet deinen Fokus.',
+  'tutorial.nightmare.3.title': 'Muster, Boni und Mehrfach-Treffer',
+  'tutorial.nightmare.3.body': 'Muster erscheinen häufiger bei höheren Kombos. Goldene Bonus-Buttons geben extra Punkte und heilen Leben. Viele Buttons benötigen 3-4 Treffer—sei bereit, mehrmals zu drücken.',
+  'tutorial.nightmare.4.title': 'Nutze Einstellungen und passe dich an',
+  'tutorial.nightmare.4.body': 'Reduziere Effekte oder aktiviere hohen Kontrast, wenn die Optik zu überladen wirkt. Die Schwierigkeit skaliert aggressiv mit der Kombo (0-100), erwarte also schnelle Anstiege bei Button-Anzahl und Geschwindigkeit.',
 
   // Tutorial Steps - Odd One Out
   'tutorial.odd.1.title': 'Finde den Button, der anders aussieht',
@@ -866,8 +882,10 @@ const de: TranslationDict = {
   'tutorial.odd.2.title': 'Unterschiede können subtil sein',
   'tutorial.odd.2.body': 'Achte auf Farb-, Helligkeits- oder Animationsunterschiede. Sie werden mit der Zeit kniffliger.',
   'tutorial.odd.2.callout': 'Wenn unsicher, pausiere kurz—Hast kann ein Leben kosten.',
-  'tutorial.odd.3.title': 'Geschwindigkeit zählt immer noch',
-  'tutorial.odd.3.body': 'Du hast begrenzte Zeit pro Runde. Entscheide schnell, sobald du das außergewöhnliche Ziel erkennst.',
+  'tutorial.odd.3.title': 'Muster helfen beim Organisieren',
+  'tutorial.odd.3.body': 'Buttons erscheinen in Mustern (Linien, Formen, Cluster), wenn deine Kombo wächst. Nutze das Muster-Layout, um schnell nach dem Außenseiter zu scannen.',
+  'tutorial.odd.4.title': 'Geschwindigkeit und Schwierigkeitsskalierung',
+  'tutorial.odd.4.body': 'Du hast begrenzte Zeit pro Runde. Die Schwierigkeit skaliert mit der Kombo: mehr Buttons und schnelleres Timing, wenn deine Kombo steigt (0-100). Entscheide schnell, sobald du das außergewöhnliche Ziel erkennst.',
 
   // Achievement translations
   'achievement.score_100.title': 'Erste Schritte',

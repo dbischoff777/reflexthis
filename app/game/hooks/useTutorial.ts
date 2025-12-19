@@ -61,6 +61,12 @@ export function useTutorial({
           title: t(language, 'tutorial.reflex.3.title'),
           body: t(language, 'tutorial.reflex.3.body'),
         },
+        {
+          id: 'reflex-4',
+          title: t(language, 'tutorial.reflex.4.title'),
+          body: t(language, 'tutorial.reflex.4.body'),
+          callout: t(language, 'tutorial.reflex.4.callout'),
+        },
       ],
       sequence: [
         {
@@ -96,6 +102,11 @@ export function useTutorial({
           title: t(language, 'tutorial.survival.3.title'),
           body: t(language, 'tutorial.survival.3.body'),
         },
+        {
+          id: 'survival-4',
+          title: t(language, 'tutorial.survival.4.title'),
+          body: t(language, 'tutorial.survival.4.body'),
+        },
       ],
       nightmare: [
         {
@@ -112,6 +123,11 @@ export function useTutorial({
           id: 'nightmare-3',
           title: t(language, 'tutorial.nightmare.3.title'),
           body: t(language, 'tutorial.nightmare.3.body'),
+        },
+        {
+          id: 'nightmare-4',
+          title: t(language, 'tutorial.nightmare.4.title'),
+          body: t(language, 'tutorial.nightmare.4.body'),
         },
       ],
       oddOneOut: [
@@ -130,6 +146,11 @@ export function useTutorial({
           id: 'odd-3',
           title: t(language, 'tutorial.odd.3.title'),
           body: t(language, 'tutorial.odd.3.body'),
+        },
+        {
+          id: 'odd-4',
+          title: t(language, 'tutorial.odd.4.title'),
+          body: t(language, 'tutorial.odd.4.body'),
         },
       ],
     }),
