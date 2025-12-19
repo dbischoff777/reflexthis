@@ -19,6 +19,7 @@ interface UseHighlightButtonsOptions {
   isProcessingRef: React.MutableRefObject<boolean>;
   gameMode: GameMode;
   score: number;
+  combo: number;
   difficulty: DifficultyPreset;
   lives: number;
   soundEnabled: boolean;
@@ -53,6 +54,7 @@ export function useHighlightButtons({
   isProcessingRef,
   gameMode,
   score,
+  combo,
   difficulty,
   lives,
   soundEnabled,
@@ -149,9 +151,28 @@ export function useHighlightButtons({
         newHighlighted = pattern.buttons;
         patternRef.current = pattern;
         
-        // Don't add bonus buttons when using patterns - patterns need to be preserved exactly
-        setBonusButtonId(null);
-        setBonusActive(false);
+        // Allow bonus buttons even with patterns (for reflex and nightmare modes)
+        // Bonus button is added as an extra button, preserving the pattern integrity
+        let bonusWasAdded = false;
+        if ((gameMode === 'reflex' || gameMode === 'nightmare') && Math.random() < 0.18) {
+          const available = Array.from({ length: 10 }, (_, i) => i + 1).filter(
+            (id) => !newHighlighted.includes(id)
+          );
+          if (available.length > 0) {
+            const idx = Math.floor(Math.random() * available.length);
+            const bonusId = available[idx];
+            newHighlighted = [...newHighlighted, bonusId];
+            setBonusButtonId(bonusId);
+            setBonusActive(true);
+            bonusWasAdded = true;
+          } else {
+            setBonusButtonId(null);
+            setBonusActive(false);
+          }
+        } else {
+          setBonusButtonId(null);
+          setBonusActive(false);
+        }
       } else {
         // Fallback to random selection
         newHighlighted = getRandomButtons(
@@ -189,15 +210,27 @@ export function useHighlightButtons({
 
     lastHighlightedRef.current = newHighlighted;
 
-      // Assign multi-hit requirements (30% chance per button, 2–3 hits) for all modes
+      // Assign multi-hit requirements based on difficulty for all modes
       // that use this hook, except for sequence (which has its own sequence logic).
       // Note: gameMode is typed to exclude 'sequence' in this hook, but we check defensively
       // to prevent issues if mode changes between timer setup and execution
       if (gameMode !== 'oddOneOut') {
       const hitRequirements: Record<number, number> = {};
+      
+      // Define additional hits required per difficulty (1 base hit + additional hits)
+      const additionalHitsByDifficulty: Record<DifficultyPreset, number> = {
+        easy: 1,      // 1 additional hit = 2 total hits
+        medium: 1,    // 1 additional hit = 2 total hits
+        hard: 2,       // 2 additional hits = 3 total hits
+        nightmare: 3, // 3 additional hits = 4 total hits
+      };
+      
+      const additionalHits = additionalHitsByDifficulty[difficulty];
+      const totalHitsRequired = 1 + additionalHits; // Base hit + additional hits
+      
       newHighlighted.forEach((buttonId) => {
         if (Math.random() < 0.3) {
-          hitRequirements[buttonId] = Math.random() < 0.5 ? 2 : 3;
+          hitRequirements[buttonId] = totalHitsRequired;
         }
       });
       setButtonHitRequirements(hitRequirements);
@@ -215,7 +248,8 @@ export function useHighlightButtons({
 
     // Set timer to clear highlight and penalize if not pressed in time
     // Use captured multiplier to prevent changes during highlight
-    const duration = getHighlightDurationForDifficulty(score, difficulty, currentMultiplier);
+    // Reaction time now scales with combo: at combo 100, duration reaches minDuration
+    const duration = getHighlightDurationForDifficulty(combo, difficulty, currentMultiplier);
     setHighlightDuration(duration);
     
     // Determine if bonus was added - track it locally since state updates are async
@@ -278,6 +312,7 @@ export function useHighlightButtons({
     isProcessingRef,
     gameMode, // Include gameMode to prevent stale closures and ensure mode changes are detected
     score,
+    combo,
     difficulty,
     soundEnabled,
     screenShakeEnabled,

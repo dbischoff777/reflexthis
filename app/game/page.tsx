@@ -197,6 +197,7 @@ export default function GamePage() {
     isProcessingRef,
     gameMode,
     score,
+    combo,
     difficulty,
     lives,
     soundEnabled,

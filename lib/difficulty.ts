@@ -49,21 +49,30 @@ export const DIFFICULTY_PRESETS: Record<DifficultyPreset, DifficultyConfig> = {
 };
 
 /**
- * Calculate highlight duration based on score and difficulty preset
+ * Calculate highlight duration based on combo and difficulty preset
+ * Reaction time scales with combo: at combo 100, duration reaches minDuration
+ * @param combo Current combo count (used for scaling instead of score)
+ * @param preset Difficulty preset
  * @param adaptiveMultiplier Optional adaptive difficulty multiplier (default: 1.0)
  */
 export function getHighlightDurationForDifficulty(
-  score: number,
+  combo: number,
   preset: DifficultyPreset,
   adaptiveMultiplier: number = 1.0
 ): number {
   const config = DIFFICULTY_PRESETS[preset];
+  
+  // Calculate combo-based scaling: at combo 100, we reach minDuration
+  // Linear interpolation from baseDuration (combo 0) to minDuration (combo 100)
+  const comboProgress = Math.min(1.0, combo / 100); // 0.0 at combo 0, 1.0 at combo 100
+  const durationRange = config.baseDuration - config.minDuration;
+  const comboBasedDuration = config.baseDuration - (durationRange * comboProgress);
+  
   // Apply adaptive multiplier: < 1.0 = easier (longer duration), > 1.0 = harder (shorter duration)
-  const adjustedSpeedIncrease = config.speedIncrease * adaptiveMultiplier;
-  const speedReduction = Math.min(0.8, score * 0.001 * adjustedSpeedIncrease);
-  const duration = config.baseDuration * (1 - speedReduction);
-  // Further adjust by multiplier: lower multiplier = longer duration (easier)
-  const finalDuration = duration / adaptiveMultiplier;
+  // Lower multiplier = longer duration (easier)
+  const finalDuration = comboBasedDuration / adaptiveMultiplier;
+  
+  // Ensure we never go below minDuration
   return Math.max(config.minDuration, finalDuration);
 }
 
