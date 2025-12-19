@@ -17,7 +17,7 @@ export const DIFFICULTY_PRESETS: Record<DifficultyPreset, DifficultyConfig> = {
   easy: {
     name: 'Easy',
     baseDuration: 2000, // 2 seconds - more time to react
-    minDuration: 800, // Minimum 800ms
+    minDuration: 1200, // Minimum 1200ms
     maxButtons: 3, // Max 3 buttons at once
     speedIncrease: 0.3, // Slower difficulty increase
     description: 'Perfect for beginners. More time to react, fewer buttons.',
@@ -25,23 +25,23 @@ export const DIFFICULTY_PRESETS: Record<DifficultyPreset, DifficultyConfig> = {
   medium: {
     name: 'Medium',
     baseDuration: 1500, // 1.5 seconds - standard
-    minDuration: 400, // Minimum 400ms
+    minDuration: 800, // Minimum 800ms
     maxButtons: 4, // Max 4 buttons at once
     speedIncrease: 0.5, // Moderate difficulty increase
     description: 'Balanced difficulty. Good for improving reflexes.',
   },
   hard: {
     name: 'Hard',
-    baseDuration: 666, // 666ms - challenging
-    minDuration: 250, // Minimum 250ms
+    baseDuration: 999, // 999ms - challenging
+    minDuration: 666, // Minimum 666ms
     maxButtons: 5, // Max 5 buttons at once
     speedIncrease: 0.7, // Fast difficulty increase
     description: 'Extreme challenge. For reflex masters only!',
   },
   nightmare: {
     name: 'Nightmare',
-    baseDuration: 300, // Extremely fast - brutal from the start
-    minDuration: 150, // Near human reaction limit
+    baseDuration: 666, // 666ms - brutal from the start
+    minDuration: 420, // Minimum 420ms
     maxButtons: 10, // All buttons - maximum chaos
     speedIncrease: 0.85, // Very fast difficulty increase
     description: 'Brutal challenge for elite players only. Extreme speed and maximum buttons.',
