@@ -90,8 +90,8 @@ export class AdaptiveDifficulty {
     // Set preset-specific adaptive difficulty ceilings to keep scaling fair
     // Easy: small headroom, Medium: moderate, Hard: full, Nightmare: slightly reduced
     const presetCeiling: Record<DifficultyPreset, number> = {
-      easy: 1.1,       // Up to ~20% harder than easy baseline
-      medium: 1.2,     // Up to ~30% harder than medium baseline
+      easy: 1.1,       // Up to ~10% harder than easy baseline
+      medium: 1.2,     // Up to ~20% harder than medium baseline
       hard: 1.3,       // Allow full global headroom on hard
       nightmare: 1.4,  // Slightly capped to avoid over-punishing on an already brutal base
     };
