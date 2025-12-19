@@ -71,10 +71,10 @@ export class AdaptiveDifficulty {
     // Adjust target accuracy based on base difficulty preset
     // Easier modes should have lower target accuracy expectations
     const presetTargetAccuracy: Record<DifficultyPreset, number> = {
-      easy: 0.65,    // Lower expectation for easy mode
-      medium: 0.75,  // Standard expectation
-      hard: 0.80,    // Higher expectation for hard mode
-      nightmare: 0.85, // Very high expectation for nightmare
+      easy: 0.55,    // Lower expectation for easy mode
+      medium: 0.65,  // Standard expectation
+      hard: 0.70,    // Higher expectation for hard mode
+      nightmare: 0.75, // Very high expectation for nightmare
     };
     this.config.targetAccuracy = presetTargetAccuracy[preset];
     
