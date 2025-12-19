@@ -96,7 +96,15 @@ export function useHighlightButtons({
   const highlightNewButtons = useCallback(function highlightNewButtonsInternal() {
     // Early exit if game is over, processing, not ready, paused, or in sequence mode
     // Sequence mode has its own highlight logic and should not use this hook
-    if (gameOver || isProcessingRef.current || !isReady || isPausedRef.current || gameMode === 'sequence') return;
+    // CRITICAL: Never spawn new highlights if there are already active highlights
+    if (
+      gameOver || 
+      isProcessingRef.current || 
+      !isReady || 
+      isPausedRef.current || 
+      gameMode === 'sequence' ||
+      currentHighlightedRef.current.length > 0  // Prevent spawning if highlights are already active
+    ) return;
 
     clearHighlightTimer();
     isProcessingRef.current = true;
@@ -299,6 +307,11 @@ export function useHighlightButtons({
         // Note: Defensive check for mode changes - timer could fire after mode switch
         const currentMode = gameMode as GameMode;
         if (!gameOver && currentMode !== 'sequence') {
+          // Clear any existing next highlight timer to prevent overlapping timers
+          if (nextHighlightTimerRef.current) {
+            clearTimeout(nextHighlightTimerRef.current);
+            nextHighlightTimerRef.current = null;
+          }
           nextHighlightTimerRef.current = setTimer(() => {
             highlightNewButtonsInternal();
           }, 1000);

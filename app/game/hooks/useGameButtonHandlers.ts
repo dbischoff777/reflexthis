@@ -258,6 +258,11 @@ export function useGameButtonHandlers({
             // Note: Defensive check for mode changes - timer could fire after mode switch
             const currentMode = gameMode as GameMode;
             if (!gameOver && currentMode !== 'sequence') {
+              // Clear any existing next highlight timer to prevent overlapping timers
+              if (nextHighlightTimerRef.current) {
+                clearTimeout(nextHighlightTimerRef.current);
+                nextHighlightTimerRef.current = null;
+              }
               nextHighlightTimerRef.current = setTimer(() => {
                 highlightNewButtons();
               }, 500);
@@ -310,6 +315,11 @@ export function useGameButtonHandlers({
         decrementLives();
         const currentMode = gameMode as GameMode;
         if (!gameOver && currentMode !== 'sequence') {
+          // Clear any existing next highlight timer to prevent overlapping timers
+          if (nextHighlightTimerRef.current) {
+            clearTimeout(nextHighlightTimerRef.current);
+            nextHighlightTimerRef.current = null;
+          }
           nextHighlightTimerRef.current = setTimer(() => {
             highlightNewButtons();
           }, 1000);
@@ -418,6 +428,11 @@ export function useGameButtonHandlers({
         // Note: Defensive check for mode changes - timer could fire after mode switch
         const currentMode = gameMode as GameMode;
         if (!gameOver && currentMode !== 'sequence') {
+          // Clear any existing next highlight timer to prevent overlapping timers
+          if (nextHighlightTimerRef.current) {
+            clearTimeout(nextHighlightTimerRef.current);
+            nextHighlightTimerRef.current = null;
+          }
           nextHighlightTimerRef.current = setTimer(() => {
             highlightNewButtons();
           }, 700);
@@ -465,6 +480,11 @@ export function useGameButtonHandlers({
         // Note: Defensive check for mode changes - timer could fire after mode switch
         const currentMode = gameMode as GameMode;
         if (!gameOver && livesAfterDecrement > 0 && currentMode !== 'sequence') {
+          // Clear any existing next highlight timer to prevent overlapping timers
+          if (nextHighlightTimerRef.current) {
+            clearTimeout(nextHighlightTimerRef.current);
+            nextHighlightTimerRef.current = null;
+          }
           nextHighlightTimerRef.current = setTimer(() => {
             highlightNewButtons();
           }, 1000);

@@ -585,6 +585,7 @@ export default function GamePage() {
   }, [highlightedButtons]);
 
   // Restart reflex/survival/nightmare/oddOneOut game loop when game resets (only after ready)
+  // CRITICAL: Only restart if there are NO active highlights (check both state and ref)
   useEffect(() => {
     if (
       (gameMode === 'reflex' ||
@@ -595,6 +596,7 @@ export default function GamePage() {
       isReady &&
       !isPaused &&
       highlightedButtons.length === 0 &&
+      currentHighlightedRef.current.length === 0 &&  // Also check ref to prevent race conditions
       !isProcessingRef.current
     ) {
       const restartTimer = setTimer(() => {

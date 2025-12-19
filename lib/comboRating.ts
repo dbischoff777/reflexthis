@@ -77,7 +77,7 @@ export function getRatingDisplay(rating: ComboRating): {
     'C': 'Cool',
     'B': 'Brilliant',
     'A': 'Amazing',
-    'A+': 'Ace Plus',
+    'A+': 'Ace',
     'S': 'Superb',
     'SS': 'Stellar',
     'SSS': 'Supreme',
