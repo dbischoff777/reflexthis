@@ -627,7 +627,7 @@ export function GameOverModal({
           </button>
 
           <Link
-            href="/"
+            href="/?showMode=true"
             className={cn(
               'flex-1 py-4 px-6 border-4 font-bold text-lg sm:text-xl text-center',
               'text-foreground transition-all duration-100',
@@ -646,7 +646,7 @@ export function GameOverModal({
               e.currentTarget.style.backgroundColor = 'rgba(0, 58, 99, 0.6)';
             }}
           >
-            {t(language, 'gameover.backHome')}
+            {t(language, 'gameover.backToModeSelection')}
           </Link>
         </div>
       </div>

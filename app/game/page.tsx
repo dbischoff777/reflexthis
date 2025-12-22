@@ -32,8 +32,10 @@ import { useGameButtonHandlers } from './hooks/useGameButtonHandlers';
 import { useSequenceMode } from './hooks/useSequenceMode';
 import { useMobileHandlers } from './hooks/useMobileHandlers';
 import { useGameInitialization } from './hooks/useGameInitialization';
+import { useGameEventNotifications } from './hooks/useGameEventNotifications';
 import { loadChallenge } from '@/lib/challenges';
 import { GameModeTitle } from '@/components/GameModeTitle';
+import { GameEventNotification } from '@/components/GameEventNotification';
 
 // Lazy load heavy modal components
 const GameOverModal = lazy(() => import('@/components/GameOverModal').then(m => ({ default: m.GameOverModal })));
@@ -77,6 +79,7 @@ export default function GamePage() {
     lastScoreBreakdown,
     comboShieldAvailable,
     reviveAvailable,
+    adaptiveDifficultyMultiplier,
   } = useGameState();
   
   const maxLives = gameMode === 'survival' ? 1 : 5;
@@ -277,6 +280,7 @@ export default function GamePage() {
     playerSequence,
     isShowingSequence,
     isWaitingForInput,
+    showSequenceWarning,
     showSequence,
     handleSequenceButtonPress,
     resetSequence,
@@ -552,6 +556,15 @@ export default function GamePage() {
     startGameplay,
   });
 
+  // Game event notifications hook
+  const gameEventNotifications = useGameEventNotifications({
+    adaptiveDifficultyMultiplier,
+    buttonHitRequirements,
+    combo,
+    isReady,
+    gameOver,
+  });
+
   // Start reflex/nightmare/oddOneOut game when component mounts or game resets (only after ready)
   useEffect(() => {
     if ((gameMode === 'reflex' || gameMode === 'nightmare' || gameMode === 'oddOneOut') && !gameOver && isReady && !isPaused) {
@@ -794,7 +807,7 @@ export default function GamePage() {
               setShowPauseModal(true);
             } else {
               endGame();
-              router.push('/');
+              router.push('/?showMode=true');
             }
           }}
           onOpenSettings={() => {
@@ -821,6 +834,8 @@ export default function GamePage() {
       
       {/* Main Game Area */}
       <main className="relative z-10 flex-1 flex items-center justify-center px-2 sm:px-4 md:px-6 py-2 sm:py-4 overflow-hidden">
+        {/* Game Event Notifications - positioned within main game area */}
+        <GameEventNotification events={gameEventNotifications} />
         {/* Vertical Combo Meter - Right Side */}
         <VerticalComboMeter
           combo={combo}
@@ -829,10 +844,46 @@ export default function GamePage() {
           position="right"
         />
         
+        {/* Prominent Sequence Warning Overlay */}
+        {gameMode === 'sequence' && showSequenceWarning && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+            {/* Backdrop with dimming effect */}
+            <div 
+              className="absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity duration-300"
+              style={{ animation: 'fadeIn 0.3s ease-in' }}
+            />
+            
+            {/* Main warning message */}
+            <div 
+              className="relative z-10 text-center px-6 sm:px-8 md:px-12"
+              style={{ animation: 'pulseScale 1.5s ease-in-out infinite' }}
+            >
+              <div
+                className="border-8 pixel-border px-8 py-6 sm:px-12 sm:py-8 md:px-16 md:py-10 shadow-[0_0_40px_rgba(0,255,255,0.8),0_0_80px_rgba(0,255,255,0.4)]"
+                style={{ 
+                  backgroundColor: 'rgba(0, 58, 99, 0.95)', 
+                  borderColor: '#00FFFF',
+                  animation: 'glowPulse 1.5s ease-in-out infinite',
+                }}
+              >
+                <div 
+                  className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-primary text-glow"
+                  style={{
+                    textShadow: '0 0 20px rgba(0, 255, 255, 0.8), 0 0 40px rgba(0, 255, 255, 0.6), 0 0 60px rgba(0, 255, 255, 0.4)',
+                    animation: 'textPulse 1.5s ease-in-out infinite',
+                  }}
+                >
+                  {t(language, 'ready.sequence.watch')}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
         {/* Inline mode status - Enhanced visibility */}
         <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-20 flex flex-col items-center gap-2">
-          {/* Sequence status */}
-          {gameMode === 'sequence' && (
+          {/* Sequence status - Hide during warning */}
+          {gameMode === 'sequence' && !showSequenceWarning && (
             <div
               className="border-4 pixel-border px-5 py-3 shadow-[0_0_18px_rgba(62,124,172,0.5)]"
               style={{ backgroundColor: 'rgba(0, 58, 99, 0.9)', borderColor: '#3E7CAC' }}
@@ -842,7 +893,7 @@ export default function GamePage() {
                   {t(language, 'ready.sequence.watch')}
                 </div>
               ) : isWaitingForInput ? (
-                <div className="text-sm sm:text-base md:text-lg font-bold text-secondary text-glow">
+                <div className="text-sm sm:text-base md:text-lg font-bold text-primary text-glow">
                   {t(language, 'ready.sequence.repeat')} {playerSequence.length}/{sequence.length}
                 </div>
               ) : null}
@@ -975,7 +1026,7 @@ export default function GamePage() {
         onExit={() => {
           setShowPauseModal(false);
           endGame();
-          router.push('/');
+          router.push('/?showMode=true');
         }}
       />
 

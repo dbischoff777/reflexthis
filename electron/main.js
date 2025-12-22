@@ -16,6 +16,10 @@ const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 const SERVER_PORT = 3000;
 const SERVER_URL = `http://localhost:${SERVER_PORT}`;
 
+// Disable Windows DPI scaling to prevent text scaling from affecting game visuals
+// This forces the device scale factor to 1, blocking Windows text scaling (e.g., 150%)
+app.commandLine.appendSwitch('force-device-scale-factor', '1');
+
 // Create log file for debugging
 const logFile = path.join(os.tmpdir(), 'reflexthis-electron.log');
 function logToFile(message) {

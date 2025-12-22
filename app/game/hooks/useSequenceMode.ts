@@ -69,6 +69,7 @@ export function useSequenceMode({
   const [playerSequence, setPlayerSequence] = useState<number[]>([]);
   const [isShowingSequence, setIsShowingSequence] = useState(false);
   const [isWaitingForInput, setIsWaitingForInput] = useState(false);
+  const [showSequenceWarning, setShowSequenceWarning] = useState(false);
   // Optional secondary track for multi-track sequences (shown with different color)
   const [distractorSequence, setDistractorSequence] = useState<number[]>([]);
   const [useMultiTrack, setUseMultiTrack] = useState(false);
@@ -80,7 +81,6 @@ export function useSequenceMode({
     clearHighlightTimer();
     isProcessingRef.current = true;
     setIsWaitingForInput(false);
-    setIsShowingSequence(true);
     setPlayerSequence([]);
     
     const sequenceLength = getSequenceLength(score, difficulty);
@@ -161,10 +161,20 @@ export function useSequenceMode({
       }, displayDuration);
     };
     
-    // Start showing sequence after a reduced delay
+    // First, show prominent warning message
+    setShowSequenceWarning(true);
+    
+    // After warning display, start the sequence
     setTimer(() => {
-      showNextButton(0);
-    }, 200);
+      // Hide warning and start showing sequence
+      setShowSequenceWarning(false);
+      setIsShowingSequence(true);
+      
+      // Start showing sequence after a brief moment
+      setTimer(() => {
+        showNextButton(0);
+      }, 200);
+    }, 1500); // Show warning for 1.5 seconds
   }, [score, difficulty, gameOver, isReady, soundEnabled, clearHighlightTimer, setTimer, isPausedRef, isProcessingRef, setHighlightedButtons, sequenceTimerRef, useMultiTrack, distractorSequence.length]);
   
   // Handle button press in sequence mode
@@ -341,6 +351,7 @@ export function useSequenceMode({
     setPlayerSequence([]);
     setIsShowingSequence(false);
     setIsWaitingForInput(false);
+    setShowSequenceWarning(false);
     setDistractorSequence([]);
     setUseMultiTrack(false);
   }, []);
@@ -350,6 +361,7 @@ export function useSequenceMode({
     playerSequence,
     isShowingSequence,
     isWaitingForInput,
+    showSequenceWarning,
     showSequence,
     handleSequenceButtonPress,
     resetSequence,

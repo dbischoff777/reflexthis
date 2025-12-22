@@ -141,11 +141,47 @@ export function ModeAndDifficultySelector({
   };
 
   return (
-    <div className="flex flex-col gap-4 sm:gap-5 w-full max-w-2xl mx-auto">
-      {/* Subtitle: "Choose Your Game" - left-aligned */}
-      <h3 className="text-lg sm:text-xl md:text-2xl font-semibold text-white text-left">
-        Choose Your Game
-      </h3>
+    <div className="flex flex-col gap-4 sm:gap-5 w-full max-w-2xl mx-auto relative">
+      {/* Header with title and back button */}
+      <div className="relative flex items-center">
+        {/* Subtitle: "Choose Your Game" - left-aligned */}
+        <h3 className="text-lg sm:text-xl md:text-2xl font-semibold text-white text-left">
+          Choose Your Game
+        </h3>
+        
+        {/* Back to Home button - top right */}
+        {onCancel && (
+          <button
+            onClick={onCancel}
+            disabled={disabled}
+            draggable={false}
+            className={cn(
+              'absolute right-0 px-3 py-2 sm:px-4 sm:py-2.5 border-4 pixel-border font-bold text-sm sm:text-base',
+              'text-white transition-all duration-100',
+              'focus:outline-none focus:ring-2 pixel-border',
+              disabled && 'opacity-50 cursor-not-allowed'
+            )}
+            style={{
+              borderColor: '#3E7CAC',
+              backgroundColor: 'rgba(0, 58, 99, 0.6)',
+            }}
+            onMouseEnter={(e) => {
+              if (!disabled) {
+                e.currentTarget.style.borderColor = 'rgba(62, 124, 172, 0.7)';
+                e.currentTarget.style.backgroundColor = 'rgba(62, 124, 172, 0.3)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!disabled) {
+                e.currentTarget.style.borderColor = '#3E7CAC';
+                e.currentTarget.style.backgroundColor = 'rgba(0, 58, 99, 0.6)';
+              }
+            }}
+          >
+            {t(language, 'gameover.backHome')}
+          </button>
+        )}
+      </div>
       
       {/* 3x2 Grid of mode buttons + difficulty selector */}
       <div className="grid grid-cols-3 gap-4 sm:gap-5 md:gap-6">
@@ -208,7 +244,10 @@ export function ModeAndDifficultySelector({
                 </div>
                 {/* Label at bottom */}
                 <div className="flex flex-col items-center justify-center py-2 sm:py-3 md:py-4 pointer-events-none shrink-0 gap-1">
-                  <span className="font-bold text-base sm:text-lg md:text-xl lg:text-2xl text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)]">
+                  <span className={cn(
+                    "font-bold text-base sm:text-lg md:text-xl lg:text-2xl drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)]",
+                    isHovered && !isButtonDisabled ? "text-black" : "text-white"
+                  )}>
                     {mode === 'reflex' && t(language, 'mode.reflex.name')}
                     {mode === 'sequence' && t(language, 'mode.sequence.name')}
                     {mode === 'survival' && t(language, 'mode.survival.name')}
@@ -302,10 +341,11 @@ export function ModeAndDifficultySelector({
                 {t(language, 'difficulty.select.title')}
               </span>
               <span className="font-semibold text-xs sm:text-sm md:text-base text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] text-center">
-                {localDifficulty === 'easy' && t(language, 'difficulty.name.easy')}
-                {localDifficulty === 'medium' && t(language, 'difficulty.name.medium')}
-                {localDifficulty === 'hard' && t(language, 'difficulty.name.hard')}
-                {localDifficulty === 'nightmare' && t(language, 'difficulty.name.nightmare')}
+                {t(language, 'difficulty.level.label')}{' '}
+                {(localDifficulty === 'easy' && t(language, 'difficulty.name.easy')) ||
+                 (localDifficulty === 'medium' && t(language, 'difficulty.name.medium')) ||
+                 (localDifficulty === 'hard' && t(language, 'difficulty.name.hard')) ||
+                 (localDifficulty === 'nightmare' && t(language, 'difficulty.name.nightmare'))}
               </span>
             </div>
           </button>

@@ -115,21 +115,49 @@ export function useHighlightButtons({
     // Track if bonus button exists (for duration calculation)
     let hasBonusButton = false;
 
-    // Spawn chance scales with combo: starts at 20% (combo 0) and increases to 60% (combo 100)
+    // Spawn chance scales with combo: starts at 20% (combo 25) and increases to 60% (combo 100)
     const calculatePatternSpawnChance = (comboValue: number): number => {
-      // Base chance at combo 0: 20%
+      // Base chance at combo 25: 20%
       // Max chance at combo 100: 60%
-      // Smooth scaling between them across the full combo range
+      // No patterns before combo 25
+      const minCombo = 25;
       const baseChance = 0.2;
       const maxChance = 0.6;
       const maxCombo = 100;
+      
+      if (comboValue < minCombo) {
+        return 0;
+      }
       
       if (comboValue >= maxCombo) {
         return maxChance;
       }
       
-      // Linear interpolation between base and max
-      const progress = comboValue / maxCombo;
+      // Linear interpolation between base and max (combo 25-100)
+      const progress = (comboValue - minCombo) / (maxCombo - minCombo);
+      return baseChance + (maxChance - baseChance) * progress;
+    };
+
+    // Multi-hit spawn chance scales with combo: starts at 15% (combo 15) and increases to 50% (combo 100)
+    const calculateMultiHitSpawnChance = (comboValue: number): number => {
+      // Base chance at combo 15: 15%
+      // Max chance at combo 100: 50%
+      // No multi-hit buttons before combo 15
+      const minCombo = 15;
+      const baseChance = 0.15;
+      const maxChance = 0.5;
+      const maxCombo = 100;
+      
+      if (comboValue < minCombo) {
+        return 0;
+      }
+      
+      if (comboValue >= maxCombo) {
+        return maxChance;
+      }
+      
+      // Linear interpolation between base and max (combo 15-100)
+      const progress = (comboValue - minCombo) / (maxCombo - minCombo);
       return baseChance + (maxChance - baseChance) * progress;
     };
 
@@ -246,8 +274,11 @@ export function useHighlightButtons({
       const additionalHits = additionalHitsByDifficulty[difficulty];
       const totalHitsRequired = 1 + additionalHits; // Base hit + additional hits
       
+      // Multi-hit spawn chance scales with combo, similar to patterns
+      const multiHitSpawnChance = calculateMultiHitSpawnChance(combo);
+      
       newHighlighted.forEach((buttonId) => {
-        if (Math.random() < 0.3) {
+        if (Math.random() < multiHitSpawnChance) {
           hitRequirements[buttonId] = totalHitsRequired;
         }
       });

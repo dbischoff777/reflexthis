@@ -102,6 +102,23 @@ const en: TranslationDict = {
   'loading.assets': 'Loading 3D assets & audio…',
   'loading.finishing': 'Finishing up…',
 
+  // Game Event Notifications
+  'notification.reaction-time.easier': 'Reaction time increased - easier now!',
+  'notification.reaction-time.harder': 'Reaction time decreased - faster now!',
+  'notification.multi-hit.starting': 'Multi-hit buttons spawning! Press multiple times!',
+  'notification.pattern.starting': 'Pattern spawning now!',
+  'notification.pattern.type.line-horizontal': 'Horizontal Line',
+  'notification.pattern.type.line-vertical': 'Vertical Line',
+  'notification.pattern.type.line-diagonal': 'Diagonal Line',
+  'notification.pattern.type.shape-l': 'L-Shape',
+  'notification.pattern.type.shape-t': 'T-Shape',
+  'notification.pattern.type.shape-cross': 'Cross',
+  'notification.pattern.type.shape-corner': 'Corner',
+  'notification.pattern.type.sweep-left-right': 'Left-Right Sweep',
+  'notification.pattern.type.sweep-top-bottom': 'Top-Bottom Sweep',
+  'notification.pattern.type.cluster': 'Cluster',
+  'notification.pattern.type.random': 'Random',
+
   // Game Over Modal
   'gameover.title': 'Game Over',
   'gameover.titleNewHigh': 'New High Score!',
@@ -128,6 +145,7 @@ const en: TranslationDict = {
   'gameover.achievements.none': 'No new achievements this run. Keep playing!',
   'gameover.playAgain': 'Play Again',
   'gameover.backHome': 'Back to Home',
+  'gameover.backToModeSelection': 'Select Game',
   'gameover.share': 'Share Score',
   'gameover.tab.overview': 'Overview',
   'gameover.tab.details': 'Details',
@@ -151,6 +169,7 @@ const en: TranslationDict = {
   'difficulty.base': 'Base:',
   'difficulty.min': 'Min:',
   'difficulty.maxButtons': 'Max Buttons:',
+  'difficulty.level.label': 'Level:',
   'difficulty.name.easy': 'Easy',
   'difficulty.name.medium': 'Medium',
   'difficulty.name.hard': 'Hard',
@@ -541,6 +560,23 @@ const de: TranslationDict = {
   'loading.assets': '3D-Assets & Audio werden geladen…',
   'loading.finishing': 'Abschluss…',
 
+  // Game Event Notifications
+  'notification.reaction-time.easier': 'Reaktionszeit erhöht - jetzt einfacher!',
+  'notification.reaction-time.harder': 'Reaktionszeit verringert - jetzt schneller!',
+  'notification.multi-hit.starting': 'Mehrfach-Treffer-Buttons erscheinen! Mehrfach drücken!',
+  'notification.pattern.starting': 'Muster erscheinen jetzt!',
+  'notification.pattern.type.line-horizontal': 'Horizontale Linie',
+  'notification.pattern.type.line-vertical': 'Vertikale Linie',
+  'notification.pattern.type.line-diagonal': 'Diagonale Linie',
+  'notification.pattern.type.shape-l': 'L-Form',
+  'notification.pattern.type.shape-t': 'T-Form',
+  'notification.pattern.type.shape-cross': 'Kreuz',
+  'notification.pattern.type.shape-corner': 'Ecke',
+  'notification.pattern.type.sweep-left-right': 'Links-Rechts-Sweep',
+  'notification.pattern.type.sweep-top-bottom': 'Oben-Unten-Sweep',
+  'notification.pattern.type.cluster': 'Cluster',
+  'notification.pattern.type.random': 'Zufällig',
+
   // Game Over Modal
   'gameover.title': 'Spiel beendet',
   'gameover.titleNewHigh': 'Neue Bestpunktzahl!',
@@ -567,6 +603,7 @@ const de: TranslationDict = {
   'gameover.achievements.none': 'Keine neuen Erfolge in diesem Lauf. Spiele weiter!',
   'gameover.playAgain': 'Nochmal spielen',
   'gameover.backHome': 'Zurück zum Start',
+  'gameover.backToModeSelection': 'Modus',
   'gameover.share': 'Punktzahl teilen',
   'gameover.tab.overview': 'Übersicht',
   'gameover.tab.details': 'Details',
@@ -590,6 +627,7 @@ const de: TranslationDict = {
   'difficulty.base': 'Basis:',
   'difficulty.min': 'Min:',
   'difficulty.maxButtons': 'Max Buttons:',
+  'difficulty.level.label': 'Level:',
   'difficulty.name.easy': 'Leicht',
   'difficulty.name.medium': 'Mittel',
   'difficulty.name.hard': 'Schwer',
@@ -945,9 +983,18 @@ const dictionaries: Record<Language, TranslationDict> = { en, de };
 
 export type TranslationKey = string;
 
-export function t(language: Language, key: TranslationKey): string {
+export function t(language: Language, key: TranslationKey, params?: Record<string, string | number>): string {
   const dict = dictionaries[language] || dictionaries.en;
-  return (dict[key] ?? en[key]) || key;
+  let text = (dict[key] ?? en[key]) || key;
+  
+  // Replace placeholders like {hits}, {type}, etc.
+  if (params) {
+    Object.entries(params).forEach(([paramKey, paramValue]) => {
+      text = text.replace(new RegExp(`\\{${paramKey}\\}`, 'g'), String(paramValue));
+    });
+  }
+  
+  return text;
 }
 
 
