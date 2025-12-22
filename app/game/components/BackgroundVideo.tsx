@@ -1,17 +1,68 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import { useDeviceProfile } from '@/hooks/useDeviceProfile';
 
 /**
  * BackgroundVideo component - Smooth looping background video with crossfade
  * Optimized for performance with GPU acceleration and efficient event handling
+ * Includes device-aware optimizations: reduced playback rate, smart preloading, and Page Visibility API
  */
 export const BackgroundVideo = React.memo(function BackgroundVideo() {
   const [activeVideo, setActiveVideo] = useState(0);
+  const activeVideoRef = useRef(0); // Use ref to avoid stale closure in visibility handler
+  const { deviceInfo } = useDeviceProfile();
   const video1Ref = useRef<HTMLVideoElement>(null);
   const video2Ref = useRef<HTMLVideoElement>(null);
   const fadeTriggeredRef = useRef(false);
   const rafIdRef = useRef<number | null>(null);
+  
+  // Keep ref in sync with state
+  useEffect(() => {
+    activeVideoRef.current = activeVideo;
+  }, [activeVideo]);
+  
+  // Determine playback rate based on device capabilities
+  // Low-end devices (low GPU tier or mobile with medium GPU) play at 75% speed
+  const playbackRate = deviceInfo.gpuTier === 'low' || (deviceInfo.isMobile && deviceInfo.gpuTier === 'medium') 
+    ? 0.75 
+    : 1.0;
+  
+  // Smart preloading: low-end devices use metadata only
+  const preloadStrategy = deviceInfo.gpuTier === 'low' || (deviceInfo.isMobile && deviceInfo.gpuTier === 'medium')
+    ? 'metadata'
+    : 'auto';
+
+  // Apply playback rate to videos
+  useEffect(() => {
+    const video1 = video1Ref.current;
+    const video2 = video2Ref.current;
+    if (video1) video1.playbackRate = playbackRate;
+    if (video2) video2.playbackRate = playbackRate;
+  }, [playbackRate]);
+
+  // Page Visibility API: pause videos when tab is hidden
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      const video1 = video1Ref.current;
+      const video2 = video2Ref.current;
+      
+      if (document.hidden) {
+        // Pause both videos when tab is hidden
+        video1?.pause();
+        video2?.pause();
+      } else {
+        // Resume active video when tab becomes visible
+        const currentActiveVideo = activeVideoRef.current === 0 ? video1 : video2;
+        currentActiveVideo?.play().catch(() => {});
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
 
   useEffect(() => {
     const video1 = video1Ref.current;
@@ -110,7 +161,7 @@ export const BackgroundVideo = React.memo(function BackgroundVideo() {
         loop
         muted
         playsInline
-        preload="auto"
+        preload={preloadStrategy}
         aria-hidden="true"
       >
         <source src="/animation/menu-background-animated.mp4" type="video/mp4" />
@@ -128,7 +179,7 @@ export const BackgroundVideo = React.memo(function BackgroundVideo() {
         loop
         muted
         playsInline
-        preload="auto"
+        preload={preloadStrategy}
         aria-hidden="true"
       >
         <source src="/animation/menu-background-animated.mp4" type="video/mp4" />

@@ -14,6 +14,7 @@ import { GameMode } from '@/lib/gameModes';
 import { GameProvider, useGameState } from '@/lib/GameContext';
 import { stopBackgroundMusic, setGamePageActive, playMenuMusic, stopMenuMusic, preloadAudioAssets } from '@/lib/soundUtils';
 import { t } from '@/lib/i18n';
+import { useDeviceProfile } from '@/hooks/useDeviceProfile';
 
 const WARMUP_BUTTONS = Array.from({ length: 10 }, (_, i) => ({
   index: i + 1,
@@ -23,21 +24,65 @@ const WARMUP_BUTTONS = Array.from({ length: 10 }, (_, i) => ({
 /**
  * BackgroundVideo component - Smooth looping background video with crossfade
  * Optimized for performance with GPU acceleration and efficient event handling
+ * Includes device-aware optimizations: reduced playback rate, smart preloading, and Page Visibility API
  */
 const BackgroundVideo = React.memo(function BackgroundVideo() {
   const [activeVideo, setActiveVideo] = useState(0);
   const [videoError, setVideoError] = useState(false);
   const [secondVideoLoaded, setSecondVideoLoaded] = useState(false);
+  const { deviceInfo } = useDeviceProfile();
   const video1Ref = useRef<HTMLVideoElement>(null);
   const video2Ref = useRef<HTMLVideoElement>(null);
   const fadeTriggeredRef = useRef(false);
   const rafIdRef = useRef<number | null>(null);
   const activeVideoRef = useRef(0); // Use ref to avoid stale closure
 
+  // Determine playback rate based on device capabilities
+  // Low-end devices (low GPU tier or mobile with medium GPU) play at 75% speed
+  const playbackRate = deviceInfo.gpuTier === 'low' || (deviceInfo.isMobile && deviceInfo.gpuTier === 'medium') 
+    ? 0.75 
+    : 1.0;
+  
+  // Smart preloading: low-end devices use metadata only
+  const preloadStrategy = deviceInfo.gpuTier === 'low' || (deviceInfo.isMobile && deviceInfo.gpuTier === 'medium')
+    ? 'metadata'
+    : 'auto';
+
   // Keep ref in sync with state
   useEffect(() => {
     activeVideoRef.current = activeVideo;
   }, [activeVideo]);
+
+  // Apply playback rate to videos
+  useEffect(() => {
+    const video1 = video1Ref.current;
+    const video2 = video2Ref.current;
+    if (video1) video1.playbackRate = playbackRate;
+    if (video2) video2.playbackRate = playbackRate;
+  }, [playbackRate]);
+
+  // Page Visibility API: pause videos when tab is hidden
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      const video1 = video1Ref.current;
+      const video2 = video2Ref.current;
+      
+      if (document.hidden) {
+        // Pause both videos when tab is hidden
+        video1?.pause();
+        video2?.pause();
+      } else {
+        // Resume active video when tab becomes visible
+        const currentActiveVideo = activeVideoRef.current === 0 ? video1 : video2;
+        currentActiveVideo?.play().catch(() => {});
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
 
   // Handle video errors with fallback
   useEffect(() => {
@@ -242,7 +287,7 @@ const BackgroundVideo = React.memo(function BackgroundVideo() {
         loop
         muted
         playsInline
-        preload="auto"
+        preload={preloadStrategy}
         aria-hidden="true"
       >
         <source src="/animation/menu-background-animated.mp4" type="video/mp4" />
@@ -262,7 +307,7 @@ const BackgroundVideo = React.memo(function BackgroundVideo() {
           loop
           muted
           playsInline
-          preload="auto"
+          preload={preloadStrategy}
           aria-hidden="true"
         >
           <source src="/animation/menu-background-animated.mp4" type="video/mp4" />
@@ -739,16 +784,19 @@ function LandingPageContent() {
               src="/logo/ReflexIcon.jpg"
               alt="Reflex This"
               className="max-w-[520px] w-[70vw] max-h-[70vh] rounded-xl shadow-2xl shadow-primary/40 border-4 border-primary/60 bg-black/80 object-contain"
+              loading="eager"
+              fetchPriority="high"
             />
           ) : (
             <video
               className="max-w-[520px] w-[70vw] max-h-[70vh] rounded-xl shadow-2xl shadow-primary/40 border-4 border-primary/60 bg-black/80 object-contain"
               src="/animation/ReflexIconAnimated.mp4"
+              poster="/logo/ReflexIcon.jpg"
               autoPlay
               muted
               loop
               playsInline
-              preload="auto"
+              preload="metadata"
               onError={() => setSplashVideoError(true)}
               style={{
                 transform: 'translateZ(0)',

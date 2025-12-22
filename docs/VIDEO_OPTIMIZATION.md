@@ -85,6 +85,7 @@ ffmpeg -i menu-background-animated.mp4 \
 - The optimizations are **automatic** based on device detection
 - No user action required - the system adapts to device capabilities
 - Works alongside the existing `reducedEffects` setting
+- **✅ IMPLEMENTED**: All optimizations are now active in `app/game/components/BackgroundVideo.tsx` and `app/page.tsx`
 
 ### Future Enhancements
 If you create a lower-quality version, you could:
@@ -125,3 +126,19 @@ To verify the optimizations are working:
 2. **Implement lazy loading** for videos below the fold
 3. **Use poster images** to show a frame while video loads
 4. **Monitor Core Web Vitals** (LCP, FID, CLS) to ensure optimizations help
+5. **Create optimized video files** using the FFmpeg commands above to reduce file size and bandwidth usage
+6. **Consider WebM format** for better compression (smaller file sizes) while maintaining quality
+
+## Performance Impact
+
+### Expected Improvements
+- **Low-end devices**: 25% reduction in video processing load (75% playback rate)
+- **Memory usage**: Reduced initial memory footprint with `preload="metadata"` on low-end devices
+- **Battery life**: Improved on mobile devices when tab is hidden (videos pause automatically)
+- **Network**: Lower bandwidth usage on low-end devices (metadata-only preload)
+
+### Monitoring
+Use browser DevTools to verify optimizations:
+- **Performance tab**: Check CPU usage and frame rate
+- **Network tab**: Verify preload behavior (`metadata` vs `auto`)
+- **Console**: Check playback rate: `document.querySelector('video').playbackRate`

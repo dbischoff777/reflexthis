@@ -6,10 +6,12 @@ export default function RootLoading() {
         <video
           className="max-w-[520px] w-[70vw] max-h-[70vh] rounded-xl shadow-2xl shadow-primary/40 border-4 border-primary/60 bg-black/80 object-contain"
           src="/animation/ReflexIconAnimated.mp4"
+          poster="/logo/ReflexIcon.jpg"
           autoPlay
           muted
           loop
           playsInline
+          preload="metadata"
         />
 
         {/* Optional subtle vignette */}
