@@ -23,7 +23,44 @@ const nextConfig: NextConfig = {
   
   // Performance optimizations
   experimental: {
-    optimizePackageImports: ['lucide-react'],
+    // Tree-shake heavy packages
+    optimizePackageImports: [
+      'lucide-react',
+      '@react-three/fiber',
+      '@react-three/drei',
+      '@react-three/postprocessing',
+      'three',
+      'postprocessing',
+    ],
+  },
+  
+  // Turbopack config (Next.js 16+ default bundler for dev)
+  turbopack: {},
+  
+  // Webpack optimizations for production builds
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      // Split Three.js into its own chunk for better caching
+      config.optimization.splitChunks = {
+        ...config.optimization.splitChunks,
+        cacheGroups: {
+          ...config.optimization.splitChunks?.cacheGroups,
+          three: {
+            test: /[\\/]node_modules[\\/](three|@react-three)[\\/]/,
+            name: 'three-vendor',
+            chunks: 'all',
+            priority: 30,
+          },
+          postprocessing: {
+            test: /[\\/]node_modules[\\/]postprocessing[\\/]/,
+            name: 'postprocessing',
+            chunks: 'all',
+            priority: 25,
+          },
+        },
+      };
+    }
+    return config;
   },
   
   // Headers for security and performance
@@ -47,6 +84,25 @@ const nextConfig: NextConfig = {
           {
             key: 'Referrer-Policy',
             value: 'strict-origin-when-cross-origin',
+          },
+        ],
+      },
+      // Cache static assets aggressively
+      {
+        source: '/animation/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
+        source: '/sounds/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
           },
         ],
       },

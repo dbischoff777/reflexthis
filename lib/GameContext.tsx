@@ -464,36 +464,61 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }
   }, [isGameStarted, gameOver, isPaused]);
 
-  // Update adaptive difficulty multiplier periodically
+  // Update adaptive difficulty multiplier periodically - reduced frequency for INP
   useEffect(() => {
     if (!adaptiveDifficultyRef.current) return;
     
-    const interval = setInterval(() => {
+    // Use longer interval and requestIdleCallback for non-critical updates
+    const updateMultiplier = () => {
       if (adaptiveDifficultyRef.current) {
         const multiplier = adaptiveDifficultyRef.current.getDifficultyMultiplier();
-        setAdaptiveDifficultyMultiplier(multiplier);
+        // Only update if changed to avoid unnecessary re-renders
+        setAdaptiveDifficultyMultiplier(prev => 
+          Math.abs(prev - multiplier) > 0.01 ? multiplier : prev
+        );
       }
-    }, 500); // Update every 500ms
+    };
+    
+    const interval = setInterval(() => {
+      // Use requestIdleCallback to avoid blocking main thread
+      if ('requestIdleCallback' in window) {
+        requestIdleCallback(updateMultiplier, { timeout: 200 });
+      } else {
+        updateMultiplier();
+      }
+    }, 1000); // Reduced from 500ms to 1000ms
     
     return () => clearInterval(interval);
   }, []);
 
   // Increment score with advanced multi-factor scoring system
+  // Optimized to batch updates and reduce re-renders for better INP
   const incrementScore = useCallback((reactionTime: number, patternBonusMultiplier: number = 1.0) => {
-    // Record action for adaptive difficulty
+    // Record action for adaptive difficulty (non-blocking)
     if (adaptiveDifficultyRef.current) {
-      adaptiveDifficultyRef.current.recordAction({
-        timestamp: Date.now(),
-        reactionTime,
-        isCorrect: true,
-        isMiss: false,
+      // Defer to avoid blocking the main thread
+      queueMicrotask(() => {
+        adaptiveDifficultyRef.current?.recordAction({
+          timestamp: Date.now(),
+          reactionTime,
+          isCorrect: true,
+          isMiss: false,
+        });
       });
     }
 
-    // Update reaction time stats
+    // Update reaction time stats - optimized calculation
     setReactionTimeStats((prev) => {
-      const newTimes = [...prev.allTimes, reactionTime];
-      const average = newTimes.reduce((sum, time) => sum + time, 0) / newTimes.length;
+      // Avoid creating new array for every update when not needed for display
+      const newTimes = prev.allTimes.length < 1000 
+        ? [...prev.allTimes, reactionTime]
+        : [...prev.allTimes.slice(-999), reactionTime]; // Cap at 1000 for memory
+      
+      // Incremental average calculation for better performance
+      const count = newTimes.length;
+      const average = prev.average !== null 
+        ? prev.average + (reactionTime - prev.average) / count
+        : reactionTime;
       const fastest = prev.fastest === null ? reactionTime : Math.min(prev.fastest, reactionTime);
       const slowest = prev.slowest === null ? reactionTime : Math.max(prev.slowest, reactionTime);
 

@@ -9,10 +9,10 @@ import {
   EffectComposer, 
   Bloom, 
   ToneMapping,
-  ChromaticAberration,
   Vignette,
 } from '@react-three/postprocessing';
 import { ToneMappingMode, BlendFunction } from 'postprocessing';
+// ChromaticAberration removed for better FPS
 import * as THREE from 'three';
 
 // Import types and constants
@@ -56,13 +56,29 @@ export const GameButtonGridWebGL = memo(function GameButtonGridWebGL({
   const lastPressTime = useRef<number>(0);
   const [rippleEvents, setRippleEvents] = useState<RippleEvent[]>([]);
   
-  // Clean up old ripple events - reduced frequency for better performance
+  // Clean up old ripple events - use requestIdleCallback for better FPS
   useEffect(() => {
-    const cleanup = setInterval(() => {
+    let timeoutId: number;
+    
+    const cleanup = () => {
       const now = Date.now();
-      setRippleEvents(prev => prev.filter(e => now - e.timestamp < 500));
-    }, 1000); // Reduced from 500ms to 1000ms
-    return () => clearInterval(cleanup);
+      setRippleEvents(prev => {
+        const filtered = prev.filter(e => now - e.timestamp < 500);
+        // Only update if array actually changed
+        return filtered.length !== prev.length ? filtered : prev;
+      });
+      // Schedule next cleanup during idle time
+      timeoutId = window.setTimeout(() => {
+        if ('requestIdleCallback' in window) {
+          requestIdleCallback(() => cleanup(), { timeout: 2000 });
+        } else {
+          cleanup();
+        }
+      }, 1500);
+    };
+    
+    timeoutId = window.setTimeout(cleanup, 1500);
+    return () => window.clearTimeout(timeoutId);
   }, []);
   
   // Track feedback changes to create ripple events
@@ -143,13 +159,17 @@ export const GameButtonGridWebGL = memo(function GameButtonGridWebGL({
           near: 0.1,
           far: 100,
         }}
-        dpr={[1, maxDpr]}
+        dpr={[1, Math.min(maxDpr, 1.5)]} // Cap DPR at 1.5 for better FPS on high-DPI displays
         gl={{
           antialias: true,
           alpha: true,
           powerPreference,
           toneMapping: THREE.ACESFilmicToneMapping,
           toneMappingExposure: 1.2,
+          // Performance optimizations
+          stencil: false, // Disable unused stencil buffer
+          depth: true,
+          preserveDrawingBuffer: false, // Better memory management
         }}
         style={{ background: 'transparent' }}
       >
@@ -245,24 +265,18 @@ export const GameButtonGridWebGL = memo(function GameButtonGridWebGL({
           </group>
           
           
-          {/* Post-processing effects - adaptive quality based on reducedEffects */}
+          {/* Post-processing effects - reduced for better FPS */}
           {!disablePostprocessing && (
-            <EffectComposer multisampling={disablePostprocessing ? 0 : 4}>
+            <EffectComposer multisampling={0}> {/* Disabled MSAA - handled by WebGL antialias */}
               {/* Dynamic Bloom - responds to combo milestones */}
-              <DynamicBloom comboMilestone={comboMilestone} baseIntensity={0.7} />
+              <DynamicBloom comboMilestone={comboMilestone} baseIntensity={0.5} />
               
-              {/* Subtle chromatic aberration for energy feel */}
-              <ChromaticAberration
-                blendFunction={BlendFunction.NORMAL}
-                offset={[0.0008, 0.0008]}
-                radialModulation={true}
-                modulationOffset={0.5}
-              />
+              {/* Removed ChromaticAberration - expensive for marginal visual benefit */}
               
-              {/* Vignette for focus effect */}
+              {/* Vignette for focus effect - reduced intensity */}
               <Vignette
-                offset={0.35}
-                darkness={0.4}
+                offset={0.4}
+                darkness={0.3}
                 blendFunction={BlendFunction.NORMAL}
               />
               

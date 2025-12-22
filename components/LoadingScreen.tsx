@@ -41,21 +41,22 @@ export const LoadingScreen = React.memo(function LoadingScreen({ message = 'LOAD
   const [statusIndex, setStatusIndex] = useState(0);
 
   // Animate progress using requestAnimationFrame for smoother 60fps animation
+  // Reduced from 3s to 1.5s for better perceived performance
   useEffect(() => {
     startTimeRef.current = Date.now();
     
     const animate = () => {
       const elapsed = Date.now() - startTimeRef.current;
-      const newProgress = Math.min(100, (elapsed / 3000) * 100); // 3 seconds to 100%
+      const newProgress = Math.min(100, (elapsed / 1500) * 100); // Reduced to 1.5 seconds
       
       setProgress(newProgress);
       
       if (newProgress < 100) {
         rafIdRef.current = requestAnimationFrame(animate);
       } else {
-        // Complete
+        // Complete immediately for better INP
         if (onCompleteRef.current) {
-          setTimeout(onCompleteRef.current, 300);
+          setTimeout(onCompleteRef.current, 100); // Reduced from 300ms to 100ms
         }
       }
     };

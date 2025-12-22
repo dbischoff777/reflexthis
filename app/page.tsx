@@ -362,9 +362,9 @@ function LandingPageContent() {
 
     let cancelled = false;
     const startTime = Date.now();
-    const MIN_DISPLAY_TIME = 1000; // Minimum 1 second display for better UX
+    const MIN_DISPLAY_TIME = 400; // Reduced from 1s to 400ms for better LCP
 
-    // Track individual asset loading progress
+    // Track individual asset loading progress - prioritize critical path
     const assetProgress = {
       logoImage: 0,
       logoVideo: 0,
@@ -375,13 +375,13 @@ function LandingPageContent() {
 
     const updateProgress = () => {
       if (cancelled) return;
-      // Weighted progress: logo (15%), video (25%), buttons (15%), audio (25%), background video (20%)
+      // Rebalanced: prioritize LCP-critical assets (logo 30%), defer non-critical
       const totalProgress = 
-        assetProgress.logoImage * 0.15 +
-        assetProgress.logoVideo * 0.25 +
-        assetProgress.buttonImages * 0.15 +
-        assetProgress.audio * 0.25 +
-        assetProgress.backgroundVideo * 0.2;
+        assetProgress.logoImage * 0.30 +  // Critical for LCP
+        assetProgress.logoVideo * 0.15 +
+        assetProgress.buttonImages * 0.20 +
+        assetProgress.audio * 0.20 +
+        assetProgress.backgroundVideo * 0.15;  // Non-critical, loads in background
       setBootProgress(Math.min(99, Math.round(totalProgress)));
     };
 
@@ -518,13 +518,22 @@ function LandingPageContent() {
       // Ignore prefetch errors – it will still load on first navigation.
     }
 
-    // Wait for all assets and minimum display time
-    Promise.all([
-      imagePromise, 
+    // Critical path: Wait only for essential assets, let others load in background
+    const criticalPromise = Promise.all([
+      imagePromise,  // Logo is LCP-critical
+      Promise.all(buttonImagePromises),  // Buttons needed for interaction
+    ]);
+    
+    // Non-critical assets load in background
+    const nonCriticalPromise = Promise.all([
       videoPromise, 
       audioPromise, 
       backgroundVideoPromise,
-      Promise.all(buttonImagePromises),
+    ]);
+
+    // Continue once critical assets + min time are ready
+    Promise.all([
+      criticalPromise,
       new Promise<void>((resolve) => {
         const elapsed = Date.now() - startTime;
         const remaining = Math.max(0, MIN_DISPLAY_TIME - elapsed);
@@ -532,17 +541,27 @@ function LandingPageContent() {
       })
     ]).then(() => {
       if (!cancelled) {
-        setBootProgress(100);
-        // Small delay to show 100% before hiding
-        setTimeout(() => {
+        // Mark critical complete, but continue loading non-critical in background
+        setBootProgress(85);
+        
+        // Wait for non-critical with short timeout (don't block indefinitely)
+        Promise.race([
+          nonCriticalPromise,
+          new Promise<void>((resolve) => setTimeout(resolve, 800)) // Max 800ms extra wait
+        ]).then(() => {
           if (!cancelled) {
-            setBootstrapping(false);
-            // Set sessionStorage flag ONLY after all assets are successfully preloaded
-            if (typeof window !== 'undefined') {
-              window.sessionStorage.setItem('reflex_boot_done', '1');
-            }
+            setBootProgress(100);
+            // Reduced delay to show 100%
+            setTimeout(() => {
+              if (!cancelled) {
+                setBootstrapping(false);
+                if (typeof window !== 'undefined') {
+                  window.sessionStorage.setItem('reflex_boot_done', '1');
+                }
+              }
+            }, 100); // Reduced from 200ms to 100ms
           }
-        }, 200);
+        });
       }
     });
 

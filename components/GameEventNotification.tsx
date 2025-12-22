@@ -101,7 +101,7 @@ export const GameEventNotification = React.memo(function GameEventNotification({
   const color = getEventColor(currentNotification.type);
 
   return (
-    <div className="absolute left-1/2 transform -translate-x-1/2 z-50 pointer-events-none game-event-notification">
+    <div className="fixed bottom-0 left-0 right-0 flex items-center justify-center z-50 pointer-events-none pb-4">
       <div
         key={currentNotification.id}
         className={cn(

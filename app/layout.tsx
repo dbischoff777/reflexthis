@@ -3,8 +3,6 @@ import localFont from "next/font/local";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import "./globals.css";
-// Ensure drei is imported early to register components with R3F
-import '@react-three/drei';
 import { ErrorBoundaryWrapper } from "@/components/ErrorBoundaryWrapper";
 import { CRTOverlay } from "@/components/CRTOverlay";
 import { InteractionPrevention } from "@/components/InteractionPrevention";
@@ -13,8 +11,11 @@ const geistSans = GeistSans;
 
 const geistMono = GeistMono;
 
+// Optimized font loading with display swap for better LCP
 const rajdhani = localFont({
   variable: "--font-rajdhani",
+  display: "swap", // Prevents FOIT, improves LCP
+  preload: true,
   src: [
     {
       path: "../public/fonts/rajdhani/Rajdhani-Regular.ttf",
@@ -73,10 +74,13 @@ export default function RootLayout({
         <meta name="theme-color" content="#0a0a0f" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        {/* Resource hints for critical splash screen assets */}
-        <link rel="preload" href="/logo/ReflexIcon.jpg" as="image" />
-        <link rel="prefetch" href="/animation/ReflexIconAnimated.mp4" />
-        <link rel="prefetch" href="/animation/menu-background-animated.mp4" />
+        {/* Preconnect for faster resource loading */}
+        <link rel="dns-prefetch" href="/" />
+        {/* Preload critical LCP image with high priority */}
+        <link rel="preload" href="/logo/ReflexIcon.jpg" as="image" fetchPriority="high" />
+        {/* Defer non-critical video loading - use prefetch instead of preload */}
+        <link rel="prefetch" href="/animation/ReflexIconAnimated.mp4" as="video" />
+        <link rel="prefetch" href="/animation/menu-background-animated.mp4" as="video" />
         <link rel="prefetch" href="/game" as="document" />
       </head>
       <body

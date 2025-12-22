@@ -418,17 +418,22 @@ export default function GamePage() {
   }, []); // Empty deps since keybindings are stored in localStorage and we want to recalc on mount
 
   // Memoized button data for 3D grid to prevent unnecessary re-renders
-  // Only recalculates when button states actually change
+  // Optimized: only recalculates when critical button states change
   const buttonGridData = useMemo(() => {
     const pattern = currentPattern?.current;
     const patternButtons = pattern?.buttons || [];
     
+    // Pre-compute sets for O(1) lookups instead of O(n) includes()
+    const highlightedSet = new Set(highlightedButtons);
+    const distractorSet = new Set(
+      gameMode === 'sequence' && isShowingSequence ? sequenceDistractorButtons : []
+    );
+    
     return Array.from({ length: 10 }, (_, i) => {
       const id = i + 1;
       const feedback = buttonPressFeedback[id];
-      const isPrimaryHighlight = highlightedButtons.includes(id);
-      const isDistractorHighlight =
-        gameMode === 'sequence' && isShowingSequence && sequenceDistractorButtons.includes(id);
+      const isPrimaryHighlight = highlightedSet.has(id);
+      const isDistractorHighlight = distractorSet.has(id);
       const isHighlighted = isPrimaryHighlight || isDistractorHighlight;
       const isOddTarget = gameMode === 'oddOneOut' && oddOneOutTarget === id;
       const isPatternButton = patternButtons.includes(id);
@@ -436,7 +441,6 @@ export default function GamePage() {
       const currentHits = buttonHitCounts[id] || 0;
       const remainingHits = requiredHits > 1 ? requiredHits - currentHits : 0;
       // Only pass highlightStartTime when we have both a highlighted button AND a valid timestamp
-      // This prevents undefined from being used in arithmetic (Date.now() - highlightStartTime)
       const validHighlightTime = isHighlighted && highlightStartTimeState !== null
         ? highlightStartTimeState
         : undefined;
@@ -454,7 +458,7 @@ export default function GamePage() {
         remainingHits,
       };
     });
-  }, [highlightedButtons, buttonPressFeedback, highlightStartTimeState, gameMode, oddOneOutTarget, bonusActive, bonusButtonId, buttonReactionTimes, currentPattern, buttonHitRequirements, buttonHitCounts]);
+  }, [highlightedButtons, buttonPressFeedback, highlightStartTimeState, gameMode, oddOneOutTarget, bonusActive, bonusButtonId, buttonReactionTimes, currentPattern, buttonHitRequirements, buttonHitCounts, isShowingSequence, sequenceDistractorButtons]);
 
   // Keep a ref of the paused state for use in callbacks/timers
   useEffect(() => {
