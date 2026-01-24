@@ -1,20 +1,29 @@
-'use client';
+"use client";
 
 import React, { useState, useEffect, useRef, useMemo, useCallback, startTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { BuildInfo } from '@/components/BuildInfo';
 import { ModeAndDifficultySelector } from '@/components/ModeAndDifficultySelector';
 import { StatsModal } from '@/components/StatsModal';
 import { RippleButton } from '@/components/RippleButton';
 import { DemoMode } from '@/components/DemoMode';
-import { GameButtonGridWebGL } from '@/components/GameButton3DWebGL';
 import SettingsModal from '@/components/SettingsModal';
 import { GameMode } from '@/lib/gameModes';
 import { GameProvider, useGameState } from '@/lib/GameContext';
 import { stopBackgroundMusic, setGamePageActive, playMenuMusic, stopMenuMusic, preloadAudioAssets } from '@/lib/soundUtils';
 import { t } from '@/lib/i18n';
 import { useDeviceProfile } from '@/hooks/useDeviceProfile';
+
+// Lazily load heavy WebGL grid so it doesn't block initial landing page JS bundle
+const GameButtonGridWebGLLazy = dynamic(
+  () => import('@/components/GameButton3DWebGL').then((m) => m.GameButtonGridWebGL),
+  {
+    ssr: false,
+    loading: () => null,
+  }
+);
 
 const WARMUP_BUTTONS = Array.from({ length: 10 }, (_, i) => ({
   index: i + 1,
@@ -331,6 +340,7 @@ function LandingPageContent() {
     reducedEffects,
     highContrastMode,
   } = useGameState();
+  const { deviceInfo } = useDeviceProfile();
 
   const LOADING_TIPS = [
     t(language, 'landing.tip.effects'),
@@ -355,9 +365,10 @@ function LandingPageContent() {
   const bootstrappingInitRef = useRef(false);
 
   // Hidden warm-up grid to pre-initialize WebGL and shaders
+  // Only runs on sufficiently capable devices to avoid hurting low-end performance
   const WarmupGrid = () => (
     <div className="pointer-events-none fixed -z-10 opacity-0 w-px h-px overflow-hidden">
-      <GameButtonGridWebGL
+      <GameButtonGridWebGLLazy
         buttons={WARMUP_BUTTONS}
         highlightDuration={1000}
         onPress={() => {}}
@@ -719,6 +730,9 @@ function LandingPageContent() {
         ? t(language, 'loading.assets')
         : t(language, 'loading.finishing');
 
+    // Only enable WebGL warmup on non-low-tier devices
+    const enableWebGlWarmup = !reducedEffects && deviceInfo.gpuTier !== 'low';
+
     // Reduced effects / high-contrast: no video, simple static splash
     if (reducedEffects || highContrastMode) {
       return (
@@ -729,7 +743,7 @@ function LandingPageContent() {
           aria-label={statusLabel}
         >
           {/* Hidden warm-up grid runs behind splash to pre-initialize WebGL */}
-          <WarmupGrid />
+          {enableWebGlWarmup && <WarmupGrid />}
           <div className="relative w-full h-full flex flex-col items-center justify-center gap-6">
             <div className="flex flex-col items-center gap-3">
               <img
@@ -776,7 +790,7 @@ function LandingPageContent() {
         aria-label={t(language, 'loading.engine')}
       >
         {/* Hidden warm-up grid runs behind splash to pre-initialize WebGL */}
-        <WarmupGrid />
+        {enableWebGlWarmup && <WarmupGrid />}
         <div className="relative w-full h-full flex items-center justify-center">
           {splashVideoError ? (
             // Fallback to static image if video fails

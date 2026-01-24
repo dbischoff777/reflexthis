@@ -74,26 +74,25 @@ export const BackgroundGrid = memo(function BackgroundGrid({ gameState, highligh
           // Game over darkening
           baseColor *= (1.0 - uGameOver * 0.5);
           
-          // Main grid pattern - larger cells
+          // Main grid pattern - larger cells (optimized for performance)
           vec2 gridUv = vUv * vec2(24.0, 16.0);
           float gridX = smoothstep(0.96, 1.0, fract(gridUv.x)) + smoothstep(0.04, 0.0, fract(gridUv.x));
           float gridY = smoothstep(0.96, 1.0, fract(gridUv.y)) + smoothstep(0.04, 0.0, fract(gridUv.y));
           float grid = max(gridX, gridY);
           
-          // Secondary finer grid
-          vec2 fineGridUv = vUv * vec2(48.0, 32.0);
-          float fineGridX = smoothstep(0.98, 1.0, fract(fineGridUv.x)) + smoothstep(0.02, 0.0, fract(fineGridUv.x));
-          float fineGridY = smoothstep(0.98, 1.0, fract(fineGridUv.y)) + smoothstep(0.02, 0.0, fract(fineGridUv.y));
-          float fineGrid = max(fineGridX, fineGridY) * 0.3;
+          // Secondary finer grid - simplified for better FPS
+          vec2 fineGridUv = vUv * vec2(36.0, 24.0);
+          float fineGridX = smoothstep(0.97, 1.0, fract(fineGridUv.x)) + smoothstep(0.03, 0.0, fract(fineGridUv.x));
+          float fineGridY = smoothstep(0.97, 1.0, fract(fineGridUv.y)) + smoothstep(0.03, 0.0, fract(fineGridUv.y));
+          float fineGrid = max(fineGridX, fineGridY) * 0.25;
           
-          // Horizontal scan lines - uses accumulated phase (no reset on state change)
-          float scanLine = sin(vUv.y * 200.0 + uScanPhase) * 0.5 + 0.5;
-          scanLine = pow(scanLine, 8.0) * (0.08 + uIntensity * 0.08);
+          // Horizontal scan lines - uses accumulated phase (optimized for FPS)
+          float scanLine = sin(vUv.y * 150.0 + uScanPhase) * 0.5 + 0.5;
+          scanLine = pow(scanLine, 6.0) * (0.08 + uIntensity * 0.08);
           
-          // Animated vertical pulse lines - uses accumulated phase
+          // Animated vertical pulse lines - uses accumulated phase (simplified for FPS)
           float pulse1 = smoothstep(0.02, 0.0, abs(fract(vUv.x * 4.0 - uPulsePhase * 0.3) - 0.5));
-          float pulse2 = smoothstep(0.015, 0.0, abs(fract(vUv.x * 6.0 + uPulsePhase * 0.21) - 0.5));
-          float pulses = (pulse1 + pulse2 * 0.6) * (0.4 + uIntensity * 0.4);
+          float pulses = pulse1 * (0.4 + uIntensity * 0.4);
           
           // Urgency warning pulses (low lives) - uses raw time for consistent speed
           float urgencyPulse = sin(uTime * 8.0) * 0.5 + 0.5;

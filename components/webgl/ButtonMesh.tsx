@@ -79,13 +79,16 @@ export const ButtonMesh = memo(function ButtonMesh({
   const prevHighlightStartTime = useRef<number | undefined>(undefined);
   const anticipationPhase = useRef(0); // 0 = none, 0-1 = anticipation in progress
   
-  // Frustum culling and LOD check (throttled to every 10 frames)
+  // Frustum culling and LOD check (throttled to every 15 frames for better FPS)
   const cullCheckFrame = useRef(0);
+  // Throttle material updates to every 2 frames when not in critical states
+  const materialUpdateFrame = useRef(0);
+  const lastMaterialUpdate = useRef(0);
   
   // Smooth animation using useFrame
   useFrame((state, delta) => {
-    // Frustum culling and LOD check (every 10 frames for performance)
-    if (cullCheckFrame.current % 10 === 0 && groupRef.current) {
+    // Frustum culling and LOD check (every 15 frames for better performance)
+    if (cullCheckFrame.current % 15 === 0 && groupRef.current) {
       const visible = isInFrustum(groupRef.current, state.camera);
       if (visible !== isVisibleRef.current) {
         isVisibleRef.current = visible;
@@ -114,6 +117,12 @@ export const ButtonMesh = memo(function ButtonMesh({
       groupRef.current.visible = true;
     }
     if (!meshRef.current || !materialRef.current) return;
+    
+    // Determine if we need to update materials this frame
+    // Always update for highlighted/feedback states, throttle for idle
+    const needsImmediateUpdate = highlighted || pressFeedback || hovered || pressed;
+    const shouldUpdateMaterial = needsImmediateUpdate || (materialUpdateFrame.current % 2 === 0);
+    materialUpdateFrame.current++;
     
     const mesh = meshRef.current;
     const material = materialRef.current;
@@ -269,6 +278,11 @@ export const ButtonMesh = memo(function ButtonMesh({
     // Apply scale only - position is handled by parent group
     mesh.scale.z = currentDepth.current / BASE_DEPTH;
     mesh.position.z = currentDepth.current / 2; // Offset to keep front face at same position
+    
+    // Skip material updates if not needed (throttled for idle state)
+    if (!shouldUpdateMaterial && !needsImmediateUpdate) {
+      return;
+    }
     
     // Enhanced material properties based on state
     const baseMetalness = 0.7;
@@ -586,58 +600,65 @@ export const ButtonMesh = memo(function ButtonMesh({
       material.clearcoat = 1.0;
     }
     
-    // Update text position to follow button
+    // Update text position to follow button (always update when material updates)
     if (textRef.current) {
       textRef.current.position.z = currentDepth.current + 0.01;
     }
      
-     // Update multi-hit indicator position to follow button surface
-     // The button's front face is at currentDepth.current, so position text above it
-     if (hitCountTextRef.current) {
-       hitCountTextRef.current.position.z = currentDepth.current + 0.05;
-     }
-    
-    // Calculate ripple effect from nearby button presses
-    let totalRipple = 0;
-    const now = Date.now();
-    const RIPPLE_DURATION = 400; // ms
-    const RIPPLE_SPEED = 3; // units per second
-    
-    for (const event of rippleEvents) {
-      if (event.sourceIndex === buttonIndex) continue;
-      
-      const elapsed = now - event.timestamp;
-      if (elapsed > RIPPLE_DURATION) continue;
-      
-      // Find source button position
-      const sourceButton = allButtonPositions.find(b => b.index === event.sourceIndex);
-      if (!sourceButton) continue;
-      
-      // Calculate distance
-      const dx = position[0] - sourceButton.position[0];
-      const dy = position[1] - sourceButton.position[1];
-      const distance = Math.sqrt(dx * dx + dy * dy);
-      
-      // Wave travels outward
-      const wavePosition = (elapsed / 1000) * RIPPLE_SPEED;
-      const distanceFromWave = Math.abs(distance - wavePosition);
-      
-      if (distanceFromWave < 0.5) {
-        const waveStrength = 1 - distanceFromWave / 0.5;
-        const timeFade = 1 - elapsed / RIPPLE_DURATION;
-        // Scale ripple amount based on intensity (default to 0.5 if not provided)
-        const intensity = event.intensity ?? 0.5;
-        const baseRippleAmount = waveStrength * timeFade * 0.15;
-        const scaledRippleAmount = baseRippleAmount * (0.5 + intensity * 0.5); // Scale from 0.5x to 1.0x
-        totalRipple += event.type === 'success' ? scaledRippleAmount : -scaledRippleAmount * 0.5;
-      }
+    // Update multi-hit indicator position to follow button surface
+    // The button's front face is at currentDepth.current, so position text above it
+    if (hitCountTextRef.current) {
+      hitCountTextRef.current.position.z = currentDepth.current + 0.05;
     }
     
-    // Apply ripple to scale
-    rippleOffset.current = THREE.MathUtils.lerp(rippleOffset.current, totalRipple, delta * 15);
-    if (Math.abs(rippleOffset.current) > 0.001 && !pressFeedback) {
-      mesh.scale.x = 1 + rippleOffset.current;
-      mesh.scale.y = 1 + rippleOffset.current;
+    // Calculate ripple effect from nearby button presses (throttled for performance)
+    // Only calculate ripple every 2 frames when not in critical state
+    if (shouldUpdateMaterial || materialUpdateFrame.current % 2 === 0) {
+      let totalRipple = 0;
+      const now = Date.now();
+      const RIPPLE_DURATION = 400; // ms
+      const RIPPLE_SPEED = 3; // units per second
+      
+      // Limit ripple event processing for performance
+      const maxRippleChecks = reducedEffects ? 3 : 5;
+      const eventsToCheck = rippleEvents.slice(0, maxRippleChecks);
+      
+      for (const event of eventsToCheck) {
+        if (event.sourceIndex === buttonIndex) continue;
+        
+        const elapsed = now - event.timestamp;
+        if (elapsed > RIPPLE_DURATION) continue;
+        
+        // Find source button position
+        const sourceButton = allButtonPositions.find(b => b.index === event.sourceIndex);
+        if (!sourceButton) continue;
+        
+        // Calculate distance
+        const dx = position[0] - sourceButton.position[0];
+        const dy = position[1] - sourceButton.position[1];
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        // Wave travels outward
+        const wavePosition = (elapsed / 1000) * RIPPLE_SPEED;
+        const distanceFromWave = Math.abs(distance - wavePosition);
+        
+        if (distanceFromWave < 0.5) {
+          const waveStrength = 1 - distanceFromWave / 0.5;
+          const timeFade = 1 - elapsed / RIPPLE_DURATION;
+          // Scale ripple amount based on intensity (default to 0.5 if not provided)
+          const intensity = event.intensity ?? 0.5;
+          const baseRippleAmount = waveStrength * timeFade * 0.15;
+          const scaledRippleAmount = baseRippleAmount * (0.5 + intensity * 0.5); // Scale from 0.5x to 1.0x
+          totalRipple += event.type === 'success' ? scaledRippleAmount : -scaledRippleAmount * 0.5;
+        }
+      }
+      
+      // Apply ripple to scale
+      rippleOffset.current = THREE.MathUtils.lerp(rippleOffset.current, totalRipple, delta * 15);
+      if (Math.abs(rippleOffset.current) > 0.001 && !pressFeedback) {
+        mesh.scale.x = 1 + rippleOffset.current;
+        mesh.scale.y = 1 + rippleOffset.current;
+      }
     }
     
   });
@@ -680,8 +701,8 @@ export const ButtonMesh = memo(function ButtonMesh({
   
   return (
     <group ref={groupRef} position={position} frustumCulled={true}>
-      {/* Floating Particles around highlighted buttons - LOD: only show at close distance */}
-      {lodLevel <= 1 && (
+      {/* Floating Particles around highlighted buttons - LOD: only show at close distance, disabled in reduced effects */}
+      {!reducedEffects && lodLevel <= 1 && (
         <FloatingParticles 
           active={highlighted} 
           color={urgencyColorRef.current}
@@ -711,18 +732,18 @@ export const ButtonMesh = memo(function ButtonMesh({
         position={[0, 0, 0]} 
       />
       
-      {/* Particle Burst Effect - LOD: reduce particles at distance */}
-      {!reducedEffects && lodLevel <= 2 && (
+      {/* Particle Burst Effect - LOD: reduce particles at distance, more aggressive culling */}
+      {!reducedEffects && lodLevel <= 1 && (
         <ParticleBurst 
           trigger={pressFeedback} 
           position={[0, 0, 0]}
           reactionTime={reactionTime ?? null}
-          reducedEffects={reducedEffects || lodLevel > 1}
+          reducedEffects={reducedEffects || lodLevel > 0}
         />
       )}
       
       {/* Press Depth Indicator - LOD: only show at close distance */}
-      {pressFeedback === 'success' && reactionTime !== null && lodLevel <= 1 && (
+      {pressFeedback === 'success' && reactionTime !== null && lodLevel === 0 && (
         <PressDepthIndicator
           active={pressFeedback === 'success'}
           depth={calculateIntensity(reactionTime) * 0.2}
@@ -731,7 +752,7 @@ export const ButtonMesh = memo(function ButtonMesh({
       )}
       
       {/* Glow Trail for sequence mode - LOD: only show at close distance */}
-      {gameMode === 'sequence' && pressFeedback === 'success' && reactionTime !== null && !reducedEffects && lodLevel <= 1 && (
+      {gameMode === 'sequence' && pressFeedback === 'success' && reactionTime !== null && !reducedEffects && lodLevel === 0 && (
         <GlowTrail
           active={pressFeedback === 'success'}
           intensity={calculateIntensity(reactionTime)}
@@ -739,8 +760,8 @@ export const ButtonMesh = memo(function ButtonMesh({
         />
       )}
       
-      {/* Electric Arcs to other highlighted buttons - LOD: only show at close distance */}
-      {lodLevel <= 1 && connectedHighlightedButtons.map(targetIdx => {
+      {/* Electric Arcs to other highlighted buttons - LOD: only show at close distance, limit connections */}
+      {lodLevel === 0 && connectedHighlightedButtons.slice(0, 1).map(targetIdx => {
         const targetButton = allButtonPositions.find(b => b.index === targetIdx);
         if (!targetButton) return null;
         return (
@@ -758,7 +779,7 @@ export const ButtonMesh = memo(function ButtonMesh({
         );
       })}
       
-      {/* Main button with PBR Physical Material */}
+      {/* Main button with PBR Physical Material - using cached geometry when possible */}
       <RoundedBox
         ref={meshRef}
         args={[BUTTON_SIZE, BUTTON_SIZE, BASE_DEPTH]}
@@ -777,11 +798,11 @@ export const ButtonMesh = memo(function ButtonMesh({
           clearcoat={0.9}
           clearcoatRoughness={0.1}
           reflectivity={1.0}
-          envMapIntensity={1.8}
-          sheen={0.3}
+          envMapIntensity={lodLevel > 1 ? 1.2 : 1.8}
+          sheen={lodLevel > 1 ? 0.2 : 0.3}
           sheenRoughness={0.4}
           sheenColor="#00ffff"
-          transmission={0.05}
+          transmission={lodLevel > 1 ? 0.02 : 0.05}
           thickness={0.5}
           ior={1.5}
         />

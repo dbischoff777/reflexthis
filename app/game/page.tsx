@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
 import { useEffect, useRef, useCallback, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { cn } from '@/lib/utils';
 import { useGameState } from '@/lib/GameContext';
 import { GameMode } from '@/lib/gameModes';
-import { GameButtonGridWebGL } from '@/components/GameButton3DWebGL';
 import { OrientationHandler } from '@/components/OrientationHandler';
 import { ScreenFlash } from '@/components/ScreenFlash';
 import { setGamePageActive, stopMenuMusic } from '@/lib/soundUtils';
@@ -37,8 +37,15 @@ import { loadChallenge } from '@/lib/challenges';
 import { GameModeTitle } from '@/components/GameModeTitle';
 import { GameEventNotification } from '@/components/GameEventNotification';
 
-// Lazy load heavy modal components
-const GameOverModal = lazy(() => import('@/components/GameOverModal').then(m => ({ default: m.GameOverModal })));
+// Lazy load heavy 3D grid & modal components
+const GameButtonGridWebGLLazy = dynamic(
+  () => import('@/components/GameButton3DWebGL').then((m) => m.GameButtonGridWebGL),
+  {
+    ssr: false,
+    loading: () => null,
+  }
+);
+const GameOverModal = lazy(() => import('@/components/GameOverModal').then((m) => ({ default: m.GameOverModal })));
 const SettingsModal = lazy(() => import('@/components/SettingsModal'));
 
 export default function GamePage() {
@@ -922,7 +929,7 @@ export default function GamePage() {
               aspectRatio: '16 / 9',
             }}
           >
-            <GameButtonGridWebGL
+            <GameButtonGridWebGLLazy
               buttons={buttonGridData}
               highlightDuration={highlightDuration}
               onPress={(index) => getButtonHandler()(index)}

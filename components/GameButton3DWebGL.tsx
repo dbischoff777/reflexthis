@@ -161,7 +161,7 @@ export const GameButtonGridWebGL = memo(function GameButtonGridWebGL({
         }}
         dpr={[1, Math.min(maxDpr, 1.5)]} // Cap DPR at 1.5 for better FPS on high-DPI displays
         gl={{
-          antialias: true,
+          antialias: !disablePostprocessing, // Disable antialiasing when post-processing is off for FPS
           alpha: true,
           powerPreference,
           toneMapping: THREE.ACESFilmicToneMapping,
@@ -170,52 +170,45 @@ export const GameButtonGridWebGL = memo(function GameButtonGridWebGL({
           stencil: false, // Disable unused stencil buffer
           depth: true,
           preserveDrawingBuffer: false, // Better memory management
+          logarithmicDepthBuffer: false, // Disable for better performance
         }}
         style={{ background: 'transparent' }}
       >
         <Suspense fallback={null}>
           <WebGLContextHandler />
+          {/* Optimized lighting setup - reduced from 4 to 2 lights for better FPS */}
           {/* Ambient fill light - slightly brighter for better visibility */}
-          <ambientLight intensity={0.4} color="#8899cc" />
+          <ambientLight intensity={0.5} color="#8899cc" />
           
-          {/* Key light - main directional with slight cyan tint */}
+          {/* Combined key light - main directional with slight cyan tint (increased intensity to compensate) */}
           <directionalLight
             position={[5, 8, 6]}
-            intensity={1.4}
+            intensity={1.8}
             color="#f0f8ff"
+            castShadow={false}
           />
           
-          {/* Fill light - cooler cyan-blue for cyber feel */}
-          <directionalLight 
-            position={[-5, 4, 4]} 
-            intensity={0.6} 
-            color="#4488ee" 
-          />
-          
-          {/* Top accent light - adds highlight to button tops */}
-          <pointLight
-            position={[0, 5, 3]}
-            intensity={0.5}
-            color="#00ffff"
-            distance={15}
-            decay={2}
-          />
+          {/* Removed fill light and point light - ambient + key light sufficient for performance */}
           
           {/* Environment for reflections - night preset for darker mood */}
-          <Environment preset="night" background={false} />
+          {/* Disabled in reduced effects mode for better FPS */}
+          {!disablePostprocessing && <Environment preset="night" background={false} />}
           
           {/* Camera Shake Effect */}
           <CameraShake errorEvents={rippleEvents} comboMilestone={comboMilestone} />
           
           {/* Background Grid (vertical backdrop) - reacts to game state */}
-          <BackgroundGrid 
-            gameState={gameState} 
-            highlightedCount={buttons.filter(b => b.highlighted).length}
-            comboMilestone={comboMilestone}
-          />
+          {/* Disable when reduced effects is enabled for better FPS */}
+          {!disablePostprocessing && (
+            <BackgroundGrid 
+              gameState={gameState} 
+              highlightedCount={buttons.filter(b => b.highlighted).length}
+              comboMilestone={comboMilestone}
+            />
+          )}
           
-          {/* Reflection Surface (floor) */}
-          <ReflectionSurface />
+          {/* Reflection Surface (floor) - disable when reduced effects for FPS */}
+          {!disablePostprocessing && <ReflectionSurface />}
           
           {/* Button grid - 3-4-3 layout matching actual game */}
           <group rotation={[0.1, 0, 0]} position={[0, 0, 0]} scale={[gridScale, gridScale, gridScale]}>
@@ -265,22 +258,24 @@ export const GameButtonGridWebGL = memo(function GameButtonGridWebGL({
           </group>
           
           
-          {/* Post-processing effects - reduced for better FPS */}
+          {/* Post-processing effects - optimized for better FPS */}
           {!disablePostprocessing && (
             <EffectComposer multisampling={0}> {/* Disabled MSAA - handled by WebGL antialias */}
-              {/* Dynamic Bloom - responds to combo milestones */}
-              <DynamicBloom comboMilestone={comboMilestone} baseIntensity={0.5} />
+              {/* Dynamic Bloom - responds to combo milestones (reduced quality for FPS) */}
+              <DynamicBloom comboMilestone={comboMilestone} baseIntensity={0.4} />
               
               {/* Removed ChromaticAberration - expensive for marginal visual benefit */}
               
-              {/* Vignette for focus effect - reduced intensity */}
-              <Vignette
-                offset={0.4}
-                darkness={0.3}
-                blendFunction={BlendFunction.NORMAL}
-              />
+              {/* Vignette for focus effect - only when needed (combo milestones) */}
+              {comboMilestone && comboMilestone >= 10 && (
+                <Vignette
+                  offset={0.4}
+                  darkness={0.25}
+                  blendFunction={BlendFunction.NORMAL}
+                />
+              )}
               
-              {/* Tone mapping for cinematic look */}
+              {/* Tone mapping for cinematic look - lighter mode for better FPS */}
               <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
             </EffectComposer>
           )}

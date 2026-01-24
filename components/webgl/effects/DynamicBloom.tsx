@@ -67,10 +67,10 @@ export const DynamicBloom = memo(function DynamicBloom({ comboMilestone, baseInt
   return (
     <Bloom
       intensity={intensity}
-      luminanceThreshold={0.3}
-      luminanceSmoothing={0.9}
-      mipmapBlur
-      radius={0.7}
+      luminanceThreshold={0.35}
+      luminanceSmoothing={0.85}
+      mipmapBlur={false}
+      radius={0.5}
     />
   );
 });
