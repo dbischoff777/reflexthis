@@ -16,6 +16,10 @@ export type PatternType =
   | 'shape-t'
   | 'shape-cross'
   | 'shape-corner'
+  | 'shape-diamond'
+  | 'shape-hourglass'
+  | 'shape-zigzag'
+  | 'shape-smile'
   | 'sweep-left-right'
   | 'sweep-top-bottom'
   | 'cluster'
@@ -161,6 +165,49 @@ function generateSweepTopBottom(): number[] {
 /**
  * Generate cluster pattern (adjacent buttons)
  */
+/**
+ * Diamond / “fat plus” style shapes (readable symmetry on 3-4-3)
+ */
+function generateDiamond(): number[] {
+  const patterns = [
+    [2, 4, 5, 6, 9],
+    [2, 5, 6, 7, 9],
+    [2, 4, 6, 7, 9],
+    [1, 5, 10],
+    [3, 5, 8],
+  ];
+  return patterns[Math.floor(Math.random() * patterns.length)];
+}
+
+/** Both main diagonals — distinct from a single diagonal line */
+function generateHourglass(): number[] {
+  return [1, 3, 5, 6, 8, 10];
+}
+
+/** Short kinetic paths (fun to trace, still fair at low difficulty) */
+function generateZigzag(): number[] {
+  const patterns = [
+    [1, 6, 10],
+    [3, 4, 9],
+    [2, 7, 9],
+    [1, 5, 7],
+    [3, 5, 9],
+    [4, 2, 7],
+    [6, 3, 8],
+  ];
+  return patterns[Math.floor(Math.random() * patterns.length)];
+}
+
+/** Playful “face” — easy to spot in odd-one-out */
+function generateSmile(): number[] {
+  const patterns = [
+    [1, 3, 8, 9, 10],
+    [1, 3, 7, 9, 10],
+    [2, 3, 8, 9, 10],
+  ];
+  return patterns[Math.floor(Math.random() * patterns.length)];
+}
+
 function generateCluster(): number[] {
   // Clusters of 2-4 adjacent buttons
   const clusters = [
@@ -209,6 +256,14 @@ function generatePatternByType(type: PatternType): number[] {
       return generateCross();
     case 'shape-corner':
       return generateCorner();
+    case 'shape-diamond':
+      return generateDiamond();
+    case 'shape-hourglass':
+      return generateHourglass();
+    case 'shape-zigzag':
+      return generateZigzag();
+    case 'shape-smile':
+      return generateSmile();
     case 'sweep-left-right':
       return generateSweepLeftRight();
     case 'sweep-top-bottom':
@@ -239,6 +294,14 @@ function getPatternBonusMultiplier(type: PatternType): number {
       return 1.3; // 30% bonus for shapes
     case 'shape-cross':
       return 1.4; // 40% bonus for cross
+    case 'shape-diamond':
+      return 1.35;
+    case 'shape-hourglass':
+      return 1.38;
+    case 'shape-zigzag':
+      return 1.28;
+    case 'shape-smile':
+      return 1.32;
     case 'shape-corner':
       return 1.15; // 15% bonus for corners
     case 'sweep-left-right':
@@ -252,68 +315,36 @@ function getPatternBonusMultiplier(type: PatternType): number {
   }
 }
 
+/** Every pattern type is eligible regardless of score — keeps early game varied. */
+const ALL_PATTERN_TYPES: PatternType[] = [
+  'line-horizontal',
+  'line-vertical',
+  'line-diagonal',
+  'shape-l',
+  'shape-t',
+  'shape-cross',
+  'shape-corner',
+  'shape-diamond',
+  'shape-hourglass',
+  'shape-zigzag',
+  'shape-smile',
+  'sweep-left-right',
+  'sweep-top-bottom',
+  'cluster',
+  'random',
+];
+
 /**
- * Select appropriate pattern type based on score milestones
- * At score milestones (500, 1500, 2500, etc.), all patterns become available
+ * Pick a pattern type (uniform among all generators; score does not gate unlocks).
  */
-function selectPatternType(
-  targetButtonCount: number,
-  score: number
-): PatternType {
-  const patternOptions: PatternType[] = [];
-  
-  // Score milestones: 500, 1500, 2500, 3500, etc.
-  // At each milestone, unlock more patterns
-  const milestone = Math.floor(score / 500);
-  
-  if (milestone === 0) {
-    // Score < 500: Basic patterns only
-    patternOptions.push(
-      'line-horizontal',
-      'sweep-left-right',
-      'sweep-top-bottom',
-      'random'
-    );
-  } else if (milestone === 1) {
-    // Score 500-1499: Add T-shapes
-    patternOptions.push(
-      'line-horizontal',
-      'sweep-left-right',
-      'sweep-top-bottom',
-      'shape-t',
-      'random'
-    );
-  } else if (milestone === 2) {
-    // Score 1500-2499: Add L-shapes
-    patternOptions.push(
-      'line-horizontal',
-      'sweep-left-right',
-      'sweep-top-bottom',
-      'shape-t',
-      'shape-l',
-      'random'
-    );
-  } else {
-    // Score 2500+: All patterns available (including Cross)
-    patternOptions.push(
-      'line-horizontal',
-      'sweep-left-right',
-      'sweep-top-bottom',
-      'shape-t',
-      'shape-l',
-      'shape-cross',
-      'random'
-    );
-  }
-  
-  // Select random pattern from available options
-  return patternOptions[Math.floor(Math.random() * patternOptions.length)];
+function selectPatternType(_targetButtonCount: number, _score: number): PatternType {
+  return ALL_PATTERN_TYPES[Math.floor(Math.random() * ALL_PATTERN_TYPES.length)];
 }
 
 /**
  * Generate a pattern for the given button count
  * @param targetButtonCount - Desired number of buttons in pattern
- * @param score - Current game score (affects pattern selection)
+ * @param score - Reserved for callers; pattern type is not score-gated
  * @param exclude - Button IDs to exclude (for avoiding recent patterns)
  * @param shouldIncludeBonus - Whether to include a bonus button within the pattern
  * @returns Pattern object with buttons, bonus multiplier, and optional bonus button
@@ -330,8 +361,15 @@ export function generatePattern(
   // Generate buttons for pattern
   let buttons = generatePatternByType(patternType);
   
-  // For recognizable patterns (L, cross, T), preserve the exact pattern - don't modify it
-  const isRecognizablePattern = patternType === 'shape-l' || patternType === 'shape-cross' || patternType === 'shape-t';
+  // Preserve fixed layouts (shapes with intentional geometry)
+  const isRecognizablePattern =
+    patternType === 'shape-l' ||
+    patternType === 'shape-cross' ||
+    patternType === 'shape-t' ||
+    patternType === 'shape-diamond' ||
+    patternType === 'shape-hourglass' ||
+    patternType === 'shape-zigzag' ||
+    patternType === 'shape-smile';
   
   if (isRecognizablePattern) {
     // For recognizable patterns, use the exact buttons from the pattern generator

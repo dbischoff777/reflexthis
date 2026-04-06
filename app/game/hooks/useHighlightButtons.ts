@@ -115,27 +115,22 @@ export function useHighlightButtons({
     // Track if bonus button exists (for duration calculation)
     let hasBonusButton = false;
 
-    // Spawn chance scales with combo: starts at 20% (combo 25) and increases to 60% (combo 100)
+    // Patterns can appear at any combo; frequency scales with performance.
+    // Odd One Out: gentler max so random layouts still mix in.
     const calculatePatternSpawnChance = (comboValue: number): number => {
-      // Base chance at combo 25: 20%
-      // Max chance at combo 100: 60%
-      // No patterns before combo 25
-      const minCombo = 25;
-      const baseChance = 0.2;
-      const maxChance = 0.6;
-      const maxCombo = 100;
-      
-      if (comboValue < minCombo) {
-        return 0;
+      if (gameMode === 'oddOneOut') {
+        const baseChance = 0.3;
+        const maxChance = 0.65;
+        const capCombo = 100;
+        if (comboValue >= capCombo) return maxChance;
+        return baseChance + (maxChance - baseChance) * (comboValue / capCombo);
       }
-      
-      if (comboValue >= maxCombo) {
-        return maxChance;
-      }
-      
-      // Linear interpolation between base and max (combo 25-100)
-      const progress = (comboValue - minCombo) / (maxCombo - minCombo);
-      return baseChance + (maxChance - baseChance) * progress;
+      // reflex, survival, nightmare — matches on-screen help: strong presence from round start
+      const baseChance = 0.4;
+      const maxChance = 1.0;
+      const capCombo = 10;
+      if (comboValue >= capCombo) return maxChance;
+      return baseChance + (maxChance - baseChance) * (comboValue / capCombo);
     };
 
     // Multi-hit spawn chance scales with combo: starts at 15% (combo 15) and increases to 50% (combo 100)
@@ -194,7 +189,7 @@ export function useHighlightButtons({
       const buttonCount = getButtonsToHighlightForDifficulty(combo, difficulty, currentMultiplier);
       
       // Use patterns for all non-oddOneOut, non-sequence modes that rely on this hook
-      // Spawn chance scales with combo: starts at 40% (combo 0) and increases to 100% (combo 10+)
+      // Spawn chance scales with combo: 40% at 0 → 100% by combo 10
       const patternSpawnChance = calculatePatternSpawnChance(combo);
       const usePatterns =
         (gameMode === 'reflex' ||
