@@ -73,6 +73,7 @@ export const STEAM_ACHIEVEMENT_MAP: Record<string, string> = {
   playtime_32hours: 'ACH_PLAYTIME_32HOURS',
   playtime_64hours: 'ACH_PLAYTIME_64HOURS',
   playtime_128hours: 'ACH_PLAYTIME_128HOURS',
+  playtime_999hours: 'ACH_PLAYTIME_999HOURS',
   hard_90s: 'ACH_HARD_90S',
   all_modes: 'ACH_ALL_MODES',
 };
