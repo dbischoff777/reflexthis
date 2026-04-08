@@ -13,6 +13,7 @@ import { ScoreCalculator, ScoringFactors } from '@/lib/scoring';
 import { AdaptiveDifficulty, DifficultyChangeLog } from '@/lib/adaptiveDifficulty';
 import { submitChallengeResult } from '@/lib/challenges';
 import { calculateXP, addXP, getUserProgress } from '@/lib/progression';
+import { storeSteamStats, unlockSteamAchievementForLocalId } from '@/lib/steam/steamClient';
 
 export interface ReactionTimeStats {
   current: number | null;
@@ -773,6 +774,24 @@ export function GameProvider({ children }: { children: ReactNode }) {
           const newlyUnlocked = checkAndUnlockAchievements(updatedStats, sessions);
           if (newlyUnlocked.length > 0) {
             setNewlyUnlockedAchievements(newlyUnlocked);
+
+            // Mirror to Steam achievements when running inside the Electron build on Steam.
+            // Never block UI or throw if Steam isn't available.
+            queueMicrotask(async () => {
+              try {
+                let unlockedAny = false;
+                for (const localId of newlyUnlocked) {
+                  const ok = await unlockSteamAchievementForLocalId(localId);
+                  unlockedAny = unlockedAny || ok;
+                }
+                if (unlockedAny) {
+                  await storeSteamStats();
+                }
+              } catch {
+                // ignore
+              }
+            });
+
             // Clear any existing timeout before creating a new one
             if (achievementClearTimeoutRef.current) {
               clearTimeout(achievementClearTimeoutRef.current);

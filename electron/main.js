@@ -16,6 +16,61 @@ const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 const SERVER_PORT = 3000;
 const SERVER_URL = `http://localhost:${SERVER_PORT}`;
 
+// ============================================================================
+// Steamworks (Achievements/Stats) - main process only
+// ============================================================================
+let steamworks = null;
+let steamAvailable = false;
+let lastSteamStoreAt = 0;
+
+function initSteamworks() {
+  if (steamAvailable || steamworks) return;
+
+  try {
+    // steamworks.js is a native module; keep it in main process.
+    // In development, you can use a steam_appid.txt next to the executable/cwd.
+    // In production on Steam, the AppID is provided by Steam when launched.
+    // If STEAM_APP_ID is provided, pass it explicitly (useful for local testing).
+    const maybeAppId = Number(process.env.STEAM_APP_ID);
+    // eslint-disable-next-line global-require
+    steamworks = require('steamworks.js');
+
+    if (Number.isFinite(maybeAppId) && maybeAppId > 0) {
+      steamworks.init(maybeAppId);
+    } else {
+      steamworks.init();
+    }
+
+    // Basic smoke check: localplayer API should be available if Steam is running.
+    const name = steamworks?.localplayer?.getName?.();
+    steamAvailable = typeof name === 'string' && name.length > 0;
+    logToFile(`Steamworks init: ${steamAvailable ? 'available' : 'unavailable'}`);
+  } catch (e) {
+    steamworks = null;
+    steamAvailable = false;
+    logToFile(`Steamworks init failed (non-Steam run is OK): ${e.message}`);
+  }
+}
+
+function getSteamStatus() {
+  if (!steamAvailable || !steamworks) {
+    return { available: false };
+  }
+
+  try {
+    const steamId = steamworks.localplayer.getSteamId?.();
+    return {
+      available: true,
+      name: steamworks.localplayer.getName?.() ?? null,
+      steamId64: steamId?.steamId64 ? steamId.steamId64.toString() : null,
+      level: steamworks.localplayer.getLevel?.() ?? null,
+      appId: steamworks.utils?.getAppId?.() ?? null,
+    };
+  } catch (e) {
+    return { available: false };
+  }
+}
+
 // Disable Windows DPI scaling to prevent text scaling from affecting game visuals
 // This forces the device scale factor to 1, blocking Windows text scaling (e.g., 150%)
 app.commandLine.appendSwitch('force-device-scale-factor', '1');
@@ -610,6 +665,9 @@ app.whenReady().then(() => {
   appLoaded = false; // Reset loaded flag
   serverReady = false; // Reset server ready flag
   retryCount = 0; // Reset retry count
+
+  // Initialize Steamworks as early as possible (safe no-op outside Steam).
+  initSteamworks();
   
   // Start the server first
   startNextServer();
@@ -654,4 +712,80 @@ ipcMain.handle('app-quit', () => {
   }
   app.quit();
 });
+
+// ============================================================================
+// Steam IPC (renderer -> main)
+// ============================================================================
+ipcMain.handle('steam-is-available', () => {
+  // If init wasn't attempted yet, attempt now.
+  initSteamworks();
+  return getSteamStatus();
+});
+
+ipcMain.handle('steam-activate-achievement', (event, achievementApiName) => {
+  initSteamworks();
+  if (!steamAvailable || !steamworks) return { ok: false, reason: 'steam_unavailable' };
+  if (typeof achievementApiName !== 'string' || achievementApiName.length === 0) {
+    return { ok: false, reason: 'invalid_name' };
+  }
+
+  try {
+    const ok = !!steamworks.achievement.activate(achievementApiName);
+    return { ok };
+  } catch (e) {
+    return { ok: false, reason: 'exception', message: e.message };
+  }
+});
+
+ipcMain.handle('steam-set-stat-int', (event, statName, value) => {
+  initSteamworks();
+  if (!steamAvailable || !steamworks) return { ok: false, reason: 'steam_unavailable' };
+  if (typeof statName !== 'string' || statName.length === 0 || !Number.isFinite(value)) {
+    return { ok: false, reason: 'invalid_args' };
+  }
+  try {
+    const ok = !!steamworks.stats.setInt(statName, Math.trunc(value));
+    return { ok };
+  } catch (e) {
+    return { ok: false, reason: 'exception', message: e.message };
+  }
+});
+
+ipcMain.handle('steam-store-stats', () => {
+  initSteamworks();
+  if (!steamAvailable || !steamworks) return { ok: false, reason: 'steam_unavailable' };
+
+  // Throttle stores (Steam recommends not spamming StoreStats).
+  const now = Date.now();
+  if (now - lastSteamStoreAt < 10_000) {
+    return { ok: true, throttled: true };
+  }
+
+  try {
+    const ok = !!steamworks.stats.store();
+    lastSteamStoreAt = now;
+    return { ok };
+  } catch (e) {
+    return { ok: false, reason: 'exception', message: e.message };
+  }
+});
+
+ipcMain.handle('steam-open-overlay-achievements', () => {
+  initSteamworks();
+  if (!steamAvailable || !steamworks) return { ok: false, reason: 'steam_unavailable' };
+  try {
+    steamworks.overlay.activateDialog(steamworks.overlay.Dialog.Achievements);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, reason: 'exception', message: e.message };
+  }
+});
+
+// Enable Steam Overlay support for Electron if available (safe no-op outside Steam).
+try {
+  // eslint-disable-next-line global-require
+  require('steamworks.js').electronEnableSteamOverlay();
+} catch (_) {
+  // ignore
+}
 

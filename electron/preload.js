@@ -10,5 +10,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
     electron: process.versions.electron,
   },
   quit: () => ipcRenderer.invoke('app-quit'),
+  steam: {
+    isAvailable: () => ipcRenderer.invoke('steam-is-available'),
+    activateAchievement: (achievementApiName) =>
+      ipcRenderer.invoke('steam-activate-achievement', achievementApiName),
+    setStatInt: (statName, value) => ipcRenderer.invoke('steam-set-stat-int', statName, value),
+    storeStats: () => ipcRenderer.invoke('steam-store-stats'),
+    openOverlayAchievements: () => ipcRenderer.invoke('steam-open-overlay-achievements'),
+  },
 });
 
