@@ -34,6 +34,7 @@ import { useMobileHandlers } from './hooks/useMobileHandlers';
 import { useGameInitialization } from './hooks/useGameInitialization';
 import { useGameEventNotifications } from './hooks/useGameEventNotifications';
 import { loadChallenge } from '@/lib/challenges';
+import { ACTIVE_CHALLENGE_SESSION_KEY, parseActiveChallengeSession } from '@/lib/challengeSession';
 import { GameModeTitle } from '@/components/GameModeTitle';
 import { GameEventNotification } from '@/components/GameEventNotification';
 
@@ -527,10 +528,15 @@ export default function GamePage() {
   // Check for active challenge on mount - must happen before game initialization
   useEffect(() => {
     if (typeof window !== 'undefined' && !isReady) {
-      const challengeData = sessionStorage.getItem('reflexthis_activeChallenge');
+      const challengeData = sessionStorage.getItem(ACTIVE_CHALLENGE_SESSION_KEY);
       if (challengeData) {
         try {
-          const challenge = JSON.parse(challengeData);
+          const challenge = parseActiveChallengeSession(challengeData);
+          if (!challenge) {
+            sessionStorage.removeItem(ACTIVE_CHALLENGE_SESSION_KEY);
+            return;
+          }
+
           activeChallengeRef.current = challenge;
           
           // Load challenge to get parameters
@@ -544,7 +550,7 @@ export default function GamePage() {
         } catch (error) {
           console.error('Error loading challenge:', error);
           // Clear invalid challenge data
-          sessionStorage.removeItem('reflexthis_activeChallenge');
+          sessionStorage.removeItem(ACTIVE_CHALLENGE_SESSION_KEY);
         }
       }
     }

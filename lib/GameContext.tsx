@@ -14,6 +14,7 @@ import { AdaptiveDifficulty, DifficultyChangeLog } from '@/lib/adaptiveDifficult
 import { submitChallengeResult } from '@/lib/challenges';
 import { calculateXP, addXP, getUserProgress } from '@/lib/progression';
 import { storeSteamStats, unlockSteamAchievementForLocalId } from '@/lib/steam/steamClient';
+import { ACTIVE_CHALLENGE_SESSION_KEY, parseActiveChallengeSession } from '@/lib/challengeSession';
 
 export interface ReactionTimeStats {
   current: number | null;
@@ -711,24 +712,26 @@ export function GameProvider({ children }: { children: ReactNode }) {
           // Submit challenge result if this was a challenge game
           let isChallenge = false;
           if (typeof window !== 'undefined') {
-            const challengeData = sessionStorage.getItem('reflexthis_activeChallenge');
+            const challengeData = sessionStorage.getItem(ACTIVE_CHALLENGE_SESSION_KEY);
             if (challengeData) {
               try {
-                const challenge = JSON.parse(challengeData);
-                isChallenge = true;
-                const userId = 'local-user'; // In a real app, this would be from auth
-                submitChallengeResult(
-                  challenge.id,
-                  userId,
-                  score,
-                  {
-                    reactionTime: reactionTimeStats.average || undefined,
-                    accuracy,
-                  }
-                );
-                
-                // Clear challenge from sessionStorage
-                sessionStorage.removeItem('reflexthis_activeChallenge');
+                const challenge = parseActiveChallengeSession(challengeData);
+                if (challenge) {
+                  isChallenge = true;
+                  const userId = 'local-user'; // In a real app, this would be from auth
+                  submitChallengeResult(
+                    challenge.id,
+                    userId,
+                    score,
+                    {
+                      reactionTime: reactionTimeStats.average || undefined,
+                      accuracy,
+                    }
+                  );
+                }
+
+                // Always clear challenge from sessionStorage (even if invalid)
+                sessionStorage.removeItem(ACTIVE_CHALLENGE_SESSION_KEY);
               } catch (error) {
                 console.error('Error submitting challenge result:', error);
               }

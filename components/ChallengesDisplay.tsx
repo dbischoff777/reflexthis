@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGameState } from '@/lib/GameContext';
-import { t } from '@/lib/i18n';
 import {
   Challenge,
   getTodaysChallenge,
@@ -16,7 +15,7 @@ import {
   type ChallengeType,
   type StreakBadge,
 } from '@/lib/challenges';
-import { cn } from '@/lib/utils';
+import { ACTIVE_CHALLENGE_SESSION_KEY, serializeActiveChallengeSession } from '@/lib/challengeSession';
 
 interface ChallengesDisplayProps {
   onStartChallenge?: (challengeId: string) => void;
@@ -80,10 +79,10 @@ export function ChallengesDisplay({ onStartChallenge }: ChallengesDisplayProps) 
     
     // Store challenge ID in sessionStorage for game page to pick up
     if (typeof window !== 'undefined') {
-      sessionStorage.setItem('reflexthis_activeChallenge', JSON.stringify({
-        id: challenge.id,
-        type: challenge.type,
-      }));
+      sessionStorage.setItem(
+        ACTIVE_CHALLENGE_SESSION_KEY,
+        serializeActiveChallengeSession({ id: challenge.id, type: challenge.type })
+      );
     }
     
     // Navigate to game page

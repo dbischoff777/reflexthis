@@ -90,6 +90,50 @@ function logToFile(message) {
   console.log(message);
 }
 
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function showErrorPage({ title, heading, messageLines }) {
+  if (!mainWindow) return;
+
+  const safeTitle = escapeHtml(title);
+  const safeHeading = escapeHtml(heading);
+  const safeLines = (Array.isArray(messageLines) ? messageLines : [])
+    .map((line) => `<p style="margin: 8px 0;">${escapeHtml(line)}</p>`)
+    .join('');
+
+  const html = `<!doctype html>
+  <html>
+    <head>
+      <meta charset="utf-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <title>${safeTitle}</title>
+    </head>
+    <body style="font-family: Arial, sans-serif; padding: 20px; background: #1a1a1a; color: #fff; height: 100vh; margin: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+      <div style="max-width: 900px;">
+        <h1 style="margin: 0 0 12px 0;">${safeHeading}</h1>
+        ${safeLines}
+        <p style="margin: 14px 0 0 0; opacity: 0.8;">Log file:</p>
+        <p style="background: #2a2a2a; padding: 10px; border-radius: 4px; font-family: monospace; word-break: break-all; margin: 8px 0 0 0;">${escapeHtml(
+          logFile
+        )}</p>
+      </div>
+    </body>
+  </html>`;
+
+  mainWindow
+    .loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`)
+    .catch((e) => {
+      logToFile(`Failed to show error page: ${e.message}`);
+    });
+}
+
 // Log startup
 logToFile('=== Electron App Starting ===');
 logToFile(`isDev: ${isDev}`);
@@ -159,22 +203,14 @@ function createWindow() {
     
     mainWindow.loadURL(SERVER_URL).catch((error) => {
       logToFile(`ERROR: Failed to load app: ${error.message}`);
-      // Use a simpler error display that doesn't rely on data URLs
-      mainWindow.webContents.executeJavaScript(`
-        document.body.innerHTML = \`
-          <div style="font-family: Arial; padding: 20px; background: #1a1a1a; color: #fff; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-            <h1>Error Loading App</h1>
-            <p><strong>Error:</strong> ${error.message}</p>
-            <p><strong>Log file location:</strong></p>
-            <p style="background: #2a2a2a; padding: 10px; border-radius: 4px; font-family: monospace; word-break: break-all;">${logFile}</p>
-            <p>Please check the log file for detailed error information.</p>
-            <p>Retrying in 3 seconds...</p>
-          </div>
-        \`;
-        setTimeout(() => { window.location.reload(); }, 3000);
-      `).catch(() => {
-        // If executeJavaScript fails, try basic HTML
-        logToFile('Failed to execute error display script');
+      showErrorPage({
+        title: 'Error Loading App',
+        heading: 'Error Loading App',
+        messageLines: [
+          `Error: ${error.message}`,
+          'Please check the log file for detailed error information.',
+          'Retrying in 3 seconds...',
+        ],
       });
     });
   };
@@ -213,21 +249,16 @@ function createWindow() {
       
       if (retryCount > MAX_RETRIES) {
         logToFile(`Max retries (${MAX_RETRIES}) reached. Showing error.`);
-        mainWindow.webContents.executeJavaScript(`
-          document.body.innerHTML = \`
-            <div style="font-family: Arial; padding: 20px; background: #1a1a1a; color: #fff; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-              <h1>Connection Error</h1>
-              <p>The Next.js server is not responding after ${MAX_RETRIES} attempts.</p>
-              <p><strong>Error Code:</strong> ${errorCode}</p>
-              <p><strong>Description:</strong> ${errorDescription}</p>
-              <p><strong>Log file location:</strong></p>
-              <p style="background: #2a2a2a; padding: 10px; border-radius: 4px; font-family: monospace; word-break: break-all;">${logFile}</p>
-              <p>Please check the log file to see why the server failed to start.</p>
-              <p>You can try closing and reopening the application.</p>
-            </div>
-          \`;
-        `).catch(() => {
-          logToFile('Failed to display error message');
+        showErrorPage({
+          title: 'Connection Error',
+          heading: 'Connection Error',
+          messageLines: [
+            `The Next.js server is not responding after ${MAX_RETRIES} attempts.`,
+            `Error Code: ${errorCode}`,
+            `Description: ${errorDescription}`,
+            'Please check the log file to see why the server failed to start.',
+            'You can try closing and reopening the application.',
+          ],
         });
         return;
       }
