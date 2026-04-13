@@ -3,10 +3,10 @@
 	"appid" "4622350"
 
 	// Output folder where SteamPipe writes logs/manifests during upload.
-	"buildoutput" "..\\..\\steam_build_output"
+	"buildoutput" "D:\\Workspace\\ReactJS\\reflexthis\\steam_build_output"
 
 	// Root folder used by depot scripts (relative paths resolve from here).
-	"contentroot" "..\\..\\dist\\win-unpacked"
+	"contentroot" "D:\\Workspace\\ReactJS\\reflexthis\\dist\\win-unpacked"
 
 	"setlive" ""
 	"preview" "0"

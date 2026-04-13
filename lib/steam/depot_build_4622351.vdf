@@ -3,7 +3,7 @@
 	"DepotID" "4622351"
 
 	// Upload the packaged Windows app folder (contains Reflex This.exe and resources/).
-	"ContentRoot" "..\\..\\dist\\win-unpacked"
+	"ContentRoot" "D:\\Workspace\\ReactJS\\reflexthis\\dist\\win-unpacked"
 
 	"FileMapping"
 	{
