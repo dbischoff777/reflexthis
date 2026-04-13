@@ -1,0 +1,20 @@
+"DepotBuildConfig"
+{
+	"DepotID" "4622351"
+
+	// Upload the packaged Windows app folder (contains Reflex This.exe and resources/).
+	"ContentRoot" "..\\..\\dist\\win-unpacked"
+
+	"FileMapping"
+	{
+		"LocalPath" "*"
+		"DepotPath" "."
+		"recursive" "1"
+	}
+
+	// Don't ship local testing helpers / debug artifacts if they exist.
+	"FileExclusion" "steam_appid.txt"
+	"FileExclusion" "*.pdb"
+	"FileExclusion" "*.map"
+}
+

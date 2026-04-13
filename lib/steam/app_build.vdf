@@ -1,0 +1,20 @@
+"appbuild"
+{
+	"appid" "4622350"
+
+	// Output folder where SteamPipe writes logs/manifests during upload.
+	"buildoutput" "..\\..\\steam_build_output"
+
+	// Root folder used by depot scripts (relative paths resolve from here).
+	"contentroot" "..\\..\\dist\\win-unpacked"
+
+	"setlive" ""
+	"preview" "0"
+	"local" ""
+
+	"depots"
+	{
+		"4622351" "depot_build_4622351.vdf"
+	}
+}
+
