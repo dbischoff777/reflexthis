@@ -22,6 +22,7 @@ const SERVER_URL = `http://localhost:${SERVER_PORT}`;
 let steamworks = null;
 let steamAvailable = false;
 let lastSteamStoreAt = 0;
+let steamCallbacksInterval = null;
 
 function initSteamworks() {
   if (steamAvailable || steamworks) return;
@@ -35,7 +36,21 @@ function initSteamworks() {
     // eslint-disable-next-line global-require
     steamworks = require('steamworks.js');
 
+    // If we're not launched by Steam, restartAppIfNecessary will relaunch us through Steam
+    // (required for overlay + proper stats/achievements context).
     if (Number.isFinite(maybeAppId) && maybeAppId > 0) {
+      try {
+        const shouldRestart = !!steamworks.restartAppIfNecessary?.(maybeAppId);
+        if (shouldRestart) {
+          logToFile(`Steamworks requested restart via Steam (appId=${maybeAppId}). Quitting...`);
+          // Quit quickly; Steam will relaunch us.
+          app.quit();
+          return;
+        }
+      } catch (e) {
+        logToFile(`Steamworks restartAppIfNecessary failed (continuing): ${e.message}`);
+      }
+
       steamworks.init(maybeAppId);
     } else {
       steamworks.init();
@@ -45,6 +60,17 @@ function initSteamworks() {
     const name = steamworks?.localplayer?.getName?.();
     steamAvailable = typeof name === 'string' && name.length > 0;
     logToFile(`Steamworks init: ${steamAvailable ? 'available' : 'unavailable'}`);
+
+    // Pump Steam callbacks periodically (recommended for callback-driven systems like overlay/stats).
+    if (steamAvailable && steamworks?.runCallbacks && !steamCallbacksInterval) {
+      steamCallbacksInterval = setInterval(() => {
+        try {
+          steamworks.runCallbacks();
+        } catch (_) {
+          // ignore
+        }
+      }, 100);
+    }
   } catch (e) {
     steamworks = null;
     steamAvailable = false;
@@ -724,6 +750,10 @@ app.on('window-all-closed', () => {
   if (nextServer) {
     nextServer.kill();
   }
+  if (steamCallbacksInterval) {
+    clearInterval(steamCallbacksInterval);
+    steamCallbacksInterval = null;
+  }
   
   if (process.platform !== 'darwin') {
     app.quit();
@@ -734,12 +764,20 @@ app.on('before-quit', () => {
   if (nextServer) {
     nextServer.kill();
   }
+  if (steamCallbacksInterval) {
+    clearInterval(steamCallbacksInterval);
+    steamCallbacksInterval = null;
+  }
 });
 
 // Handle quit request from renderer
 ipcMain.handle('app-quit', () => {
   if (nextServer) {
     nextServer.kill();
+  }
+  if (steamCallbacksInterval) {
+    clearInterval(steamCallbacksInterval);
+    steamCallbacksInterval = null;
   }
   app.quit();
 });
