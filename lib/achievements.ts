@@ -119,203 +119,147 @@ export function getAchievementProgress(
 // ACHIEVEMENT DEFINITIONS
 // ============================================================================
 
-const ALL_ACHIEVEMENTS: Achievement[] = [
-  // Score Milestones
-  {
-    id: 'score_100',
-    title: 'Getting Started',
-    description: 'Score 100 points in a single run.',
-    category: 'score',
-    icon: '🎯',
-    rarity: 'common',
-    target: 100,
-    checkCondition: (stats) => (stats.bestScore ?? 0) >= 100,
-    getProgress: (stats) => ({
-      current: Math.min(stats.bestScore ?? 0, 100),
-      target: 100,
-    }),
+type AchievementRarity = Achievement['rarity'];
+
+const SCORE_MILESTONES = [
+  100, 250, 500, 1000, 2000, 5000,
+  10000, 20000, 50000, 100000, 200000, 500000,
+  1000000, 2000000, 5000000, 10000000, 20000000, 50000000, 100000000,
+] as const;
+
+const COMBO_MILESTONES = [
+  10, 20, 30, 50, 100, 200, 300, 500, 1000, 2000, 5000, 10000,
+] as const;
+
+const REACTION_MILESTONES_MS = [
+  250, 200, 150, 100, 75, 50, 25, 10, 5,
+] as const;
+
+const GAMES_MILESTONES = [100, 500, 1000] as const;
+
+const PLAYTIME_MILESTONES_MS: ReadonlyArray<{ id: string; ms: number; label: string; rarity: AchievementRarity }> = [
+  { id: 'playtime_hour', ms: 1 * 60 * 60 * 1000, label: '1 hour', rarity: 'rare' },
+  { id: 'playtime_2hours', ms: 2 * 60 * 60 * 1000, label: '2 hours', rarity: 'rare' },
+  { id: 'playtime_4hours', ms: 4 * 60 * 60 * 1000, label: '4 hours', rarity: 'epic' },
+  { id: 'playtime_8hours', ms: 8 * 60 * 60 * 1000, label: '8 hours', rarity: 'epic' },
+  { id: 'playtime_16hours', ms: 16 * 60 * 60 * 1000, label: '16 hours', rarity: 'legendary' },
+  { id: 'playtime_32hours', ms: 32 * 60 * 60 * 1000, label: '32 hours', rarity: 'legendary' },
+  { id: 'playtime_64hours', ms: 64 * 60 * 60 * 1000, label: '64 hours', rarity: 'legendary' },
+  { id: 'playtime_128hours', ms: 128 * 60 * 60 * 1000, label: '128 hours', rarity: 'legendary' },
+  { id: 'playtime_999hours', ms: 999 * 60 * 60 * 1000, label: '999 hours', rarity: 'legendary' },
+];
+
+function formatCompactNumber(n: number): string {
+  if (n >= 1_000_000_000) return `${Math.round(n / 1_000_000_000)}B`;
+  if (n >= 1_000_000) return `${Math.round(n / 1_000_000)}M`;
+  if (n >= 1_000) return `${Math.round(n / 1_000)}K`;
+  return String(n);
+}
+
+function scoreRarityForTarget(score: number): AchievementRarity {
+  if (score >= 1_000_000) return 'legendary';
+  if (score >= 100_000) return 'epic';
+  if (score >= 5_000) return 'rare';
+  return 'common';
+}
+
+function comboRarityForTarget(combo: number): AchievementRarity {
+  if (combo >= 1000) return 'legendary';
+  if (combo >= 200) return 'epic';
+  if (combo >= 50) return 'rare';
+  return 'common';
+}
+
+function reactionRarityForTarget(ms: number): AchievementRarity {
+  if (ms <= 25) return 'legendary';
+  if (ms <= 75) return 'epic';
+  if (ms <= 150) return 'rare';
+  return 'common';
+}
+
+const SCORE_ACHIEVEMENTS: Achievement[] = SCORE_MILESTONES.map((target) => ({
+  id: `score_${target}`,
+  title: target <= 2000 ? 'Score Milestone' : 'High Score Milestone',
+  description: `Score ${formatCompactNumber(target)} points in a single run.`,
+  category: 'score',
+  icon: '🎯',
+  rarity: scoreRarityForTarget(target),
+  target,
+  checkCondition: (stats) => (stats.bestScore ?? 0) >= target,
+  getProgress: (stats) => ({
+    current: Math.min(stats.bestScore ?? 0, target),
+    target,
+  }),
+}));
+
+const COMBO_ACHIEVEMENTS: Achievement[] = COMBO_MILESTONES.map((target) => ({
+  id: `combo_${target}`,
+  title: target < 100 ? 'Combo Milestone' : 'Combo Mastery',
+  description: `Reach a ${target}x combo in a single run.`,
+  category: 'combo',
+  icon: '🔥',
+  rarity: comboRarityForTarget(target),
+  target,
+  checkCondition: (stats) => (stats.bestCombo ?? 0) >= target,
+  getProgress: (stats) => ({
+    current: Math.min(stats.bestCombo ?? 0, target),
+    target,
+  }),
+}));
+
+const REACTION_ACHIEVEMENTS: Achievement[] = REACTION_MILESTONES_MS.map((targetMs) => ({
+  id: `reaction_${targetMs}`,
+  title: targetMs <= 50 ? 'Reflex Reactor' : 'Fast Reflexes',
+  description: `Achieve a reaction time under ${targetMs}ms.`,
+  category: 'reaction',
+  icon: '⚡',
+  rarity: reactionRarityForTarget(targetMs),
+  target: targetMs,
+  checkCondition: (stats) => {
+    const fastest = stats.fastestReactionTime;
+    return fastest !== null && fastest <= targetMs;
   },
-  {
-    id: 'score_250',
-    title: 'Score Hunter',
-    description: 'Score 250 points in a single run.',
-    category: 'score',
-    icon: '🏹',
-    rarity: 'common',
-    target: 250,
-    checkCondition: (stats) => (stats.bestScore ?? 0) >= 250,
-    getProgress: (stats) => ({
-      current: Math.min(stats.bestScore ?? 0, 250),
-      target: 250,
-    }),
+  getProgress: (stats) => {
+    const fastest = stats.fastestReactionTime;
+    if (fastest === null) return { current: 0, target: targetMs };
+    return {
+      current: Math.max(0, targetMs - fastest),
+      target: targetMs,
+    };
   },
-  {
-    id: 'score_500',
-    title: 'Score Master',
-    description: 'Score 500 points in a single run.',
-    category: 'score',
-    icon: '⭐',
-    rarity: 'rare',
-    target: 500,
-    checkCondition: (stats) => (stats.bestScore ?? 0) >= 500,
-    getProgress: (stats) => ({
-      current: Math.min(stats.bestScore ?? 0, 500),
-      target: 500,
-    }),
-  },
-  {
-    id: 'score_1000',
-    title: 'Score Legend',
-    description: 'Score 1000 points in a single run.',
-    category: 'score',
-    icon: '👑',
-    rarity: 'epic',
-    target: 1000,
-    checkCondition: (stats) => (stats.bestScore ?? 0) >= 1000,
-    getProgress: (stats) => ({
-      current: Math.min(stats.bestScore ?? 0, 1000),
-      target: 1000,
-    }),
-  },
-  {
-    id: 'score_2000',
-    title: 'Score Deity',
-    description: 'Score 2000 points in a single run.',
-    category: 'score',
-    icon: '⚡',
-    rarity: 'legendary',
-    target: 2000,
-    checkCondition: (stats) => (stats.bestScore ?? 0) >= 2000,
-    getProgress: (stats) => ({
-      current: Math.min(stats.bestScore ?? 0, 2000),
-      target: 2000,
-    }),
-  },
-  
-  // Combo Achievements
-  {
-    id: 'combo_10',
-    title: 'Combo Initiate',
-    description: 'Reach a 10x combo in a single run.',
-    category: 'combo',
-    icon: '🔥',
-    rarity: 'common',
-    target: 10,
-    checkCondition: (stats) => (stats.bestCombo ?? 0) >= 10,
-    getProgress: (stats) => ({
-      current: Math.min(stats.bestCombo ?? 0, 10),
-      target: 10,
-    }),
-  },
-  {
-    id: 'combo_20',
-    title: 'Combo Master',
-    description: 'Reach a 20x combo in a single run.',
-    category: 'combo',
-    icon: '💥',
-    rarity: 'rare',
-    target: 20,
-    checkCondition: (stats) => (stats.bestCombo ?? 0) >= 20,
-    getProgress: (stats) => ({
-      current: Math.min(stats.bestCombo ?? 0, 20),
-      target: 20,
-    }),
-  },
-  {
-    id: 'combo_30',
-    title: 'Combo Legend',
-    description: 'Reach a 30x combo in a single run.',
-    category: 'combo',
-    icon: '🌟',
-    rarity: 'epic',
-    target: 30,
-    checkCondition: (stats) => (stats.bestCombo ?? 0) >= 30,
-    getProgress: (stats) => ({
-      current: Math.min(stats.bestCombo ?? 0, 30),
-      target: 30,
-    }),
-  },
-  {
-    id: 'combo_50',
-    title: 'Combo Deity',
-    description: 'Reach a 50x combo in a single run.',
-    category: 'combo',
-    icon: '💫',
-    rarity: 'legendary',
-    target: 50,
-    checkCondition: (stats) => (stats.bestCombo ?? 0) >= 50,
-    getProgress: (stats) => ({
-      current: Math.min(stats.bestCombo ?? 0, 50),
-      target: 50,
-    }),
-  },
-  
-  // Reaction Time Achievements
-  {
-    id: 'reaction_250',
-    title: 'Lightning Fast',
-    description: 'Achieve a reaction time under 250ms.',
-    category: 'reaction',
-    icon: '⚡',
-    rarity: 'rare',
-    target: 250,
-    checkCondition: (stats) => {
-      const fastest = stats.fastestReactionTime;
-      return fastest !== null && fastest <= 250;
-    },
-    getProgress: (stats) => {
-      const fastest = stats.fastestReactionTime;
-      if (fastest === null) return { current: 0, target: 250 };
-      return {
-        current: Math.max(0, 250 - fastest),
-        target: 250,
-      };
-    },
-  },
-  {
-    id: 'reaction_200',
-    title: 'Superhuman',
-    description: 'Achieve a reaction time under 200ms.',
-    category: 'reaction',
-    icon: '🚀',
-    rarity: 'epic',
-    target: 200,
-    checkCondition: (stats) => {
-      const fastest = stats.fastestReactionTime;
-      return fastest !== null && fastest <= 200;
-    },
-    getProgress: (stats) => {
-      const fastest = stats.fastestReactionTime;
-      if (fastest === null) return { current: 0, target: 200 };
-      return {
-        current: Math.max(0, 200 - fastest),
-        target: 200,
-      };
-    },
-  },
-  {
-    id: 'reaction_150',
-    title: 'Godlike Reflexes',
-    description: 'Achieve a reaction time under 150ms.',
-    category: 'reaction',
-    icon: '⚡',
-    rarity: 'legendary',
-    target: 150,
-    checkCondition: (stats) => {
-      const fastest = stats.fastestReactionTime;
-      return fastest !== null && fastest <= 150;
-    },
-    getProgress: (stats) => {
-      const fastest = stats.fastestReactionTime;
-      if (fastest === null) return { current: 0, target: 150 };
-      return {
-        current: Math.max(0, 150 - fastest),
-        target: 150,
-      };
-    },
-  },
-  
-  // Mode Mastery
+}));
+
+const GAMES_ACHIEVEMENTS: Achievement[] = GAMES_MILESTONES.map((target) => ({
+  id: `games_${target}`,
+  title: target >= 1000 ? 'Master Grinder' : target >= 500 ? 'Dedicated' : 'Veteran',
+  description: `Play ${target} games.`,
+  category: 'consistency',
+  icon: '🏆',
+  rarity: target >= 1000 ? 'legendary' : target >= 500 ? 'epic' : 'rare',
+  target,
+  checkCondition: (stats) => stats.totalGames >= target,
+  getProgress: (stats) => ({
+    current: Math.min(stats.totalGames, target),
+    target,
+  }),
+}));
+
+const PLAYTIME_ACHIEVEMENTS: Achievement[] = PLAYTIME_MILESTONES_MS.map(({ id, ms, label, rarity }) => ({
+  id,
+  title: 'Marathon Player',
+  description: `Accumulate ${label} of total playtime.`,
+  category: 'consistency',
+  icon: '⏱️',
+  rarity,
+  target: ms,
+  checkCondition: (stats) => stats.totalPlaytime >= ms,
+  getProgress: (stats) => ({
+    current: Math.min(stats.totalPlaytime, ms),
+    target: ms,
+  }),
+}));
+
+const MODE_ACHIEVEMENTS: Achievement[] = [
   {
     id: 'mode_reflex',
     title: 'Reflex Master',
@@ -325,17 +269,10 @@ const ALL_ACHIEVEMENTS: Achievement[] = [
     rarity: 'rare',
     target: 300,
     gameMode: 'reflex',
-    checkCondition: (stats, sessions) => {
-      const reflexSessions = sessions.filter(s => s.gameMode === 'reflex');
-      return reflexSessions.some(s => s.score >= 300);
-    },
-    getProgress: (stats, sessions) => {
-      const reflexSessions = sessions.filter(s => s.gameMode === 'reflex');
-      const bestReflex = reflexSessions.length > 0 ? Math.max(...reflexSessions.map(s => s.score)) : 0;
-      return {
-        current: Math.min(bestReflex, 300),
-        target: 300,
-      };
+    checkCondition: (_stats, sessions) => sessions.some((s) => s.gameMode === 'reflex' && s.score >= 300),
+    getProgress: (_stats, sessions) => {
+      const best = sessions.filter((s) => s.gameMode === 'reflex').reduce((m, s) => Math.max(m, s.score), 0);
+      return { current: Math.min(best, 300), target: 300 };
     },
   },
   {
@@ -347,17 +284,10 @@ const ALL_ACHIEVEMENTS: Achievement[] = [
     rarity: 'rare',
     target: 10,
     gameMode: 'sequence',
-    checkCondition: (stats, sessions) => {
-      const sequenceSessions = sessions.filter(s => s.gameMode === 'sequence');
-      return sequenceSessions.some(s => s.score >= 10);
-    },
-    getProgress: (stats, sessions) => {
-      const sequenceSessions = sessions.filter(s => s.gameMode === 'sequence');
-      const bestSequence = sequenceSessions.length > 0 ? Math.max(...sequenceSessions.map(s => s.score)) : 0;
-      return {
-        current: Math.min(bestSequence, 10),
-        target: 10,
-      };
+    checkCondition: (_stats, sessions) => sessions.some((s) => s.gameMode === 'sequence' && s.score >= 10),
+    getProgress: (_stats, sessions) => {
+      const best = sessions.filter((s) => s.gameMode === 'sequence').reduce((m, s) => Math.max(m, s.score), 0);
+      return { current: Math.min(best, 10), target: 10 };
     },
   },
   {
@@ -369,19 +299,13 @@ const ALL_ACHIEVEMENTS: Achievement[] = [
     rarity: 'epic',
     target: 60,
     gameMode: 'survival',
-    checkCondition: (stats, sessions) => {
-      const survivalSessions = sessions.filter(s => s.gameMode === 'survival');
-      return survivalSessions.some(s => Math.floor(s.duration / 1000) >= 60);
-    },
-    getProgress: (stats, sessions) => {
-      const survivalSessions = sessions.filter(s => s.gameMode === 'survival');
-      const longestSurvival = survivalSessions.length > 0
-        ? Math.max(...survivalSessions.map(s => Math.floor(s.duration / 1000)))
-        : 0;
-      return {
-        current: Math.min(longestSurvival, 60),
-        target: 60,
-      };
+    checkCondition: (_stats, sessions) =>
+      sessions.some((s) => s.gameMode === 'survival' && Math.floor(s.duration / 1000) >= 60),
+    getProgress: (_stats, sessions) => {
+      const best = sessions
+        .filter((s) => s.gameMode === 'survival')
+        .reduce((m, s) => Math.max(m, Math.floor(s.duration / 1000)), 0);
+      return { current: Math.min(best, 60), target: 60 };
     },
   },
   {
@@ -393,19 +317,10 @@ const ALL_ACHIEVEMENTS: Achievement[] = [
     rarity: 'legendary',
     target: 500,
     gameMode: 'nightmare',
-    checkCondition: (stats, sessions) => {
-      const nightmareSessions = sessions.filter(s => s.gameMode === 'nightmare');
-      return nightmareSessions.some(s => s.score >= 500);
-    },
-    getProgress: (stats, sessions) => {
-      const nightmareSessions = sessions.filter(s => s.gameMode === 'nightmare');
-      const bestNightmare = nightmareSessions.length > 0
-        ? Math.max(...nightmareSessions.map(s => s.score))
-        : 0;
-      return {
-        current: Math.min(bestNightmare, 500),
-        target: 500,
-      };
+    checkCondition: (_stats, sessions) => sessions.some((s) => s.gameMode === 'nightmare' && s.score >= 500),
+    getProgress: (_stats, sessions) => {
+      const best = sessions.filter((s) => s.gameMode === 'nightmare').reduce((m, s) => Math.max(m, s.score), 0);
+      return { current: Math.min(best, 500), target: 500 };
     },
   },
   {
@@ -415,25 +330,17 @@ const ALL_ACHIEVEMENTS: Achievement[] = [
     category: 'mode',
     icon: '💀',
     rarity: 'legendary',
-    target: 1000000,
+    target: 1_000_000,
     gameMode: 'nightmare',
-    checkCondition: (stats, sessions) => {
-      const nightmareSessions = sessions.filter(s => s.gameMode === 'nightmare');
-      return nightmareSessions.some(s => s.score >= 1000000);
-    },
-    getProgress: (stats, sessions) => {
-      const nightmareSessions = sessions.filter(s => s.gameMode === 'nightmare');
-      const bestNightmare = nightmareSessions.length > 0
-        ? Math.max(...nightmareSessions.map(s => s.score))
-        : 0;
-      return {
-        current: Math.min(bestNightmare, 1000000),
-        target: 1000000,
-      };
+    checkCondition: (_stats, sessions) => sessions.some((s) => s.gameMode === 'nightmare' && s.score >= 1_000_000),
+    getProgress: (_stats, sessions) => {
+      const best = sessions.filter((s) => s.gameMode === 'nightmare').reduce((m, s) => Math.max(m, s.score), 0);
+      return { current: Math.min(best, 1_000_000), target: 1_000_000 };
     },
   },
-  
-  // Consistency Achievements
+];
+
+const SPECIAL_ACHIEVEMENTS: Achievement[] = [
   {
     id: 'flawless_streak',
     title: 'Flawless Streak',
@@ -449,50 +356,6 @@ const ALL_ACHIEVEMENTS: Achievement[] = [
     }),
   },
   {
-    id: 'games_100',
-    title: 'Veteran',
-    description: 'Play 100 games.',
-    category: 'consistency',
-    icon: '🎖️',
-    rarity: 'rare',
-    target: 100,
-    checkCondition: (stats) => stats.totalGames >= 100,
-    getProgress: (stats) => ({
-      current: Math.min(stats.totalGames, 100),
-      target: 100,
-    }),
-  },
-  {
-    id: 'games_500',
-    title: 'Dedicated',
-    description: 'Play 500 games.',
-    category: 'consistency',
-    icon: '🏆',
-    rarity: 'epic',
-    target: 500,
-    checkCondition: (stats) => stats.totalGames >= 500,
-    getProgress: (stats) => ({
-      current: Math.min(stats.totalGames, 500),
-      target: 500,
-    }),
-  },
-  {
-    id: 'playtime_hour',
-    title: 'Marathon Player',
-    description: 'Accumulate 1 hour of total playtime.',
-    category: 'consistency',
-    icon: '⏱️',
-    rarity: 'rare',
-    target: 3600000, // 1 hour in milliseconds
-    checkCondition: (stats) => stats.totalPlaytime >= 3600000,
-    getProgress: (stats) => ({
-      current: Math.min(stats.totalPlaytime, 3600000),
-      target: 3600000,
-    }),
-  },
-  
-  // Special Achievements
-  {
     id: 'hard_90s',
     title: 'Hard Endurance',
     description: 'Survive for 90 seconds on Hard difficulty.',
@@ -501,19 +364,15 @@ const ALL_ACHIEVEMENTS: Achievement[] = [
     rarity: 'epic',
     target: 90,
     difficulty: 'hard',
-    checkCondition: (stats, sessions) => {
-      const hardRuns = sessions.filter(s => s.difficulty === 'hard');
-      return hardRuns.some(s => Math.floor(s.duration / 1000) >= 90);
+    checkCondition: (_stats, sessions) => {
+      const hardRuns = sessions.filter((s) => s.difficulty === 'hard');
+      return hardRuns.some((s) => Math.floor(s.duration / 1000) >= 90);
     },
-    getProgress: (stats, sessions) => {
-      const hardRuns = sessions.filter(s => s.difficulty === 'hard');
-      const longestHard = hardRuns.length > 0
-        ? Math.max(...hardRuns.map(s => Math.floor(s.duration / 1000)))
-        : 0;
-      return {
-        current: Math.min(longestHard, 90),
-        target: 90,
-      };
+    getProgress: (_stats, sessions) => {
+      const best = sessions
+        .filter((s) => s.difficulty === 'hard')
+        .reduce((m, s) => Math.max(m, Math.floor(s.duration / 1000)), 0);
+      return { current: Math.min(best, 90), target: 90 };
     },
   },
   {
@@ -524,19 +383,30 @@ const ALL_ACHIEVEMENTS: Achievement[] = [
     icon: '🗺️',
     rarity: 'rare',
     target: 4, // reflex, sequence, survival, nightmare
-    checkCondition: (stats, sessions) => {
-      const modesPlayed = new Set(sessions.map(s => s.gameMode).filter(Boolean));
+    checkCondition: (_stats, sessions) => {
+      const modesPlayed = new Set(sessions.map((s) => s.gameMode).filter(Boolean));
       return modesPlayed.size >= 4;
     },
-    getProgress: (stats, sessions) => {
-      const modesPlayed = new Set(sessions.map(s => s.gameMode).filter(Boolean));
-      return {
-        current: Math.min(modesPlayed.size, 4),
-        target: 4,
-      };
+    getProgress: (_stats, sessions) => {
+      const modesPlayed = new Set(sessions.map((s) => s.gameMode).filter(Boolean));
+      return { current: Math.min(modesPlayed.size, 4), target: 4 };
     },
   },
 ];
+
+const ALL_ACHIEVEMENTS: Achievement[] = [
+  ...SCORE_ACHIEVEMENTS,
+  ...COMBO_ACHIEVEMENTS,
+  ...REACTION_ACHIEVEMENTS,
+  ...MODE_ACHIEVEMENTS,
+  ...GAMES_ACHIEVEMENTS,
+  ...PLAYTIME_ACHIEVEMENTS,
+  ...SPECIAL_ACHIEVEMENTS,
+];
+
+export type AchievementId = (typeof ALL_ACHIEVEMENTS)[number]['id'];
+
+export const ALL_ACHIEVEMENT_IDS: ReadonlyArray<AchievementId> = ALL_ACHIEVEMENTS.map((a) => a.id as AchievementId);
 
 /**
  * Get achievement by ID

@@ -1,4 +1,4 @@
-import type { Achievement } from '@/lib/achievements';
+import type { AchievementId, Achievement } from '@/lib/achievements';
 
 /**
  * Map local achievement IDs (used in `lib/achievements.ts`) to Steamworks
@@ -6,7 +6,7 @@ import type { Achievement } from '@/lib/achievements';
  *
  * Keep this stable once shipped (changing API names breaks unlock continuity).
  */
-export const STEAM_ACHIEVEMENT_MAP: Record<string, string> = {
+export const STEAM_ACHIEVEMENT_MAP: Record<AchievementId, string> = {
   // Score
   score_100: 'ACH_SCORE_100',
   score_250: 'ACH_SCORE_250',
@@ -79,7 +79,7 @@ export const STEAM_ACHIEVEMENT_MAP: Record<string, string> = {
 };
 
 export function getSteamAchievementApiName(localAchievementId: string): string | null {
-  return STEAM_ACHIEVEMENT_MAP[localAchievementId] ?? null;
+  return (STEAM_ACHIEVEMENT_MAP as Record<string, string>)[localAchievementId] ?? null;
 }
 
 export function hasSteamMapping(achievement: Achievement): boolean {
