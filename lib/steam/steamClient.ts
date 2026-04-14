@@ -34,6 +34,18 @@ export async function unlockSteamAchievementForLocalId(localAchievementId: strin
   }
 }
 
+export async function setSteamStatInt(statName: string, value: number): Promise<boolean> {
+  const steam = getSteamApi();
+  if (!steam) return false;
+  if (!Number.isFinite(value)) return false;
+  try {
+    const res = await steam.setStatInt(statName, Math.trunc(value));
+    return !!res?.ok;
+  } catch {
+    return false;
+  }
+}
+
 export async function storeSteamStats(): Promise<void> {
   const steam = getSteamApi();
   if (!steam) return;

@@ -13,7 +13,8 @@ import { ScoreCalculator, ScoringFactors } from '@/lib/scoring';
 import { AdaptiveDifficulty, DifficultyChangeLog } from '@/lib/adaptiveDifficulty';
 import { submitChallengeResult } from '@/lib/challenges';
 import { calculateXP, addXP, getUserProgress } from '@/lib/progression';
-import { storeSteamStats, unlockSteamAchievementForLocalId } from '@/lib/steam/steamClient';
+import { setSteamStatInt, storeSteamStats, unlockSteamAchievementForLocalId } from '@/lib/steam/steamClient';
+import { getSteamIntStatsFromLocalStats, STEAM_INT_STATS } from '@/lib/steam/steamStats';
 import { ACTIVE_CHALLENGE_SESSION_KEY, parseActiveChallengeSession } from '@/lib/challengeSession';
 
 export interface ReactionTimeStats {
@@ -783,11 +784,19 @@ export function GameProvider({ children }: { children: ReactNode }) {
             queueMicrotask(async () => {
               try {
                 let unlockedAny = false;
+                // Push our local stats to Steam so Steam-side "Progress Stat" unlocks can work.
+                const steamStats = getSteamIntStatsFromLocalStats(updatedStats, sessions);
+                let changedAnyStat = false;
+                for (const statName of STEAM_INT_STATS) {
+                  const ok = await setSteamStatInt(statName, steamStats[statName]);
+                  changedAnyStat = changedAnyStat || ok;
+                }
+
                 for (const localId of newlyUnlocked) {
                   const ok = await unlockSteamAchievementForLocalId(localId);
                   unlockedAny = unlockedAny || ok;
                 }
-                if (unlockedAny) {
+                if (unlockedAny || changedAnyStat) {
                   await storeSteamStats();
                 }
               } catch {
