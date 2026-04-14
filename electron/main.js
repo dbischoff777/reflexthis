@@ -19,13 +19,55 @@ const SERVER_URL = `http://localhost:${SERVER_PORT}`;
 // ============================================================================
 // Steamworks (Achievements/Stats) - main process only
 // ============================================================================
-let steamworks = null;
+let steamworks = null; // module
+let steamClient = null; // client API returned by steamworks.init()
 let steamAvailable = false;
 let lastSteamStoreAt = 0;
 let steamCallbacksInterval = null;
 
+function cleanupSteamworks() {
+  // Stop our callback pumping (and any overlay frame invalidation timers we attached).
+  if (steamCallbacksInterval) {
+    clearInterval(steamCallbacksInterval);
+    steamCallbacksInterval = null;
+  }
+
+  try {
+    const { BrowserWindow } = require('electron');
+    BrowserWindow.getAllWindows().forEach((bw) => {
+      if (bw?.steamworksRepaintInterval) {
+        try {
+          clearInterval(bw.steamworksRepaintInterval);
+        } catch (_) {
+          // ignore
+        }
+        bw.steamworksRepaintInterval = null;
+      }
+    });
+  } catch (_) {
+    // ignore
+  }
+
+  // steamworks.js does not currently expose a public SteamAPI_Shutdown.
+  // Best effort: if the native binding ever exposes a shutdown, call it.
+  try {
+    steamClient?.shutdown?.();
+  } catch (_) {
+    // ignore
+  }
+  try {
+    steamworks?.shutdown?.();
+  } catch (_) {
+    // ignore
+  }
+
+  steamClient = null;
+  steamworks = null;
+  steamAvailable = false;
+}
+
 function initSteamworks() {
-  if (steamAvailable || steamworks) return;
+  if (steamAvailable || steamClient || steamworks) return;
 
   try {
     // steamworks.js is a native module; keep it in main process.
@@ -51,17 +93,19 @@ function initSteamworks() {
         logToFile(`Steamworks restartAppIfNecessary failed (continuing): ${e.message}`);
       }
 
-      steamworks.init(maybeAppId);
+      steamClient = steamworks.init(maybeAppId);
     } else {
-      steamworks.init();
+      steamClient = steamworks.init();
     }
 
     // Basic smoke check: localplayer API should be available if Steam is running.
-    const name = steamworks?.localplayer?.getName?.();
+    const name = steamClient?.localplayer?.getName?.();
     steamAvailable = typeof name === 'string' && name.length > 0;
     logToFile(`Steamworks init: ${steamAvailable ? 'available' : 'unavailable'}`);
 
     // Pump Steam callbacks periodically (recommended for callback-driven systems like overlay/stats).
+    // NOTE: steamworks.js already pumps callbacks internally after init (30fps).
+    // We keep a very small additional pump as a safety net in case of edge cases.
     if (steamAvailable && steamworks?.runCallbacks && !steamCallbacksInterval) {
       steamCallbacksInterval = setInterval(() => {
         try {
@@ -72,25 +116,25 @@ function initSteamworks() {
       }, 100);
     }
   } catch (e) {
-    steamworks = null;
+    cleanupSteamworks();
     steamAvailable = false;
     logToFile(`Steamworks init failed (non-Steam run is OK): ${e.message}`);
   }
 }
 
 function getSteamStatus() {
-  if (!steamAvailable || !steamworks) {
+  if (!steamAvailable || !steamClient) {
     return { available: false };
   }
 
   try {
-    const steamId = steamworks.localplayer.getSteamId?.();
+    const steamId = steamClient.localplayer.getSteamId?.();
     return {
       available: true,
-      name: steamworks.localplayer.getName?.() ?? null,
+      name: steamClient.localplayer.getName?.() ?? null,
       steamId64: steamId?.steamId64 ? steamId.steamId64.toString() : null,
-      level: steamworks.localplayer.getLevel?.() ?? null,
-      appId: steamworks.utils?.getAppId?.() ?? null,
+      level: steamClient.localplayer.getLevel?.() ?? null,
+      appId: steamClient.utils?.getAppId?.() ?? null,
     };
   } catch (e) {
     return { available: false };
@@ -100,6 +144,11 @@ function getSteamStatus() {
 // Disable Windows DPI scaling to prevent text scaling from affecting game visuals
 // This forces the device scale factor to 1, blocking Windows text scaling (e.g., 150%)
 app.commandLine.appendSwitch('force-device-scale-factor', '1');
+// Overlay/hooking can be sensitive to GPU compositing. steamworks.js also sets these
+// in electronEnableSteamOverlay(), but we set them here too to guarantee they're applied
+// before any Chromium GPU initialization.
+app.commandLine.appendSwitch('in-process-gpu');
+app.commandLine.appendSwitch('disable-direct-composition');
 
 // Create log file for debugging
 const logFile = path.join(os.tmpdir(), 'reflexthis-electron.log');
@@ -179,6 +228,9 @@ function createWindow() {
       contextIsolation: true,
       preload: path.join(__dirname, 'preload.js'),
       devTools: isDev, // Only enable DevTools in development mode
+      // Keep renderer active; helps overlay invalidation and reduces throttling issues.
+      backgroundThrottling: false,
+      webgl: true,
     },
     icon: path.join(__dirname, '../public/logo/ReflexIcon.jpg'),
     show: false, // Don't show until ready
@@ -725,6 +777,16 @@ app.whenReady().then(() => {
 
   // Initialize Steamworks as early as possible (safe no-op outside Steam).
   initSteamworks();
+
+  // Log GPU feature status for overlay diagnostics (helps spot software rendering / disabled compositing).
+  try {
+    const status = app.getGPUFeatureStatus?.();
+    if (status) {
+      logToFile(`GPU feature status: ${JSON.stringify(status)}`);
+    }
+  } catch (_) {
+    // ignore
+  }
   
   // Start the server first
   startNextServer();
@@ -750,10 +812,7 @@ app.on('window-all-closed', () => {
   if (nextServer) {
     nextServer.kill();
   }
-  if (steamCallbacksInterval) {
-    clearInterval(steamCallbacksInterval);
-    steamCallbacksInterval = null;
-  }
+  cleanupSteamworks();
   
   if (process.platform !== 'darwin') {
     app.quit();
@@ -764,10 +823,7 @@ app.on('before-quit', () => {
   if (nextServer) {
     nextServer.kill();
   }
-  if (steamCallbacksInterval) {
-    clearInterval(steamCallbacksInterval);
-    steamCallbacksInterval = null;
-  }
+  cleanupSteamworks();
 });
 
 // Handle quit request from renderer
@@ -775,10 +831,7 @@ ipcMain.handle('app-quit', () => {
   if (nextServer) {
     nextServer.kill();
   }
-  if (steamCallbacksInterval) {
-    clearInterval(steamCallbacksInterval);
-    steamCallbacksInterval = null;
-  }
+  cleanupSteamworks();
   app.quit();
 });
 
@@ -793,13 +846,13 @@ ipcMain.handle('steam-is-available', () => {
 
 ipcMain.handle('steam-activate-achievement', (event, achievementApiName) => {
   initSteamworks();
-  if (!steamAvailable || !steamworks) return { ok: false, reason: 'steam_unavailable' };
+  if (!steamAvailable || !steamClient) return { ok: false, reason: 'steam_unavailable' };
   if (typeof achievementApiName !== 'string' || achievementApiName.length === 0) {
     return { ok: false, reason: 'invalid_name' };
   }
 
   try {
-    const ok = !!steamworks.achievement.activate(achievementApiName);
+    const ok = !!steamClient.achievement.activate(achievementApiName);
     return { ok };
   } catch (e) {
     return { ok: false, reason: 'exception', message: e.message };
@@ -808,12 +861,12 @@ ipcMain.handle('steam-activate-achievement', (event, achievementApiName) => {
 
 ipcMain.handle('steam-set-stat-int', (event, statName, value) => {
   initSteamworks();
-  if (!steamAvailable || !steamworks) return { ok: false, reason: 'steam_unavailable' };
+  if (!steamAvailable || !steamClient) return { ok: false, reason: 'steam_unavailable' };
   if (typeof statName !== 'string' || statName.length === 0 || !Number.isFinite(value)) {
     return { ok: false, reason: 'invalid_args' };
   }
   try {
-    const ok = !!steamworks.stats.setInt(statName, Math.trunc(value));
+    const ok = !!steamClient.stats.setInt(statName, Math.trunc(value));
     return { ok };
   } catch (e) {
     return { ok: false, reason: 'exception', message: e.message };
@@ -822,7 +875,7 @@ ipcMain.handle('steam-set-stat-int', (event, statName, value) => {
 
 ipcMain.handle('steam-store-stats', () => {
   initSteamworks();
-  if (!steamAvailable || !steamworks) return { ok: false, reason: 'steam_unavailable' };
+  if (!steamAvailable || !steamClient) return { ok: false, reason: 'steam_unavailable' };
 
   // Throttle stores (Steam recommends not spamming StoreStats).
   const now = Date.now();
@@ -831,7 +884,7 @@ ipcMain.handle('steam-store-stats', () => {
   }
 
   try {
-    const ok = !!steamworks.stats.store();
+    const ok = !!steamClient.stats.store();
     lastSteamStoreAt = now;
     return { ok };
   } catch (e) {
@@ -841,9 +894,9 @@ ipcMain.handle('steam-store-stats', () => {
 
 ipcMain.handle('steam-open-overlay-achievements', () => {
   initSteamworks();
-  if (!steamAvailable || !steamworks) return { ok: false, reason: 'steam_unavailable' };
+  if (!steamAvailable || !steamClient) return { ok: false, reason: 'steam_unavailable' };
   try {
-    steamworks.overlay.activateDialog(steamworks.overlay.Dialog.Achievements);
+    steamClient.overlay.activateDialog(steamClient.overlay.Dialog.Achievements);
     return { ok: true };
   } catch (e) {
     return { ok: false, reason: 'exception', message: e.message };
