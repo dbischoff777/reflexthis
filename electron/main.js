@@ -873,14 +873,32 @@ ipcMain.handle('steam-set-stat-int', (event, statName, value) => {
   }
 });
 
-ipcMain.handle('steam-store-stats', () => {
+ipcMain.handle('steam-get-stat-int', (event, statName) => {
+  initSteamworks();
+  if (!steamAvailable || !steamClient) return { ok: false, reason: 'steam_unavailable' };
+  if (typeof statName !== 'string' || statName.length === 0) {
+    return { ok: false, reason: 'invalid_args' };
+  }
+  try {
+    const value = steamClient.stats.getInt(statName);
+    if (typeof value !== 'number' || !Number.isFinite(value)) {
+      return { ok: false, reason: 'not_found' };
+    }
+    return { ok: true, value };
+  } catch (e) {
+    return { ok: false, reason: 'exception', message: e.message };
+  }
+});
+
+ipcMain.handle('steam-store-stats', (event, options) => {
   initSteamworks();
   if (!steamAvailable || !steamClient) return { ok: false, reason: 'steam_unavailable' };
 
   // Throttle stores (Steam recommends not spamming StoreStats).
   const now = Date.now();
-  if (now - lastSteamStoreAt < 10_000) {
-    return { ok: true, throttled: true };
+  const force = !!options?.force;
+  if (!force && now - lastSteamStoreAt < 10_000) {
+    return { ok: false, throttled: true, reason: 'throttled' };
   }
 
   try {

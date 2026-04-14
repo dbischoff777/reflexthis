@@ -46,13 +46,37 @@ export async function setSteamStatInt(statName: string, value: number): Promise<
   }
 }
 
-export async function storeSteamStats(): Promise<void> {
+export async function getSteamStatInt(statName: string): Promise<number | null> {
   const steam = getSteamApi();
-  if (!steam) return;
+  if (!steam) return null;
   try {
-    await steam.storeStats();
+    const res = await steam.getStatInt(statName);
+    if (!res?.ok) return null;
+    return Number.isFinite(res.value) ? res.value! : null;
   } catch {
-    // ignore
+    return null;
+  }
+}
+
+/**
+ * Steam stats can have constraints (e.g. "Increment Only"). To avoid StoreStats being rejected due to
+ * accidental decreases (local resets, session truncation, etc.), only set if the value is >= current.
+ */
+export async function setSteamStatIntMonotonic(statName: string, value: number): Promise<boolean> {
+  if (!Number.isFinite(value)) return false;
+  const current = await getSteamStatInt(statName);
+  if (current !== null && value < current) return false;
+  return await setSteamStatInt(statName, value);
+}
+
+export async function storeSteamStats(options?: { force?: boolean }): Promise<{ ok: boolean; throttled?: boolean }> {
+  const steam = getSteamApi();
+  if (!steam) return { ok: false };
+  try {
+    const res = await steam.storeStats(options);
+    return { ok: !!res?.ok, throttled: !!res?.throttled };
+  } catch {
+    return { ok: false };
   }
 }
 

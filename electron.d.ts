@@ -13,8 +13,9 @@ export interface ElectronAPI {
       | { available: true; name: string | null; steamId64: string | null; level: number | null; appId: number | null }
     >;
     activateAchievement: (achievementApiName: string) => Promise<{ ok: boolean; reason?: string; message?: string }>;
+    getStatInt: (statName: string) => Promise<{ ok: boolean; value?: number; reason?: string; message?: string }>;
     setStatInt: (statName: string, value: number) => Promise<{ ok: boolean; reason?: string; message?: string }>;
-    storeStats: () => Promise<{ ok: boolean; throttled?: boolean; reason?: string; message?: string }>;
+    storeStats: (options?: { force?: boolean }) => Promise<{ ok: boolean; throttled?: boolean; reason?: string; message?: string }>;
     openOverlayAchievements: () => Promise<{ ok: boolean; reason?: string; message?: string }>;
   };
 }

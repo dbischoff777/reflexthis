@@ -14,8 +14,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     isAvailable: () => ipcRenderer.invoke('steam-is-available'),
     activateAchievement: (achievementApiName) =>
       ipcRenderer.invoke('steam-activate-achievement', achievementApiName),
+    getStatInt: (statName) => ipcRenderer.invoke('steam-get-stat-int', statName),
     setStatInt: (statName, value) => ipcRenderer.invoke('steam-set-stat-int', statName, value),
-    storeStats: () => ipcRenderer.invoke('steam-store-stats'),
+    storeStats: (options) => ipcRenderer.invoke('steam-store-stats', options),
     openOverlayAchievements: () => ipcRenderer.invoke('steam-open-overlay-achievements'),
   },
 });

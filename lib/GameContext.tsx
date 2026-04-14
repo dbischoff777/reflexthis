@@ -13,7 +13,7 @@ import { ScoreCalculator, ScoringFactors } from '@/lib/scoring';
 import { AdaptiveDifficulty, DifficultyChangeLog } from '@/lib/adaptiveDifficulty';
 import { submitChallengeResult } from '@/lib/challenges';
 import { calculateXP, addXP, getUserProgress } from '@/lib/progression';
-import { setSteamStatInt, storeSteamStats, unlockSteamAchievementForLocalId } from '@/lib/steam/steamClient';
+import { setSteamStatIntMonotonic, storeSteamStats, unlockSteamAchievementForLocalId } from '@/lib/steam/steamClient';
 import { getSteamIntStatsFromLocalStats, STEAM_INT_STATS } from '@/lib/steam/steamStats';
 import { ACTIVE_CHALLENGE_SESSION_KEY, parseActiveChallengeSession } from '@/lib/challengeSession';
 
@@ -788,7 +788,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
                 const steamStats = getSteamIntStatsFromLocalStats(updatedStats, sessions);
                 let changedAnyStat = false;
                 for (const statName of STEAM_INT_STATS) {
-                  const ok = await setSteamStatInt(statName, steamStats[statName]);
+                  const ok = await setSteamStatIntMonotonic(statName, steamStats[statName]);
                   changedAnyStat = changedAnyStat || ok;
                 }
 
@@ -796,7 +796,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
                   const ok = await unlockSteamAchievementForLocalId(localId);
                   unlockedAny = unlockedAny || ok;
                 }
-                if (unlockedAny || changedAnyStat) {
+                if (unlockedAny) {
+                  // Achievements must be uploaded promptly or they won't persist on the Steam side.
+                  // Bypass our local store throttle when an achievement was unlocked.
+                  await storeSteamStats({ force: true });
+                } else if (changedAnyStat) {
                   await storeSteamStats();
                 }
               } catch {
