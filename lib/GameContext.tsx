@@ -13,7 +13,7 @@ import { ScoreCalculator, ScoringFactors } from '@/lib/scoring';
 import { AdaptiveDifficulty, DifficultyChangeLog } from '@/lib/adaptiveDifficulty';
 import { submitChallengeResult } from '@/lib/challenges';
 import { calculateXP, addXP, getUserProgress } from '@/lib/progression';
-import { setSteamStatIntMonotonic, storeSteamStats, unlockSteamAchievementForLocalId } from '@/lib/steam/steamClient';
+import { ensureSteamStatsReady, setSteamStatIntMonotonic, storeSteamStats, unlockSteamAchievementForLocalId } from '@/lib/steam/steamClient';
 import { getSteamIntStatsFromLocalStats, STEAM_INT_STATS } from '@/lib/steam/steamStats';
 import { ACTIVE_CHALLENGE_SESSION_KEY, parseActiveChallengeSession } from '@/lib/challengeSession';
 
@@ -794,6 +794,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
           // Never block UI or throw if Steam isn't available.
           queueMicrotask(async () => {
             try {
+              const ready = await ensureSteamStatsReady({ timeoutMs: 8000, probeStatName: 'STAT_BEST_SCORE' });
+              if (!ready) return;
+
               // Push our local stats to Steam so Steam-side "Progress Stat" unlocks can work.
               const steamStats = getSteamIntStatsFromLocalStats(updatedStats, sessions);
               let changedAnyStat = false;
