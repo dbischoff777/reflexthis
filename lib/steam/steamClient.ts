@@ -104,3 +104,25 @@ export async function openSteamAchievementsOverlay(): Promise<void> {
   }
 }
 
+export async function getSteamDebug(options?: {
+  statNames?: string[];
+  achievementApiNames?: string[];
+}): Promise<{
+  ok: boolean;
+  available?: boolean;
+  appId?: number | null;
+  achievementNames?: string[];
+  achievements?: Record<string, boolean | null>;
+  stats?: Record<string, number | null>;
+  reason?: string;
+  message?: string;
+}> {
+  const steam = getSteamApi();
+  if (!steam?.debug) return { ok: false, reason: 'unsupported' };
+  try {
+    return await steam.debug(options);
+  } catch {
+    return { ok: false, reason: 'exception' };
+  }
+}
+

@@ -71,7 +71,9 @@ function cleanupSteamworks() {
 }
 
 function initSteamworks() {
-  if (steamAvailable || steamClient || steamworks) return;
+  // Only consider Steam initialized once we have a client.
+  // The module may be loaded even if init previously failed; allow retries.
+  if (steamClient) return;
 
   try {
     // steamworks.js is a native module; keep it in main process.
@@ -79,8 +81,10 @@ function initSteamworks() {
     // In production on Steam, the AppID is provided by Steam when launched.
     // If STEAM_APP_ID is provided, pass it explicitly (useful for local testing).
     const maybeAppId = Number(process.env.STEAM_APP_ID);
-    // eslint-disable-next-line global-require
-    steamworks = require('steamworks.js');
+    if (!steamworks) {
+      // eslint-disable-next-line global-require
+      steamworks = require('steamworks.js');
+    }
 
     // If we're not launched by Steam, restartAppIfNecessary will relaunch us through Steam
     // (required for overlay + proper stats/achievements context).
@@ -102,12 +106,25 @@ function initSteamworks() {
       steamClient = steamworks.init();
     }
 
-    // Basic smoke check: localplayer API should be available if Steam is running.
-    const name = steamClient?.localplayer?.getName?.();
-    steamAvailable = typeof name === 'string' && name.length > 0;
+    // Determine availability. `localplayer.getName()` can be empty in edge cases, so prefer stable identifiers.
+    let appId = null;
+    let steamId64 = null;
+    try {
+      appId = steamClient?.utils?.getAppId?.() ?? null;
+    } catch (_) {
+      appId = null;
+    }
+    try {
+      const sid = steamClient?.localplayer?.getSteamId?.();
+      steamId64 = sid?.steamId64 ? sid.steamId64.toString() : null;
+    } catch (_) {
+      steamId64 = null;
+    }
+
+    steamAvailable = Number.isFinite(appId) && appId > 0;
     steamStatsReady = false;
     steamStatsReadyInFlight = null;
-    logToFile(`Steamworks init: ${steamAvailable ? 'available' : 'unavailable'}`);
+    logToFile(`Steamworks init: ${steamAvailable ? 'available' : 'unavailable'} (appId=${appId}, steamId64=${steamId64})`);
 
     // Pump Steam callbacks periodically (recommended for callback-driven systems like overlay/stats).
     // NOTE: steamworks.js already pumps callbacks internally after init (30fps).
@@ -122,28 +139,52 @@ function initSteamworks() {
       }, 100);
     }
   } catch (e) {
-    cleanupSteamworks();
+    // Keep the module loaded so we can retry init later, but clear client state.
+    steamClient = null;
+    steamAvailable = false;
+    steamStatsReady = false;
+    steamStatsReadyInFlight = null;
     logToFile(`Steamworks init failed (non-Steam run is OK): ${e.message}`);
   }
 }
 
 function isSteamUserStatsReady() {
-  if (!steamAvailable || !steamClient) return false;
+  if (!steamClient) return false;
   try {
-    // Use a known int stat to determine readiness. Once user stats are available,
-    // Steam returns a number (0 is valid). Before that it returns null.
-    const v = steamClient.stats.getInt('STAT_GAMES_PLAYED');
-    return typeof v === 'number' && Number.isFinite(v);
+    // Determine readiness by probing known INT stats.
+    // Once user stats are available, Steam returns a number (0 is valid). Before that it returns null.
+    const probes = [
+      'STAT_BEST_SCORE',
+      'STAT_GAMES_PLAYED',
+      'STAT_BEST_COMBO',
+      'STAT_PLAYTIME_SECONDS',
+    ];
+    return probes.some((name) => {
+      const v = steamClient.stats.getInt(name);
+      return typeof v === 'number' && Number.isFinite(v);
+    });
   } catch (_) {
     return false;
   }
 }
 
-async function ensureSteamUserStatsReady({ timeoutMs = 5000 } = {}) {
+async function ensureSteamUserStatsReady({ timeoutMs = 5000, probeStatName } = {}) {
   initSteamworks();
-  if (!steamAvailable || !steamClient) return { ok: false, reason: 'steam_unavailable' };
+  if (!steamClient) return { ok: false, reason: 'steam_unavailable' };
 
-  if (steamStatsReady || isSteamUserStatsReady()) {
+  const isReady = () => {
+    if (typeof probeStatName === 'string' && probeStatName.length > 0) {
+      try {
+        const v = steamClient.stats.getInt(probeStatName);
+        return typeof v === 'number' && Number.isFinite(v);
+      } catch {
+        return false;
+      }
+    }
+    return isSteamUserStatsReady();
+  };
+
+  if (steamStatsReady || isReady()) {
     steamStatsReady = true;
     return { ok: true };
   }
@@ -161,7 +202,7 @@ async function ensureSteamUserStatsReady({ timeoutMs = 5000 } = {}) {
       } catch (_) {
         // ignore
       }
-      if (isSteamUserStatsReady()) return true;
+      if (isReady()) return true;
       // eslint-disable-next-line no-await-in-loop
       await new Promise((r) => setTimeout(r, 200));
     }
@@ -175,14 +216,14 @@ async function ensureSteamUserStatsReady({ timeoutMs = 5000 } = {}) {
 }
 
 function getSteamStatus() {
-  if (!steamAvailable || !steamClient) {
+  if (!steamClient) {
     return { available: false };
   }
 
   try {
     const steamId = steamClient.localplayer.getSteamId?.();
     return {
-      available: true,
+      available: !!steamAvailable,
       name: steamClient.localplayer.getName?.() ?? null,
       steamId64: steamId?.steamId64 ? steamId.steamId64.toString() : null,
       level: steamClient.localplayer.getLevel?.() ?? null,
@@ -899,12 +940,13 @@ ipcMain.handle('steam-is-available', () => {
 
 ipcMain.handle('steam-ensure-stats-ready', async (event, options) => {
   const timeoutMs = Number.isFinite(options?.timeoutMs) ? Math.max(0, Math.trunc(options.timeoutMs)) : 5000;
-  return await ensureSteamUserStatsReady({ timeoutMs });
+  const probeStatName = typeof options?.probeStatName === 'string' ? options.probeStatName : undefined;
+  return await ensureSteamUserStatsReady({ timeoutMs, probeStatName });
 });
 
 ipcMain.handle('steam-activate-achievement', (event, achievementApiName) => {
   initSteamworks();
-  if (!steamAvailable || !steamClient) return { ok: false, reason: 'steam_unavailable' };
+  if (!steamClient) return { ok: false, reason: 'steam_unavailable' };
   if (!steamStatsReady && !isSteamUserStatsReady()) return { ok: false, reason: 'stats_not_ready' };
   if (typeof achievementApiName !== 'string' || achievementApiName.length === 0) {
     return { ok: false, reason: 'invalid_name' };
@@ -912,30 +954,34 @@ ipcMain.handle('steam-activate-achievement', (event, achievementApiName) => {
 
   try {
     const ok = !!steamClient.achievement.activate(achievementApiName);
+    logToFile(`Steam activateAchievement(${achievementApiName}) => ${ok}`);
     return { ok };
   } catch (e) {
+    logToFile(`Steam activateAchievement(${achievementApiName}) threw: ${e.message}`);
     return { ok: false, reason: 'exception', message: e.message };
   }
 });
 
 ipcMain.handle('steam-set-stat-int', (event, statName, value) => {
   initSteamworks();
-  if (!steamAvailable || !steamClient) return { ok: false, reason: 'steam_unavailable' };
+  if (!steamClient) return { ok: false, reason: 'steam_unavailable' };
   if (!steamStatsReady && !isSteamUserStatsReady()) return { ok: false, reason: 'stats_not_ready' };
   if (typeof statName !== 'string' || statName.length === 0 || !Number.isFinite(value)) {
     return { ok: false, reason: 'invalid_args' };
   }
   try {
     const ok = !!steamClient.stats.setInt(statName, Math.trunc(value));
+    logToFile(`Steam setStatInt(${statName}, ${Math.trunc(value)}) => ${ok}`);
     return { ok };
   } catch (e) {
+    logToFile(`Steam setStatInt(${statName}) threw: ${e.message}`);
     return { ok: false, reason: 'exception', message: e.message };
   }
 });
 
 ipcMain.handle('steam-get-stat-int', (event, statName) => {
   initSteamworks();
-  if (!steamAvailable || !steamClient) return { ok: false, reason: 'steam_unavailable' };
+  if (!steamClient) return { ok: false, reason: 'steam_unavailable' };
   if (!steamStatsReady && !isSteamUserStatsReady()) return { ok: false, reason: 'stats_not_ready' };
   if (typeof statName !== 'string' || statName.length === 0) {
     return { ok: false, reason: 'invalid_args' };
@@ -953,28 +999,83 @@ ipcMain.handle('steam-get-stat-int', (event, statName) => {
 
 ipcMain.handle('steam-store-stats', (event, options) => {
   initSteamworks();
-  if (!steamAvailable || !steamClient) return { ok: false, reason: 'steam_unavailable' };
+  if (!steamClient) return { ok: false, reason: 'steam_unavailable' };
   if (!steamStatsReady && !isSteamUserStatsReady()) return { ok: false, reason: 'stats_not_ready' };
 
   // Throttle stores (Steam recommends not spamming StoreStats).
   const now = Date.now();
   const force = !!options?.force;
   if (!force && now - lastSteamStoreAt < 10_000) {
+    logToFile(`Steam StoreStats throttled (force=false).`);
     return { ok: false, throttled: true, reason: 'throttled' };
   }
 
   try {
     const ok = !!steamClient.stats.store();
     lastSteamStoreAt = now;
+    logToFile(`Steam StoreStats(force=${force}) => ${ok}`);
     return { ok };
   } catch (e) {
+    logToFile(`Steam StoreStats threw: ${e.message}`);
     return { ok: false, reason: 'exception', message: e.message };
+  }
+});
+
+ipcMain.handle('steam-debug', (event, options) => {
+  initSteamworks();
+  if (!steamClient) return { ok: false, available: false, reason: 'steam_unavailable' };
+  if (!steamStatsReady && !isSteamUserStatsReady()) return { ok: false, available: true, reason: 'stats_not_ready' };
+
+  try {
+    const statNames = Array.isArray(options?.statNames) ? options.statNames.filter((s) => typeof s === 'string') : [];
+    const achievementApiNames = Array.isArray(options?.achievementApiNames)
+      ? options.achievementApiNames.filter((s) => typeof s === 'string')
+      : [];
+
+    const achievementNames = (() => {
+      try {
+        return steamClient.achievement?.names?.() ?? [];
+      } catch {
+        return [];
+      }
+    })();
+
+    const stats = {};
+    for (const name of statNames) {
+      try {
+        const v = steamClient.stats.getInt(name);
+        stats[name] = typeof v === 'number' && Number.isFinite(v) ? v : null;
+      } catch {
+        stats[name] = null;
+      }
+    }
+
+    const achievements = {};
+    for (const apiName of achievementApiNames) {
+      try {
+        const v = steamClient.achievement.isActivated(apiName);
+        achievements[apiName] = typeof v === 'boolean' ? v : null;
+      } catch {
+        achievements[apiName] = null;
+      }
+    }
+
+    return {
+      ok: true,
+      available: true,
+      appId: steamClient.utils?.getAppId?.() ?? null,
+      achievementNames,
+      achievements,
+      stats,
+    };
+  } catch (e) {
+    return { ok: false, available: true, reason: 'exception', message: e.message };
   }
 });
 
 ipcMain.handle('steam-open-overlay-achievements', () => {
   initSteamworks();
-  if (!steamAvailable || !steamClient) return { ok: false, reason: 'steam_unavailable' };
+  if (!steamClient) return { ok: false, reason: 'steam_unavailable' };
   try {
     steamClient.overlay.activateDialog(steamClient.overlay.Dialog.Achievements);
     return { ok: true };

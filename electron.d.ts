@@ -19,11 +19,21 @@ export interface ElectronAPI {
           statsReady: boolean;
         }
     >;
-    ensureStatsReady: (options?: { timeoutMs?: number }) => Promise<{ ok: boolean; reason?: string }>;
+    ensureStatsReady: (options?: { timeoutMs?: number; probeStatName?: string }) => Promise<{ ok: boolean; reason?: string }>;
     activateAchievement: (achievementApiName: string) => Promise<{ ok: boolean; reason?: string; message?: string }>;
     getStatInt: (statName: string) => Promise<{ ok: boolean; value?: number; reason?: string; message?: string }>;
     setStatInt: (statName: string, value: number) => Promise<{ ok: boolean; reason?: string; message?: string }>;
     storeStats: (options?: { force?: boolean }) => Promise<{ ok: boolean; throttled?: boolean; reason?: string; message?: string }>;
+    debug: (options?: { statNames?: string[]; achievementApiNames?: string[] }) => Promise<{
+      ok: boolean;
+      available?: boolean;
+      appId?: number | null;
+      achievementNames?: string[];
+      achievements?: Record<string, boolean | null>;
+      stats?: Record<string, number | null>;
+      reason?: string;
+      message?: string;
+    }>;
     openOverlayAchievements: () => Promise<{ ok: boolean; reason?: string; message?: string }>;
   };
 }
