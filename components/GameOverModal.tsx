@@ -90,6 +90,7 @@ export function GameOverModal({
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   // Cache newly unlocked achievements for this modal instance so they don't reset on re-render
   const cachedNewAchievements = useRef<AchievementProgress[] | null>(null);
+  const cachedAllAchievements = useRef<AchievementProgress[] | null>(null);
   const hasActivatedAchievementsTab = useRef(false);
   const coachingTip = getCoachingTip(score, bestCombo, reactionTimeStats, language);
   const [metaSummary, setMetaSummary] = useState<{
@@ -97,6 +98,7 @@ export function GameOverModal({
     nextRank: string | null;
   }>({ rankName: null, nextRank: null });
   const [newAchievements, setNewAchievements] = useState<AchievementProgress[]>([]);
+  const [allAchievements, setAllAchievements] = useState<AchievementProgress[]>([]);
   const [previousBest, setPreviousBest] = useState<{
     score: number;
     bestCombo: number;
@@ -140,6 +142,9 @@ export function GameOverModal({
     // If we've already cached achievements for this modal instance, reuse them
     if (cachedNewAchievements.current) {
       setNewAchievements(cachedNewAchievements.current);
+      if (cachedAllAchievements.current) {
+        setAllAchievements(cachedAllAchievements.current);
+      }
       return;
     }
 
@@ -159,6 +164,13 @@ export function GameOverModal({
     // Get achievement progress after this run
     const statsAfter = calculateSessionStatisticsFromSessions(sessions);
     const achievementsAfter = getAchievementProgress(statsAfter, sessions);
+    cachedAllAchievements.current = achievementsAfter;
+    setAllAchievements(
+      [...achievementsAfter].sort((a, b) => {
+        if (a.unlocked !== b.unlocked) return a.unlocked ? -1 : 1;
+        return a.category.localeCompare(b.category) || a.title.localeCompare(b.title);
+      })
+    );
 
     // Set meta summary (rank functionality removed - not implemented)
     setMetaSummary({
@@ -517,6 +529,82 @@ export function GameOverModal({
           <p className="text-muted-foreground text-base sm:text-lg">{t(language, 'gameover.achievements.none')}</p>
         </div>
       )}
+
+      <div className="mt-4 p-4 border-2 pixel-border" style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 58, 99, 0.35)' }}>
+        <h3 className="text-base sm:text-lg font-semibold text-foreground mb-3 uppercase tracking-wide">
+          {t(language, 'stats.achievements.title')}
+        </h3>
+
+        {allAchievements.length === 0 ? (
+          <p className="text-muted-foreground text-base sm:text-lg text-center">
+            {t(language, 'stats.achievements.noAchievements')}
+          </p>
+        ) : (
+          <ul className="space-y-3">
+            {allAchievements.map((a) => {
+              const title = (() => {
+                const key = `achievement.${a.id}.title`;
+                const translated = t(language, key);
+                return translated === key ? a.title : translated;
+              })();
+              const description = (() => {
+                const key = `achievement.${a.id}.description`;
+                const translated = t(language, key);
+                return translated === key ? a.description : translated;
+              })();
+
+              const progressPct =
+                a.progress.target > 0 ? Math.min(100, Math.round((a.progress.current / a.progress.target) * 100)) : 0;
+
+              return (
+                <li
+                  key={a.id}
+                  className={cn('p-3 border-2 pixel-border', !a.unlocked && 'opacity-85')}
+                  style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 58, 99, 0.25)' }}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="text-2xl sm:text-3xl leading-none shrink-0">{a.icon}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="font-semibold text-foreground text-base sm:text-lg wrap-break-word">{title}</p>
+                        <span
+                          className={cn(
+                            'text-xs sm:text-sm px-2 py-0.5 border pixel-border whitespace-nowrap',
+                            a.unlocked ? 'bg-chart-3/20 border-chart-3 text-chart-3' : 'bg-muted border-border text-muted-foreground'
+                          )}
+                        >
+                          {a.unlocked ? t(language, 'stats.achievements.unlocked') : `${progressPct}%`}
+                        </span>
+                      </div>
+
+                      <p className="text-foreground/70 mt-1 leading-relaxed text-sm sm:text-base wrap-break-word">
+                        {description}
+                      </p>
+
+                      {!a.unlocked && (
+                        <div className="mt-2">
+                          <div className="h-2 w-full border pixel-border overflow-hidden" style={{ borderColor: '#3E7CAC' }}>
+                            <div
+                              className="h-full"
+                              style={{
+                                width: `${progressPct}%`,
+                                backgroundColor: '#3E7CAC',
+                              }}
+                            />
+                          </div>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            {Math.min(a.progress.current, a.progress.target).toLocaleString()} / {a.progress.target.toLocaleString()}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
     </div>
   );
 

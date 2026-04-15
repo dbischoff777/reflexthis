@@ -10,8 +10,16 @@ export interface ElectronAPI {
   steam?: {
     isAvailable: () => Promise<
       | { available: false }
-      | { available: true; name: string | null; steamId64: string | null; level: number | null; appId: number | null }
+      | {
+          available: true;
+          name: string | null;
+          steamId64: string | null;
+          level: number | null;
+          appId: number | null;
+          statsReady: boolean;
+        }
     >;
+    ensureStatsReady: (options?: { timeoutMs?: number }) => Promise<{ ok: boolean; reason?: string }>;
     activateAchievement: (achievementApiName: string) => Promise<{ ok: boolean; reason?: string; message?: string }>;
     getStatInt: (statName: string) => Promise<{ ok: boolean; value?: number; reason?: string; message?: string }>;
     setStatInt: (statName: string, value: number) => Promise<{ ok: boolean; reason?: string; message?: string }>;

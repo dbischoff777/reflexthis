@@ -779,35 +779,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
           if (newlyUnlocked.length > 0) {
             setNewlyUnlockedAchievements(newlyUnlocked);
 
-            // Mirror to Steam achievements when running inside the Electron build on Steam.
-            // Never block UI or throw if Steam isn't available.
-            queueMicrotask(async () => {
-              try {
-                let unlockedAny = false;
-                // Push our local stats to Steam so Steam-side "Progress Stat" unlocks can work.
-                const steamStats = getSteamIntStatsFromLocalStats(updatedStats, sessions);
-                let changedAnyStat = false;
-                for (const statName of STEAM_INT_STATS) {
-                  const ok = await setSteamStatIntMonotonic(statName, steamStats[statName]);
-                  changedAnyStat = changedAnyStat || ok;
-                }
-
-                for (const localId of newlyUnlocked) {
-                  const ok = await unlockSteamAchievementForLocalId(localId);
-                  unlockedAny = unlockedAny || ok;
-                }
-                if (unlockedAny) {
-                  // Achievements must be uploaded promptly or they won't persist on the Steam side.
-                  // Bypass our local store throttle when an achievement was unlocked.
-                  await storeSteamStats({ force: true });
-                } else if (changedAnyStat) {
-                  await storeSteamStats();
-                }
-              } catch {
-                // ignore
-              }
-            });
-
             // Clear any existing timeout before creating a new one
             if (achievementClearTimeoutRef.current) {
               clearTimeout(achievementClearTimeoutRef.current);
@@ -818,6 +789,37 @@ export function GameProvider({ children }: { children: ReactNode }) {
               achievementClearTimeoutRef.current = null;
             }, 5000);
           }
+
+          // Mirror to Steam (stats + achievements) when running inside the Electron build on Steam.
+          // Never block UI or throw if Steam isn't available.
+          queueMicrotask(async () => {
+            try {
+              // Push our local stats to Steam so Steam-side "Progress Stat" unlocks can work.
+              const steamStats = getSteamIntStatsFromLocalStats(updatedStats, sessions);
+              let changedAnyStat = false;
+              for (const statName of STEAM_INT_STATS) {
+                const ok = await setSteamStatIntMonotonic(statName, steamStats[statName]);
+                changedAnyStat = changedAnyStat || ok;
+              }
+
+              // Also explicitly activate newly unlocked achievements as a fallback.
+              let unlockedAny = false;
+              for (const localId of newlyUnlocked) {
+                const ok = await unlockSteamAchievementForLocalId(localId);
+                unlockedAny = unlockedAny || ok;
+              }
+
+              if (unlockedAny) {
+                // Achievements must be uploaded promptly or they won't persist on the Steam side.
+                // Bypass our local store throttle when an achievement was unlocked.
+                await storeSteamStats({ force: true });
+              } else if (changedAnyStat) {
+                await storeSteamStats();
+              }
+            } catch {
+              // ignore
+            }
+          });
         };
         
         // Use requestIdleCallback for non-critical stats updates

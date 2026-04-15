@@ -8,6 +8,17 @@ function getSteamApi() {
   return typeof window !== 'undefined' ? window.electronAPI?.steam : undefined;
 }
 
+export async function ensureSteamStatsReady(options?: { timeoutMs?: number }): Promise<boolean> {
+  const steam = getSteamApi();
+  if (!steam?.ensureStatsReady) return false;
+  try {
+    const res = await steam.ensureStatsReady(options);
+    return !!res?.ok;
+  } catch {
+    return false;
+  }
+}
+
 export async function getSteamStatus(): Promise<SteamStatus> {
   const steam = getSteamApi();
   if (!steam) return { available: false };
@@ -26,6 +37,8 @@ export async function unlockSteamAchievementForLocalId(localAchievementId: strin
   if (!apiName) return false;
 
   try {
+    // Match classic Steamworks flow: only act after user stats are available.
+    await ensureSteamStatsReady({ timeoutMs: 5000 });
     const res = await steam.activateAchievement(apiName);
     // Do not throw on failure; keep game functional outside Steam.
     return !!res?.ok;
@@ -73,6 +86,7 @@ export async function storeSteamStats(options?: { force?: boolean }): Promise<{ 
   const steam = getSteamApi();
   if (!steam) return { ok: false };
   try {
+    await ensureSteamStatsReady({ timeoutMs: 5000 });
     const res = await steam.storeStats(options);
     return { ok: !!res?.ok, throttled: !!res?.throttled };
   } catch {

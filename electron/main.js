@@ -22,6 +22,8 @@ const SERVER_URL = `http://localhost:${SERVER_PORT}`;
 let steamworks = null; // module
 let steamClient = null; // client API returned by steamworks.init()
 let steamAvailable = false;
+let steamStatsReady = false;
+let steamStatsReadyInFlight = null; // Promise<boolean> | null
 let lastSteamStoreAt = 0;
 let steamCallbacksInterval = null;
 
@@ -64,6 +66,8 @@ function cleanupSteamworks() {
   steamClient = null;
   steamworks = null;
   steamAvailable = false;
+  steamStatsReady = false;
+  steamStatsReadyInFlight = null;
 }
 
 function initSteamworks() {
@@ -101,6 +105,8 @@ function initSteamworks() {
     // Basic smoke check: localplayer API should be available if Steam is running.
     const name = steamClient?.localplayer?.getName?.();
     steamAvailable = typeof name === 'string' && name.length > 0;
+    steamStatsReady = false;
+    steamStatsReadyInFlight = null;
     logToFile(`Steamworks init: ${steamAvailable ? 'available' : 'unavailable'}`);
 
     // Pump Steam callbacks periodically (recommended for callback-driven systems like overlay/stats).
@@ -117,9 +123,55 @@ function initSteamworks() {
     }
   } catch (e) {
     cleanupSteamworks();
-    steamAvailable = false;
     logToFile(`Steamworks init failed (non-Steam run is OK): ${e.message}`);
   }
+}
+
+function isSteamUserStatsReady() {
+  if (!steamAvailable || !steamClient) return false;
+  try {
+    // Use a known int stat to determine readiness. Once user stats are available,
+    // Steam returns a number (0 is valid). Before that it returns null.
+    const v = steamClient.stats.getInt('STAT_GAMES_PLAYED');
+    return typeof v === 'number' && Number.isFinite(v);
+  } catch (_) {
+    return false;
+  }
+}
+
+async function ensureSteamUserStatsReady({ timeoutMs = 5000 } = {}) {
+  initSteamworks();
+  if (!steamAvailable || !steamClient) return { ok: false, reason: 'steam_unavailable' };
+
+  if (steamStatsReady || isSteamUserStatsReady()) {
+    steamStatsReady = true;
+    return { ok: true };
+  }
+
+  if (steamStatsReadyInFlight) {
+    const ok = await steamStatsReadyInFlight;
+    return ok ? { ok: true } : { ok: false, reason: 'stats_not_ready' };
+  }
+
+  steamStatsReadyInFlight = (async () => {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      try {
+        steamworks?.runCallbacks?.();
+      } catch (_) {
+        // ignore
+      }
+      if (isSteamUserStatsReady()) return true;
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise((r) => setTimeout(r, 200));
+    }
+    return false;
+  })();
+
+  const ok = await steamStatsReadyInFlight;
+  steamStatsReadyInFlight = null;
+  steamStatsReady = ok;
+  return ok ? { ok: true } : { ok: false, reason: 'stats_not_ready' };
 }
 
 function getSteamStatus() {
@@ -135,6 +187,7 @@ function getSteamStatus() {
       steamId64: steamId?.steamId64 ? steamId.steamId64.toString() : null,
       level: steamClient.localplayer.getLevel?.() ?? null,
       appId: steamClient.utils?.getAppId?.() ?? null,
+      statsReady: steamStatsReady || isSteamUserStatsReady(),
     };
   } catch (e) {
     return { available: false };
@@ -844,9 +897,15 @@ ipcMain.handle('steam-is-available', () => {
   return getSteamStatus();
 });
 
+ipcMain.handle('steam-ensure-stats-ready', async (event, options) => {
+  const timeoutMs = Number.isFinite(options?.timeoutMs) ? Math.max(0, Math.trunc(options.timeoutMs)) : 5000;
+  return await ensureSteamUserStatsReady({ timeoutMs });
+});
+
 ipcMain.handle('steam-activate-achievement', (event, achievementApiName) => {
   initSteamworks();
   if (!steamAvailable || !steamClient) return { ok: false, reason: 'steam_unavailable' };
+  if (!steamStatsReady && !isSteamUserStatsReady()) return { ok: false, reason: 'stats_not_ready' };
   if (typeof achievementApiName !== 'string' || achievementApiName.length === 0) {
     return { ok: false, reason: 'invalid_name' };
   }
@@ -862,6 +921,7 @@ ipcMain.handle('steam-activate-achievement', (event, achievementApiName) => {
 ipcMain.handle('steam-set-stat-int', (event, statName, value) => {
   initSteamworks();
   if (!steamAvailable || !steamClient) return { ok: false, reason: 'steam_unavailable' };
+  if (!steamStatsReady && !isSteamUserStatsReady()) return { ok: false, reason: 'stats_not_ready' };
   if (typeof statName !== 'string' || statName.length === 0 || !Number.isFinite(value)) {
     return { ok: false, reason: 'invalid_args' };
   }
@@ -876,6 +936,7 @@ ipcMain.handle('steam-set-stat-int', (event, statName, value) => {
 ipcMain.handle('steam-get-stat-int', (event, statName) => {
   initSteamworks();
   if (!steamAvailable || !steamClient) return { ok: false, reason: 'steam_unavailable' };
+  if (!steamStatsReady && !isSteamUserStatsReady()) return { ok: false, reason: 'stats_not_ready' };
   if (typeof statName !== 'string' || statName.length === 0) {
     return { ok: false, reason: 'invalid_args' };
   }
@@ -893,6 +954,7 @@ ipcMain.handle('steam-get-stat-int', (event, statName) => {
 ipcMain.handle('steam-store-stats', (event, options) => {
   initSteamworks();
   if (!steamAvailable || !steamClient) return { ok: false, reason: 'steam_unavailable' };
+  if (!steamStatsReady && !isSteamUserStatsReady()) return { ok: false, reason: 'stats_not_ready' };
 
   // Throttle stores (Steam recommends not spamming StoreStats).
   const now = Date.now();

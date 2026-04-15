@@ -28,6 +28,11 @@ export function SessionStatsDisplay({ stats, hideTitle = false, gameMode }: Sess
   const allSessions = getGameSessions();
   const sessions = gameMode ? allSessions.filter(s => s.gameMode === gameMode) : allSessions;
   const achievements = getAchievementProgress(stats, sessions);
+  const sortedAchievements = [...achievements].sort((a, b) => {
+    if (a.unlocked !== b.unlocked) return a.unlocked ? -1 : 1;
+    return a.category.localeCompare(b.category) || a.title.localeCompare(b.title);
+  });
+  const unlockedCount = achievements.filter((a) => a.unlocked).length;
 
   const translateRecommendation = (language: Language, recommendation: string): string => {
     if (!recommendation) return '';
@@ -195,9 +200,20 @@ export function SessionStatsDisplay({ stats, hideTitle = false, gameMode }: Sess
         {/* Achievements Tab */}
         {activeTab === 'achievements' && (
           <div className="space-y-3 sm:space-y-4 w-full" style={{ width: '100%', minWidth: '100%' }}>
-            {achievements.length > 0 ? (
+            {unlockedCount === 0 && (
+              <div
+                className="p-3 border-2 pixel-border text-center"
+                style={{ backgroundColor: 'rgba(0, 58, 99, 0.6)', borderColor: '#3E7CAC' }}
+              >
+                <p className="text-sm sm:text-base text-muted-foreground">
+                  {t(language, 'stats.achievements.noAchievements')}
+                </p>
+              </div>
+            )}
+
+            {sortedAchievements.length > 0 ? (
               <div className="block w-full space-y-1.5 sm:space-y-2 max-h-[calc(100vh-400px)] sm:max-h-[calc(100vh-450px)] overflow-y-auto rounded-md p-2 sm:p-3" style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)', borderColor: '#3E7CAC', borderWidth: '1px', borderStyle: 'solid', width: '100%', minWidth: '100%', maxWidth: '100%', flexShrink: 0, boxSizing: 'border-box' }}>
-                  {achievements.map((a) => {
+                  {sortedAchievements.map((a) => {
                     const progressPercent = Math.round((a.progress.current / a.progress.target) * 100);
                     const rarityLabel = t(language, `rarity.${a.rarity}`);
                     return (

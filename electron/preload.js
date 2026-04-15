@@ -12,6 +12,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   quit: () => ipcRenderer.invoke('app-quit'),
   steam: {
     isAvailable: () => ipcRenderer.invoke('steam-is-available'),
+    ensureStatsReady: (options) => ipcRenderer.invoke('steam-ensure-stats-ready', options),
     activateAchievement: (achievementApiName) =>
       ipcRenderer.invoke('steam-activate-achievement', achievementApiName),
     getStatInt: (statName) => ipcRenderer.invoke('steam-get-stat-int', statName),
