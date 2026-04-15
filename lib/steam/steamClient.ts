@@ -8,7 +8,7 @@ function getSteamApi() {
   return typeof window !== 'undefined' ? window.electronAPI?.steam : undefined;
 }
 
-export async function ensureSteamStatsReady(options?: { timeoutMs?: number }): Promise<boolean> {
+export async function ensureSteamStatsReady(options?: { timeoutMs?: number; probeStatName?: string }): Promise<boolean> {
   const steam = getSteamApi();
   if (!steam?.ensureStatsReady) return false;
   try {
