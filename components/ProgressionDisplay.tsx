@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { getUserProgress, getXPProgress, getXPRequiredForNextLevel, getLevelConfig, type LevelReward } from '@/lib/progression';
 import { useGameState } from '@/lib/GameContext';
-import { CosmeticSelector } from './CosmeticSelector';
 
 export function ProgressionDisplay() {
   const { language } = useGameState();
@@ -74,44 +73,17 @@ export function ProgressionDisplay() {
         </div>
       )}
 
-      {/* Unlocked Cosmetics */}
-      {progress.unlockedCosmetics.length > 0 && (
-        <div className="p-4 border-2 pixel-border" style={{ backgroundColor: 'rgba(0, 58, 99, 0.4)', borderColor: '#3E7CAC' }}>
-          <p className="text-sm sm:text-base font-semibold text-foreground mb-3">Unlocked Cosmetics</p>
-          <div className="flex flex-wrap gap-2">
-            {progress.unlockedCosmetics.map((cosmeticId) => (
-              <div
-                key={cosmeticId}
-                className="px-3 py-2 border-2 pixel-border text-xs sm:text-sm"
-                style={{
-                  backgroundColor: 'rgba(62, 124, 172, 0.3)',
-                  borderColor: '#3E7CAC',
-                }}
-              >
-                {cosmeticId.replace('theme-', '').replace('trail-', '').replace(/-/g, ' ')}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Cosmetic Tickets */}
+      {/* Cosmetics (Coming Soon) */}
       <div className="p-4 border-2 pixel-border" style={{ backgroundColor: 'rgba(0, 58, 99, 0.4)', borderColor: '#3E7CAC' }}>
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm sm:text-base font-semibold text-foreground mb-1">Cosmetic Tickets</p>
-            <p className="text-xs text-muted-foreground">Use tickets to unlock cosmetics in the shop</p>
-          </div>
-          <div className="text-right">
-            <p className="text-2xl sm:text-3xl font-bold text-foreground">{progress.cosmeticTickets}</p>
-          </div>
+        <div className="flex items-center justify-between gap-3 mb-2">
+          <p className="text-sm sm:text-base font-semibold text-foreground">Customize Cosmetics</p>
+          <span className="text-xs px-2 py-0.5 border pixel-border uppercase tracking-wide text-chart-3" style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 0, 0, 0.35)' }}>
+            Coming Soon
+          </span>
         </div>
-      </div>
-
-      {/* Cosmetic Selector */}
-      <div className="p-4 border-2 pixel-border" style={{ backgroundColor: 'rgba(0, 58, 99, 0.4)', borderColor: '#3E7CAC' }}>
-        <p className="text-sm sm:text-base font-semibold text-foreground mb-4">Customize Cosmetics</p>
-        <CosmeticSelector />
+        <p className="text-xs sm:text-sm text-muted-foreground wrap-break-word">
+          Cosmetic themes, particle trails, and hit sounds will be available in a future update.
+        </p>
       </div>
     </div>
   );
