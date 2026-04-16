@@ -19,113 +19,113 @@ STAT_MODE_NIGHTMARE_PLAYED
 
 ### Score milestones (bind to `STAT_BEST_SCORE`)
 ```text
-ACH_SCORE_100        ProgressStat=STAT_BEST_SCORE UnlockValue=100
-ACH_SCORE_250        ProgressStat=STAT_BEST_SCORE UnlockValue=250
-ACH_SCORE_500        ProgressStat=STAT_BEST_SCORE UnlockValue=500
-ACH_SCORE_1000       ProgressStat=STAT_BEST_SCORE UnlockValue=1000
-ACH_SCORE_2000       ProgressStat=STAT_BEST_SCORE UnlockValue=2000
-ACH_SCORE_5000       ProgressStat=STAT_BEST_SCORE UnlockValue=5000
-ACH_SCORE_10000      ProgressStat=STAT_BEST_SCORE UnlockValue=10000
-ACH_SCORE_20000      ProgressStat=STAT_BEST_SCORE UnlockValue=20000
-ACH_SCORE_50000      ProgressStat=STAT_BEST_SCORE UnlockValue=50000
-ACH_SCORE_100000     ProgressStat=STAT_BEST_SCORE UnlockValue=100000
-ACH_SCORE_200000     ProgressStat=STAT_BEST_SCORE UnlockValue=200000
-ACH_SCORE_500000     ProgressStat=STAT_BEST_SCORE UnlockValue=500000
-ACH_SCORE_1000000    ProgressStat=STAT_BEST_SCORE UnlockValue=1000000
-ACH_SCORE_2000000    ProgressStat=STAT_BEST_SCORE UnlockValue=2000000
-ACH_SCORE_5000000    ProgressStat=STAT_BEST_SCORE UnlockValue=5000000
-ACH_SCORE_10000000   ProgressStat=STAT_BEST_SCORE UnlockValue=10000000
-ACH_SCORE_20000000   ProgressStat=STAT_BEST_SCORE UnlockValue=20000000
-ACH_SCORE_50000000   ProgressStat=STAT_BEST_SCORE UnlockValue=50000000
-ACH_SCORE_100000000  ProgressStat=STAT_BEST_SCORE UnlockValue=100000000
+ACH_SCORE_100        DisplayName="Score 100"        Description="Reach a best score of 100."        ProgressStat=STAT_BEST_SCORE UnlockValue=100
+ACH_SCORE_250        DisplayName="Score 250"        Description="Reach a best score of 250."        ProgressStat=STAT_BEST_SCORE UnlockValue=250
+ACH_SCORE_500        DisplayName="Score 500"        Description="Reach a best score of 500."        ProgressStat=STAT_BEST_SCORE UnlockValue=500
+ACH_SCORE_1000       DisplayName="Score 1,000"      Description="Reach a best score of 1,000."      ProgressStat=STAT_BEST_SCORE UnlockValue=1000
+ACH_SCORE_2000       DisplayName="Score 2,000"      Description="Reach a best score of 2,000."      ProgressStat=STAT_BEST_SCORE UnlockValue=2000
+ACH_SCORE_5000       DisplayName="Score 5,000"      Description="Reach a best score of 5,000."      ProgressStat=STAT_BEST_SCORE UnlockValue=5000
+ACH_SCORE_10000      DisplayName="Score 10,000"     Description="Reach a best score of 10,000."     ProgressStat=STAT_BEST_SCORE UnlockValue=10000
+ACH_SCORE_20000      DisplayName="Score 20,000"     Description="Reach a best score of 20,000."     ProgressStat=STAT_BEST_SCORE UnlockValue=20000
+ACH_SCORE_50000      DisplayName="Score 50,000"     Description="Reach a best score of 50,000."     ProgressStat=STAT_BEST_SCORE UnlockValue=50000
+ACH_SCORE_100000     DisplayName="Score 100,000"    Description="Reach a best score of 100,000."    ProgressStat=STAT_BEST_SCORE UnlockValue=100000
+ACH_SCORE_200000     DisplayName="Score 200,000"    Description="Reach a best score of 200,000."    ProgressStat=STAT_BEST_SCORE UnlockValue=200000
+ACH_SCORE_500000     DisplayName="Score 500,000"    Description="Reach a best score of 500,000."    ProgressStat=STAT_BEST_SCORE UnlockValue=500000
+ACH_SCORE_1000000    DisplayName="Score 1,000,000"  Description="Reach a best score of 1,000,000."  ProgressStat=STAT_BEST_SCORE UnlockValue=1000000
+ACH_SCORE_2000000    DisplayName="Score 2,000,000"  Description="Reach a best score of 2,000,000."  ProgressStat=STAT_BEST_SCORE UnlockValue=2000000
+ACH_SCORE_5000000    DisplayName="Score 5,000,000"  Description="Reach a best score of 5,000,000."  ProgressStat=STAT_BEST_SCORE UnlockValue=5000000
+ACH_SCORE_10000000   DisplayName="Score 10,000,000" Description="Reach a best score of 10,000,000." ProgressStat=STAT_BEST_SCORE UnlockValue=10000000
+ACH_SCORE_20000000   DisplayName="Score 20,000,000" Description="Reach a best score of 20,000,000." ProgressStat=STAT_BEST_SCORE UnlockValue=20000000
+ACH_SCORE_50000000   DisplayName="Score 50,000,000" Description="Reach a best score of 50,000,000." ProgressStat=STAT_BEST_SCORE UnlockValue=50000000
+ACH_SCORE_100000000  DisplayName="Score 100,000,000" Description="Reach a best score of 100,000,000." ProgressStat=STAT_BEST_SCORE UnlockValue=100000000
 ```
 
 ### Combo milestones (bind to `STAT_BEST_COMBO`)
 ```text
-ACH_COMBO_10     ProgressStat=STAT_BEST_COMBO UnlockValue=10
-ACH_COMBO_20     ProgressStat=STAT_BEST_COMBO UnlockValue=20
-ACH_COMBO_30     ProgressStat=STAT_BEST_COMBO UnlockValue=30
-ACH_COMBO_50     ProgressStat=STAT_BEST_COMBO UnlockValue=50
-ACH_COMBO_100    ProgressStat=STAT_BEST_COMBO UnlockValue=100
-ACH_COMBO_200    ProgressStat=STAT_BEST_COMBO UnlockValue=200
-ACH_COMBO_300    ProgressStat=STAT_BEST_COMBO UnlockValue=300
-ACH_COMBO_500    ProgressStat=STAT_BEST_COMBO UnlockValue=500
-ACH_COMBO_1000   ProgressStat=STAT_BEST_COMBO UnlockValue=1000
-ACH_COMBO_2000   ProgressStat=STAT_BEST_COMBO UnlockValue=2000
-ACH_COMBO_5000   ProgressStat=STAT_BEST_COMBO UnlockValue=5000
-ACH_COMBO_10000  ProgressStat=STAT_BEST_COMBO UnlockValue=10000
-ACH_FLAWLESS_STREAK ProgressStat=STAT_BEST_COMBO UnlockValue=40
+ACH_COMBO_10     DisplayName="Combo 10"     Description="Reach a best combo of 10."     ProgressStat=STAT_BEST_COMBO UnlockValue=10
+ACH_COMBO_20     DisplayName="Combo 20"     Description="Reach a best combo of 20."     ProgressStat=STAT_BEST_COMBO UnlockValue=20
+ACH_COMBO_30     DisplayName="Combo 30"     Description="Reach a best combo of 30."     ProgressStat=STAT_BEST_COMBO UnlockValue=30
+ACH_COMBO_50     DisplayName="Combo 50"     Description="Reach a best combo of 50."     ProgressStat=STAT_BEST_COMBO UnlockValue=50
+ACH_COMBO_100    DisplayName="Combo 100"    Description="Reach a best combo of 100."    ProgressStat=STAT_BEST_COMBO UnlockValue=100
+ACH_COMBO_200    DisplayName="Combo 200"    Description="Reach a best combo of 200."    ProgressStat=STAT_BEST_COMBO UnlockValue=200
+ACH_COMBO_300    DisplayName="Combo 300"    Description="Reach a best combo of 300."    ProgressStat=STAT_BEST_COMBO UnlockValue=300
+ACH_COMBO_500    DisplayName="Combo 500"    Description="Reach a best combo of 500."    ProgressStat=STAT_BEST_COMBO UnlockValue=500
+ACH_COMBO_1000   DisplayName="Combo 1,000"  Description="Reach a best combo of 1,000."  ProgressStat=STAT_BEST_COMBO UnlockValue=1000
+ACH_COMBO_2000   DisplayName="Combo 2,000"  Description="Reach a best combo of 2,000."  ProgressStat=STAT_BEST_COMBO UnlockValue=2000
+ACH_COMBO_5000   DisplayName="Combo 5,000"  Description="Reach a best combo of 5,000."  ProgressStat=STAT_BEST_COMBO UnlockValue=5000
+ACH_COMBO_10000  DisplayName="Combo 10,000" Description="Reach a best combo of 10,000." ProgressStat=STAT_BEST_COMBO UnlockValue=10000
+ACH_FLAWLESS_STREAK DisplayName="Flawless Streak" Description="Reach a 40 combo without a mistake." ProgressStat=STAT_BEST_COMBO UnlockValue=40
 ```
 
 ### Games played (bind to `STAT_GAMES_PLAYED`)
 ```text
-ACH_GAMES_100   ProgressStat=STAT_GAMES_PLAYED UnlockValue=100
-ACH_GAMES_500   ProgressStat=STAT_GAMES_PLAYED UnlockValue=500
-ACH_GAMES_1000  ProgressStat=STAT_GAMES_PLAYED UnlockValue=1000
+ACH_GAMES_100   DisplayName="100 Games"  Description="Play 100 games."  ProgressStat=STAT_GAMES_PLAYED UnlockValue=100
+ACH_GAMES_500   DisplayName="500 Games"  Description="Play 500 games."  ProgressStat=STAT_GAMES_PLAYED UnlockValue=500
+ACH_GAMES_1000  DisplayName="1,000 Games" Description="Play 1,000 games." ProgressStat=STAT_GAMES_PLAYED UnlockValue=1000
 ```
 
 ### Playtime (bind to `STAT_PLAYTIME_SECONDS`)
 ```text
-ACH_PLAYTIME_HOUR     ProgressStat=STAT_PLAYTIME_SECONDS UnlockValue=3600
-ACH_PLAYTIME_2HOURS   ProgressStat=STAT_PLAYTIME_SECONDS UnlockValue=7200
-ACH_PLAYTIME_4HOURS   ProgressStat=STAT_PLAYTIME_SECONDS UnlockValue=14400
-ACH_PLAYTIME_8HOURS   ProgressStat=STAT_PLAYTIME_SECONDS UnlockValue=28800
-ACH_PLAYTIME_16HOURS  ProgressStat=STAT_PLAYTIME_SECONDS UnlockValue=57600
-ACH_PLAYTIME_32HOURS  ProgressStat=STAT_PLAYTIME_SECONDS UnlockValue=115200
-ACH_PLAYTIME_64HOURS  ProgressStat=STAT_PLAYTIME_SECONDS UnlockValue=230400
-ACH_PLAYTIME_128HOURS ProgressStat=STAT_PLAYTIME_SECONDS UnlockValue=460800
-ACH_PLAYTIME_999HOURS ProgressStat=STAT_PLAYTIME_SECONDS UnlockValue=3596400
+ACH_PLAYTIME_HOUR     DisplayName="1 Hour"   Description="Play for 1 hour in total."   ProgressStat=STAT_PLAYTIME_SECONDS UnlockValue=3600
+ACH_PLAYTIME_2HOURS   DisplayName="2 Hours"  Description="Play for 2 hours in total."  ProgressStat=STAT_PLAYTIME_SECONDS UnlockValue=7200
+ACH_PLAYTIME_4HOURS   DisplayName="4 Hours"  Description="Play for 4 hours in total."  ProgressStat=STAT_PLAYTIME_SECONDS UnlockValue=14400
+ACH_PLAYTIME_8HOURS   DisplayName="8 Hours"  Description="Play for 8 hours in total."  ProgressStat=STAT_PLAYTIME_SECONDS UnlockValue=28800
+ACH_PLAYTIME_16HOURS  DisplayName="16 Hours" Description="Play for 16 hours in total." ProgressStat=STAT_PLAYTIME_SECONDS UnlockValue=57600
+ACH_PLAYTIME_32HOURS  DisplayName="32 Hours" Description="Play for 32 hours in total." ProgressStat=STAT_PLAYTIME_SECONDS UnlockValue=115200
+ACH_PLAYTIME_64HOURS  DisplayName="64 Hours" Description="Play for 64 hours in total." ProgressStat=STAT_PLAYTIME_SECONDS UnlockValue=230400
+ACH_PLAYTIME_128HOURS DisplayName="128 Hours" Description="Play for 128 hours in total." ProgressStat=STAT_PLAYTIME_SECONDS UnlockValue=460800
+ACH_PLAYTIME_999HOURS DisplayName="999 Hours" Description="Play for 999 hours in total." ProgressStat=STAT_PLAYTIME_SECONDS UnlockValue=3596400
 ```
 
 ### Player level (bind to `STAT_PLAYER_LEVEL`)
 These are the **level milestone achievements** currently generated by the game code (`level_10` … `level_999`).
 
 ```text
-ACH_LEVEL_10   ProgressStat=STAT_PLAYER_LEVEL UnlockValue=10
-ACH_LEVEL_20   ProgressStat=STAT_PLAYER_LEVEL UnlockValue=20
-ACH_LEVEL_30   ProgressStat=STAT_PLAYER_LEVEL UnlockValue=30
-ACH_LEVEL_40   ProgressStat=STAT_PLAYER_LEVEL UnlockValue=40
-ACH_LEVEL_50   ProgressStat=STAT_PLAYER_LEVEL UnlockValue=50
-ACH_LEVEL_60   ProgressStat=STAT_PLAYER_LEVEL UnlockValue=60
-ACH_LEVEL_70   ProgressStat=STAT_PLAYER_LEVEL UnlockValue=70
-ACH_LEVEL_80   ProgressStat=STAT_PLAYER_LEVEL UnlockValue=80
-ACH_LEVEL_90   ProgressStat=STAT_PLAYER_LEVEL UnlockValue=90
-ACH_LEVEL_100  ProgressStat=STAT_PLAYER_LEVEL UnlockValue=100
-ACH_LEVEL_150  ProgressStat=STAT_PLAYER_LEVEL UnlockValue=150
-ACH_LEVEL_200  ProgressStat=STAT_PLAYER_LEVEL UnlockValue=200
-ACH_LEVEL_250  ProgressStat=STAT_PLAYER_LEVEL UnlockValue=250
-ACH_LEVEL_300  ProgressStat=STAT_PLAYER_LEVEL UnlockValue=300
-ACH_LEVEL_350  ProgressStat=STAT_PLAYER_LEVEL UnlockValue=350
-ACH_LEVEL_400  ProgressStat=STAT_PLAYER_LEVEL UnlockValue=400
-ACH_LEVEL_450  ProgressStat=STAT_PLAYER_LEVEL UnlockValue=450
-ACH_LEVEL_500  ProgressStat=STAT_PLAYER_LEVEL UnlockValue=500
-ACH_LEVEL_600  ProgressStat=STAT_PLAYER_LEVEL UnlockValue=600
-ACH_LEVEL_700  ProgressStat=STAT_PLAYER_LEVEL UnlockValue=700
-ACH_LEVEL_800  ProgressStat=STAT_PLAYER_LEVEL UnlockValue=800
-ACH_LEVEL_900  ProgressStat=STAT_PLAYER_LEVEL UnlockValue=900
-ACH_LEVEL_999  ProgressStat=STAT_PLAYER_LEVEL UnlockValue=999
+ACH_LEVEL_10   DisplayName="Level 10"  Description="Reach player level 10."  ProgressStat=STAT_PLAYER_LEVEL UnlockValue=10
+ACH_LEVEL_20   DisplayName="Level 20"  Description="Reach player level 20."  ProgressStat=STAT_PLAYER_LEVEL UnlockValue=20
+ACH_LEVEL_30   DisplayName="Level 30"  Description="Reach player level 30."  ProgressStat=STAT_PLAYER_LEVEL UnlockValue=30
+ACH_LEVEL_40   DisplayName="Level 40"  Description="Reach player level 40."  ProgressStat=STAT_PLAYER_LEVEL UnlockValue=40
+ACH_LEVEL_50   DisplayName="Level 50"  Description="Reach player level 50."  ProgressStat=STAT_PLAYER_LEVEL UnlockValue=50
+ACH_LEVEL_60   DisplayName="Level 60"  Description="Reach player level 60."  ProgressStat=STAT_PLAYER_LEVEL UnlockValue=60
+ACH_LEVEL_70   DisplayName="Level 70"  Description="Reach player level 70."  ProgressStat=STAT_PLAYER_LEVEL UnlockValue=70
+ACH_LEVEL_80   DisplayName="Level 80"  Description="Reach player level 80."  ProgressStat=STAT_PLAYER_LEVEL UnlockValue=80
+ACH_LEVEL_90   DisplayName="Level 90"  Description="Reach player level 90."  ProgressStat=STAT_PLAYER_LEVEL UnlockValue=90
+ACH_LEVEL_100  DisplayName="Level 100" Description="Reach player level 100." ProgressStat=STAT_PLAYER_LEVEL UnlockValue=100
+ACH_LEVEL_150  DisplayName="Level 150" Description="Reach player level 150." ProgressStat=STAT_PLAYER_LEVEL UnlockValue=150
+ACH_LEVEL_200  DisplayName="Level 200" Description="Reach player level 200." ProgressStat=STAT_PLAYER_LEVEL UnlockValue=200
+ACH_LEVEL_250  DisplayName="Level 250" Description="Reach player level 250." ProgressStat=STAT_PLAYER_LEVEL UnlockValue=250
+ACH_LEVEL_300  DisplayName="Level 300" Description="Reach player level 300." ProgressStat=STAT_PLAYER_LEVEL UnlockValue=300
+ACH_LEVEL_350  DisplayName="Level 350" Description="Reach player level 350." ProgressStat=STAT_PLAYER_LEVEL UnlockValue=350
+ACH_LEVEL_400  DisplayName="Level 400" Description="Reach player level 400." ProgressStat=STAT_PLAYER_LEVEL UnlockValue=400
+ACH_LEVEL_450  DisplayName="Level 450" Description="Reach player level 450." ProgressStat=STAT_PLAYER_LEVEL UnlockValue=450
+ACH_LEVEL_500  DisplayName="Level 500" Description="Reach player level 500." ProgressStat=STAT_PLAYER_LEVEL UnlockValue=500
+ACH_LEVEL_600  DisplayName="Level 600" Description="Reach player level 600." ProgressStat=STAT_PLAYER_LEVEL UnlockValue=600
+ACH_LEVEL_700  DisplayName="Level 700" Description="Reach player level 700." ProgressStat=STAT_PLAYER_LEVEL UnlockValue=700
+ACH_LEVEL_800  DisplayName="Level 800" Description="Reach player level 800." ProgressStat=STAT_PLAYER_LEVEL UnlockValue=800
+ACH_LEVEL_900  DisplayName="Level 900" Description="Reach player level 900." ProgressStat=STAT_PLAYER_LEVEL UnlockValue=900
+ACH_LEVEL_999  DisplayName="Level 999" Description="Reach player level 999." ProgressStat=STAT_PLAYER_LEVEL UnlockValue=999
 ```
 
 ### Reaction-time achievements (manual unlock; don’t bind to progress stat)
 ```text
-ACH_REACTION_250
-ACH_REACTION_200
-ACH_REACTION_150
-ACH_REACTION_100
-ACH_REACTION_75
-ACH_REACTION_50
-ACH_REACTION_25
-ACH_REACTION_10
-ACH_REACTION_5
+ACH_REACTION_250 DisplayName="250 ms" Description="Get a reaction time of 250 ms or faster."
+ACH_REACTION_200 DisplayName="200 ms" Description="Get a reaction time of 200 ms or faster."
+ACH_REACTION_150 DisplayName="150 ms" Description="Get a reaction time of 150 ms or faster."
+ACH_REACTION_100 DisplayName="100 ms" Description="Get a reaction time of 100 ms or faster."
+ACH_REACTION_75  DisplayName="75 ms"  Description="Get a reaction time of 75 ms or faster."
+ACH_REACTION_50  DisplayName="50 ms"  Description="Get a reaction time of 50 ms or faster."
+ACH_REACTION_25  DisplayName="25 ms"  Description="Get a reaction time of 25 ms or faster."
+ACH_REACTION_10  DisplayName="10 ms"  Description="Get a reaction time of 10 ms or faster."
+ACH_REACTION_5   DisplayName="5 ms"   Description="Get a reaction time of 5 ms or faster."
 ```
 
 ### Mode achievements / special (manual unlock; mode-specific)
 ```text
-ACH_MODE_REFLEX
-ACH_MODE_SEQUENCE
-ACH_MODE_SURVIVAL
-ACH_MODE_NIGHTMARE
-ACH_MODE_NIGHTMARE_MASTER
-ACH_HARD_90S
-ACH_ALL_MODES
+ACH_MODE_REFLEX           DisplayName="Reflex"           Description="Complete a game in Reflex mode."
+ACH_MODE_SEQUENCE         DisplayName="Sequence"         Description="Complete a game in Sequence mode."
+ACH_MODE_SURVIVAL         DisplayName="Survival"         Description="Complete a game in Survival mode."
+ACH_MODE_NIGHTMARE        DisplayName="Nightmare"        Description="Complete a game in Nightmare mode."
+ACH_MODE_NIGHTMARE_MASTER DisplayName="Nightmare Master" Description="Master Nightmare mode."
+ACH_HARD_90S              DisplayName="90 Seconds"       Description="Complete the 90-second challenge."
+ACH_ALL_MODES             DisplayName="All Modes"        Description="Complete a game in every mode."
 ```
