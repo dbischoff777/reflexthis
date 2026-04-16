@@ -20,9 +20,22 @@ const SOUNDS = {
   lifeLost: '/sounds/life-lost.mp3',
   gameOver: '/sounds/game-over.mp3',
   combo: '/sounds/combo.mp3',
+  uiClick: '/sounds/UI_Button_Click.mp3',
 } as const;
 
 export type SoundType = keyof typeof SOUNDS;
+
+function isSoundEnabledFromStorage(): boolean {
+  if (typeof window === 'undefined') return true;
+  try {
+    const v = localStorage.getItem('reflexthis_soundEnabled');
+    // Default is enabled if not set yet.
+    if (v === null) return true;
+    return v === 'true';
+  } catch {
+    return true;
+  }
+}
 
 /**
  * Generate a simple beep sound using Web Audio API
@@ -177,6 +190,38 @@ export function playSound(sound: SoundType, enabled: boolean = true): void {
       console.debug(`Error playing sound ${sound}, using fallback:`, error);
     }
     playFallbackSound(sound);
+  }
+}
+
+/**
+ * Play UI sound effects (menus, modals, buttons).
+ * Unlike `playSound`, this does not depend on `isGamePageActive`.
+ */
+export function playUiSound(sound: SoundType): void {
+  if (typeof window === 'undefined') return;
+  if (!isSoundEnabledFromStorage()) return;
+
+  try {
+    const cachedAudio = audioCache[sound];
+    if (cachedAudio) {
+      const audio = cachedAudio.cloneNode() as HTMLAudioElement;
+      audio.volume = soundEffectsVolume;
+      audio.currentTime = 0;
+      audio.play().catch(() => {
+        // ignore
+      });
+      return;
+    }
+
+    const audio = new Audio(SOUNDS[sound]);
+    audio.volume = soundEffectsVolume;
+    audio.preload = 'auto';
+    audio.play().catch(() => {
+      // ignore
+    });
+    audioCache[sound] = audio;
+  } catch {
+    // ignore
   }
 }
 

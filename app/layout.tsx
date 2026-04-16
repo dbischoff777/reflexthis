@@ -6,6 +6,7 @@ import "./globals.css";
 import { ErrorBoundaryWrapper } from "@/components/ErrorBoundaryWrapper";
 import { CRTOverlay } from "@/components/CRTOverlay";
 import { InteractionPrevention } from "@/components/InteractionPrevention";
+import { GlobalUiClickSound } from "@/components/GlobalUiClickSound";
 
 const geistSans = GeistSans;
 
@@ -88,6 +89,7 @@ export default function RootLayout({
       >
         <InteractionPrevention />
         <CRTOverlay />
+        <GlobalUiClickSound />
         <ErrorBoundaryWrapper>
           {children}
         </ErrorBoundaryWrapper>
