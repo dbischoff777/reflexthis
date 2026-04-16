@@ -6,7 +6,7 @@ import type { AchievementId, Achievement } from '@/lib/achievements';
  *
  * Keep this stable once shipped (changing API names breaks unlock continuity).
  */
-export const STEAM_ACHIEVEMENT_MAP: Record<AchievementId, string> = {
+export const STEAM_ACHIEVEMENT_MAP: Partial<Record<AchievementId, string>> = {
   // Score
   score_100: 'ACH_SCORE_100',
   score_250: 'ACH_SCORE_250',

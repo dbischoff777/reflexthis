@@ -16,6 +16,7 @@ import { ReactionTimeGraph } from '@/components/ReactionTimeGraph';
 import { GameMode } from '@/lib/gameModes';
 import { DifficultyPreset } from '@/lib/difficulty';
 import { getAchievementById, getAchievementProgress, type Achievement } from '@/lib/achievements';
+import { getUserProgress } from '@/lib/progression';
 
 // Type for achievement progress display
 type AchievementProgress = Achievement & {
@@ -201,7 +202,7 @@ export function GameOverModal({
           if (achievement) {
             const stats = calculateSessionStatistics();
             const allSessions = getGameSessions();
-            const achievementProgress = achievement.getProgress(stats, allSessions);
+            const achievementProgress = achievement.getProgress(stats, allSessions, getUserProgress());
             return {
               ...achievement,
               unlocked: true,

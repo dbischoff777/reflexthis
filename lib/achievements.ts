@@ -6,8 +6,10 @@
 import { SessionStatistics, GameSession } from '@/lib/sessionStats';
 import { GameMode } from '@/lib/gameModes';
 import { DifficultyPreset } from '@/lib/difficulty';
+import type { UserProgress } from '@/lib/progression';
+import { getUserProgress } from '@/lib/progression';
 
-export type AchievementCategory = 'score' | 'combo' | 'reaction' | 'mode' | 'consistency' | 'special';
+export type AchievementCategory = 'score' | 'combo' | 'reaction' | 'mode' | 'consistency' | 'special' | 'progression';
 
 export interface Achievement {
   id: string;
@@ -20,8 +22,8 @@ export interface Achievement {
   // Optional filters for specific conditions
   gameMode?: GameMode;
   difficulty?: DifficultyPreset;
-  checkCondition: (stats: SessionStatistics, sessions: GameSession[]) => boolean;
-  getProgress: (stats: SessionStatistics, sessions: GameSession[]) => { current: number; target: number };
+  checkCondition: (stats: SessionStatistics, sessions: GameSession[], progress: UserProgress) => boolean;
+  getProgress: (stats: SessionStatistics, sessions: GameSession[], progress: UserProgress) => { current: number; target: number };
 }
 
 const STORAGE_KEY = 'reflexthis_achievements';
@@ -81,7 +83,8 @@ export function unlockAchievement(achievementId: string): boolean {
  */
 export function checkAndUnlockAchievements(
   stats: SessionStatistics,
-  sessions: GameSession[]
+  sessions: GameSession[],
+  progress: UserProgress = getUserProgress()
 ): string[] {
   const unlocked = getUnlockedAchievements();
   const newlyUnlocked: string[] = [];
@@ -89,7 +92,7 @@ export function checkAndUnlockAchievements(
   for (const achievement of ALL_ACHIEVEMENTS) {
     if (unlocked.has(achievement.id)) continue; // Already unlocked
     
-    if (achievement.checkCondition(stats, sessions)) {
+    if (achievement.checkCondition(stats, sessions, progress)) {
       if (unlockAchievement(achievement.id)) {
         newlyUnlocked.push(achievement.id);
       }
@@ -104,14 +107,15 @@ export function checkAndUnlockAchievements(
  */
 export function getAchievementProgress(
   stats: SessionStatistics,
-  sessions: GameSession[]
+  sessions: GameSession[],
+  progress: UserProgress = getUserProgress()
 ): Array<Achievement & { unlocked: boolean; progress: { current: number; target: number } }> {
   const unlocked = getUnlockedAchievements();
   
   return ALL_ACHIEVEMENTS.map(achievement => ({
     ...achievement,
     unlocked: unlocked.has(achievement.id),
-    progress: achievement.getProgress(stats, sessions),
+    progress: achievement.getProgress(stats, sessions, progress),
   }));
 }
 
@@ -148,6 +152,25 @@ const PLAYTIME_MILESTONES_MS: ReadonlyArray<{ id: string; ms: number; label: str
   { id: 'playtime_128hours', ms: 128 * 60 * 60 * 1000, label: '128 hours', rarity: 'legendary' },
   { id: 'playtime_999hours', ms: 999 * 60 * 60 * 1000, label: '999 hours', rarity: 'legendary' },
 ];
+
+const LEVEL_MILESTONES: ReadonlyArray<number> = [
+  // Early progression: every 10 levels up to 100
+  ...Array.from({ length: 10 }, (_, i) => (i + 1) * 10),
+  // Mid progression: every 50 up to 500
+  150, 200, 250, 300, 350, 400, 450, 500,
+  // Late progression: every 100 up to 900
+  600, 700, 800, 900,
+  // Ultimate
+  999,
+];
+
+function levelRarityForTarget(level: number): AchievementRarity {
+  if (level >= 999) return 'legendary';
+  if (level >= 500) return 'legendary';
+  if (level >= 200) return 'epic';
+  if (level >= 50) return 'rare';
+  return 'common';
+}
 
 function formatCompactNumber(n: number): string {
   if (n >= 1_000_000_000) return `${Math.round(n / 1_000_000_000)}B`;
@@ -256,6 +279,21 @@ const PLAYTIME_ACHIEVEMENTS: Achievement[] = PLAYTIME_MILESTONES_MS.map(({ id, m
   getProgress: (stats) => ({
     current: Math.min(stats.totalPlaytime, ms),
     target: ms,
+  }),
+}));
+
+const LEVEL_ACHIEVEMENTS: Achievement[] = LEVEL_MILESTONES.map((targetLevel) => ({
+  id: `level_${targetLevel}`,
+  title: 'Level Up',
+  description: `Reach player level ${targetLevel}.`,
+  category: 'progression',
+  icon: '📈',
+  rarity: levelRarityForTarget(targetLevel),
+  target: targetLevel,
+  checkCondition: (_stats, _sessions, progress) => progress.level >= targetLevel,
+  getProgress: (_stats, _sessions, progress) => ({
+    current: Math.min(progress.level, targetLevel),
+    target: targetLevel,
   }),
 }));
 
@@ -401,6 +439,7 @@ const ALL_ACHIEVEMENTS: Achievement[] = [
   ...MODE_ACHIEVEMENTS,
   ...GAMES_ACHIEVEMENTS,
   ...PLAYTIME_ACHIEVEMENTS,
+  ...LEVEL_ACHIEVEMENTS,
   ...SPECIAL_ACHIEVEMENTS,
 ];
 
