@@ -13,7 +13,13 @@ import { ScoreCalculator, ScoringFactors } from '@/lib/scoring';
 import { AdaptiveDifficulty, DifficultyChangeLog } from '@/lib/adaptiveDifficulty';
 import { submitChallengeResult } from '@/lib/challenges';
 import { calculateXP, addXP, getUserProgress } from '@/lib/progression';
-import { ensureSteamStatsReady, setSteamStatIntMonotonic, storeSteamStats, unlockSteamAchievementForLocalId } from '@/lib/steam/steamClient';
+import {
+  ensureSteamStatsReady,
+  setSteamStatIntMonotonic,
+  storeSteamStats,
+  submitSteamLeaderboardScore,
+  unlockSteamAchievementForLocalId,
+} from '@/lib/steam/steamClient';
 import { getSteamIntStatsFromLocalStats, STEAM_INT_STATS } from '@/lib/steam/steamStats';
 import { ACTIVE_CHALLENGE_SESSION_KEY, parseActiveChallengeSession } from '@/lib/challengeSession';
 
@@ -803,6 +809,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
               for (const statName of STEAM_INT_STATS) {
                 const ok = await setSteamStatIntMonotonic(statName, steamStats[statName]);
                 changedAnyStat = changedAnyStat || ok;
+              }
+
+              // Submit the run score to the Steam leaderboard (Steam keeps the best).
+              // This is separate from stats; stats are used for "Progress Stat" achievement bindings.
+              // Safe no-op outside Steam / if leaderboards aren't configured.
+              if (score > 0) {
+                await submitSteamLeaderboardScore({ leaderboardName: 'LB_BEST_SCORE', score });
               }
 
               // Also explicitly activate newly unlocked achievements as a fallback.

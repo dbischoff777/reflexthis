@@ -24,6 +24,17 @@ export interface ElectronAPI {
     getStatInt: (statName: string) => Promise<{ ok: boolean; value?: number; reason?: string; message?: string }>;
     setStatInt: (statName: string, value: number) => Promise<{ ok: boolean; reason?: string; message?: string }>;
     storeStats: (options?: { force?: boolean }) => Promise<{ ok: boolean; throttled?: boolean; reason?: string; message?: string }>;
+    leaderboardSubmitScore: (options: {
+      leaderboardName: string;
+      score: number;
+      details?: number[];
+    }) => Promise<{ ok: boolean; reason?: string; message?: string }>;
+    leaderboardGetTop: (options: { leaderboardName: string; limit?: number }) => Promise<{
+      ok: boolean;
+      entries?: Array<{ rank: number; score: number | null; steamId64: string | null; name: string | null }>;
+      reason?: string;
+      message?: string;
+    }>;
     debug: (options?: { statNames?: string[]; achievementApiNames?: string[] }) => Promise<{
       ok: boolean;
       available?: boolean;

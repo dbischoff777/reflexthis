@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { SessionStatistics, formatPlaytime, getGameSessions } from '@/lib/sessionStats';
 import { getAchievementProgress } from '@/lib/achievements';
 import { cn } from '@/lib/utils';
 import { t, type Language } from '@/lib/i18n';
 import { useGameState } from '@/lib/GameContext';
 import { GameMode } from '@/lib/gameModes';
+import { getSteamLeaderboardTop, getSteamStatus, type SteamLeaderboardEntry } from '@/lib/steam/steamClient';
 import Link from 'next/link';
 
 interface SessionStatsDisplayProps {
@@ -23,6 +24,10 @@ type TabType = 'overview' | 'achievements' | 'history';
 export function SessionStatsDisplay({ stats, hideTitle = false, gameMode }: SessionStatsDisplayProps) {
   const { language } = useGameState();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
+  const [steamAvailable, setSteamAvailable] = useState(false);
+  const [steamLeaderboardLoading, setSteamLeaderboardLoading] = useState(false);
+  const [steamLeaderboardEntries, setSteamLeaderboardEntries] = useState<SteamLeaderboardEntry[] | null>(null);
+  const [steamLeaderboardError, setSteamLeaderboardError] = useState<string | null>(null);
   
   // Get achievement progress
   const allSessions = getGameSessions();
@@ -102,6 +107,41 @@ export function SessionStatsDisplay({ stats, hideTitle = false, gameMode }: Sess
     { id: 'achievements', label: t(language, 'stats.tab.achievements') },
     { id: 'history', label: t(language, 'stats.tab.history') },
   ];
+
+  const isElectronSteam = useMemo(() => typeof window !== 'undefined' && !!window.electronAPI?.steam, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!isElectronSteam) return;
+    (async () => {
+      const status = await getSteamStatus();
+      if (cancelled) return;
+      setSteamAvailable(status.available);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isElectronSteam]);
+
+  const loadSteamLeaderboard = async () => {
+    if (!isElectronSteam) return;
+    setSteamLeaderboardLoading(true);
+    setSteamLeaderboardError(null);
+    try {
+      const res = await getSteamLeaderboardTop({ leaderboardName: 'LB_BEST_SCORE', limit: 10 });
+      if (!res.ok) {
+        setSteamLeaderboardEntries(null);
+        setSteamLeaderboardError(res.reason ?? 'Failed to load leaderboard');
+      } else {
+        setSteamLeaderboardEntries(res.entries ?? []);
+      }
+    } catch {
+      setSteamLeaderboardEntries(null);
+      setSteamLeaderboardError('Failed to load leaderboard');
+    } finally {
+      setSteamLeaderboardLoading(false);
+    }
+  };
 
   return (
     <div className={hideTitle ? 'w-full min-w-full block' : 'p-4 sm:p-6 border-4 pixel-border w-full block'} style={hideTitle ? { width: '100%', minWidth: '100%', maxWidth: '100%', display: 'block', boxSizing: 'border-box' } : { backgroundColor: '#003A63', borderColor: '#3E7CAC', width: '100%', minWidth: '100%', maxWidth: '100%', display: 'block', boxSizing: 'border-box' }}>
@@ -192,6 +232,64 @@ export function SessionStatsDisplay({ stats, hideTitle = false, gameMode }: Sess
                 </p>
               </div>
             )}
+              </div>
+            )}
+
+            {/* Steam Leaderboard (Electron/Steam only) */}
+            {isElectronSteam && (
+              <div className="p-3 border-2 pixel-border" style={{ backgroundColor: 'rgba(0, 0, 0, 0.25)', borderColor: '#3E7CAC' }}>
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <div className="min-w-0">
+                    <p className="text-sm sm:text-base font-semibold text-foreground truncate">Steam Leaderboard (Best Score)</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">
+                      {steamAvailable ? 'Top 10 global' : 'Steam not available'}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={loadSteamLeaderboard}
+                    disabled={!steamAvailable || steamLeaderboardLoading}
+                    className={cn(
+                      'px-3 py-1.5 border-2 pixel-border text-xs sm:text-sm font-semibold transition-all',
+                      (!steamAvailable || steamLeaderboardLoading) ? 'opacity-60 cursor-not-allowed' : 'hover:opacity-90'
+                    )}
+                    style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(62, 124, 172, 0.2)' }}
+                  >
+                    {steamLeaderboardLoading ? 'Loading…' : 'Refresh'}
+                  </button>
+                </div>
+
+                {steamLeaderboardError && (
+                  <p className="text-xs sm:text-sm text-foreground/80">
+                    {steamLeaderboardError === 'unsupported'
+                      ? 'Leaderboards are not supported by the current Steam integration (steamworks.js). Use a backend + Steam Web API for trusted reads/writes.'
+                      : steamLeaderboardError}
+                  </p>
+                )}
+
+                {steamLeaderboardEntries && steamLeaderboardEntries.length > 0 && (
+                  <div className="space-y-1">
+                    {steamLeaderboardEntries.map((e) => (
+                      <div
+                        key={`${e.rank}-${e.steamId64 ?? e.name ?? 'unknown'}`}
+                        className="flex items-center justify-between gap-3 px-2 py-1 border rounded"
+                        style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 58, 99, 0.35)' }}
+                      >
+                        <span className="text-xs sm:text-sm text-foreground/80 w-10 shrink-0">#{e.rank}</span>
+                        <span className="text-xs sm:text-sm text-foreground/90 min-w-0 truncate flex-1">
+                          {e.name ?? (e.steamId64 ? `SteamID ${e.steamId64}` : 'Unknown')}
+                        </span>
+                        <span className="text-xs sm:text-sm font-bold text-foreground shrink-0">
+                          {e.score ?? '--'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {steamLeaderboardEntries && steamLeaderboardEntries.length === 0 && !steamLeaderboardLoading && !steamLeaderboardError && (
+                  <p className="text-xs sm:text-sm text-muted-foreground">No entries yet.</p>
+                )}
               </div>
             )}
           </div>

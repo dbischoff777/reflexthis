@@ -19,7 +19,7 @@ const SERVER_URL = `http://localhost:${SERVER_PORT}`;
 // ============================================================================
 // Steamworks (Achievements/Stats) - main process only
 // ============================================================================
-let steamworks = null; // module
+let steamworks = null; // module (steamworks.js)
 let steamClient = null; // client API returned by steamworks.init()
 let steamAvailable = false;
 let steamStatsReady = false;
@@ -90,18 +90,19 @@ function initSteamworks() {
     // (required for overlay + proper stats/achievements context).
     if (Number.isFinite(maybeAppId) && maybeAppId > 0) {
       try {
-        const shouldRestart = !!steamworks.restartAppIfNecessary?.(maybeAppId);
+        const shouldRestart = !!steamworks.restartAppIfNecessary?.(Math.trunc(maybeAppId));
         if (shouldRestart) {
-          logToFile(`Steamworks requested restart via Steam (appId=${maybeAppId}). Quitting...`);
-          // Quit quickly; Steam will relaunch us.
+          logToFile(`Steamworks requested restart via Steam (appId=${Math.trunc(maybeAppId)}). Quitting...`);
           app.quit();
           return;
         }
       } catch (e) {
         logToFile(`Steamworks restartAppIfNecessary failed (continuing): ${e.message}`);
       }
+    }
 
-      steamClient = steamworks.init(maybeAppId);
+    if (Number.isFinite(maybeAppId) && maybeAppId > 0) {
+      steamClient = steamworks.init(Math.trunc(maybeAppId));
     } else {
       steamClient = steamworks.init();
     }
@@ -141,6 +142,7 @@ function initSteamworks() {
   } catch (e) {
     // Keep the module loaded so we can retry init later, but clear client state.
     steamClient = null;
+    steamworks = null;
     steamAvailable = false;
     steamStatsReady = false;
     steamStatsReadyInFlight = null;
@@ -152,13 +154,13 @@ function isSteamUserStatsReady() {
   if (!steamClient) return false;
   try {
     // Determine readiness by probing known INT stats.
-    // Once user stats are available, Steam returns a number (0 is valid). Before that it returns null.
     const probes = [
       'STAT_BEST_SCORE',
       'STAT_GAMES_PLAYED',
       'STAT_BEST_COMBO',
       'STAT_PLAYTIME_SECONDS',
     ];
+    // Once user stats are available, Steam returns a number (0 is valid). Before that it returns null.
     return probes.some((name) => {
       const v = steamClient.stats.getInt(name);
       return typeof v === 'number' && Number.isFinite(v);
@@ -946,14 +948,14 @@ ipcMain.handle('steam-ensure-stats-ready', async (event, options) => {
 
 ipcMain.handle('steam-activate-achievement', (event, achievementApiName) => {
   initSteamworks();
-  if (!steamClient) return { ok: false, reason: 'steam_unavailable' };
+  if (!steamworks) return { ok: false, reason: 'steam_unavailable' };
   if (!steamStatsReady && !isSteamUserStatsReady()) return { ok: false, reason: 'stats_not_ready' };
   if (typeof achievementApiName !== 'string' || achievementApiName.length === 0) {
     return { ok: false, reason: 'invalid_name' };
   }
 
   try {
-    const ok = !!steamClient.achievement.activate(achievementApiName);
+    const ok = !!steamworks.achievements.unlockAchievement(achievementApiName);
     logToFile(`Steam activateAchievement(${achievementApiName}) => ${ok}`);
     return { ok };
   } catch (e) {
@@ -964,13 +966,13 @@ ipcMain.handle('steam-activate-achievement', (event, achievementApiName) => {
 
 ipcMain.handle('steam-set-stat-int', (event, statName, value) => {
   initSteamworks();
-  if (!steamClient) return { ok: false, reason: 'steam_unavailable' };
+  if (!steamworks) return { ok: false, reason: 'steam_unavailable' };
   if (!steamStatsReady && !isSteamUserStatsReady()) return { ok: false, reason: 'stats_not_ready' };
   if (typeof statName !== 'string' || statName.length === 0 || !Number.isFinite(value)) {
     return { ok: false, reason: 'invalid_args' };
   }
   try {
-    const ok = !!steamClient.stats.setInt(statName, Math.trunc(value));
+    const ok = !!steamworks.stats.setStatInt(statName, Math.trunc(value));
     logToFile(`Steam setStatInt(${statName}, ${Math.trunc(value)}) => ${ok}`);
     return { ok };
   } catch (e) {
@@ -981,17 +983,17 @@ ipcMain.handle('steam-set-stat-int', (event, statName, value) => {
 
 ipcMain.handle('steam-get-stat-int', (event, statName) => {
   initSteamworks();
-  if (!steamClient) return { ok: false, reason: 'steam_unavailable' };
+  if (!steamworks) return { ok: false, reason: 'steam_unavailable' };
   if (!steamStatsReady && !isSteamUserStatsReady()) return { ok: false, reason: 'stats_not_ready' };
   if (typeof statName !== 'string' || statName.length === 0) {
     return { ok: false, reason: 'invalid_args' };
   }
   try {
-    const value = steamClient.stats.getInt(statName);
-    if (typeof value !== 'number' || !Number.isFinite(value)) {
-      return { ok: false, reason: 'not_found' };
-    }
-    return { ok: true, value };
+    return steamworks.stats.getStatInt(statName).then((stat) => {
+      const value = stat?.value;
+      if (typeof value !== 'number' || !Number.isFinite(value)) return { ok: false, reason: 'not_found' };
+      return { ok: true, value };
+    });
   } catch (e) {
     return { ok: false, reason: 'exception', message: e.message };
   }
@@ -999,7 +1001,7 @@ ipcMain.handle('steam-get-stat-int', (event, statName) => {
 
 ipcMain.handle('steam-store-stats', (event, options) => {
   initSteamworks();
-  if (!steamClient) return { ok: false, reason: 'steam_unavailable' };
+  if (!steamworks) return { ok: false, reason: 'steam_unavailable' };
   if (!steamStatsReady && !isSteamUserStatsReady()) return { ok: false, reason: 'stats_not_ready' };
 
   // Throttle stores (Steam recommends not spamming StoreStats).
@@ -1021,9 +1023,36 @@ ipcMain.handle('steam-store-stats', (event, options) => {
   }
 });
 
+// ============================================================================
+// Steam Leaderboards IPC (renderer -> main)
+// ============================================================================
+async function ensureSteamReadyForLeaderboards() {
+  const ready = steamStatsReady || isSteamUserStatsReady();
+  if (ready) return { ok: true };
+  return await ensureSteamUserStatsReady({ timeoutMs: 8000, probeStatName: 'STAT_BEST_SCORE' });
+}
+
+ipcMain.handle('steam-leaderboard-submit-score', async (event, options) => {
+  initSteamworks();
+  // Leaderboards are handled via Steamworks Web API (server-side).
+  // Keep IPC method for renderer compatibility, but mark unsupported here.
+  if (!steamClient) return { ok: false, reason: 'steam_unavailable' };
+
+  return { ok: false, reason: 'unsupported', message: 'Use Steam Web API routes for leaderboards' };
+});
+
+ipcMain.handle('steam-leaderboard-get-top', async (event, options) => {
+  initSteamworks();
+  // Leaderboards are handled via Steamworks Web API (server-side).
+  // Keep IPC method for renderer compatibility, but mark unsupported here.
+  if (!steamClient) return { ok: false, reason: 'steam_unavailable' };
+
+  return { ok: false, reason: 'unsupported', message: 'Use Steam Web API routes for leaderboards' };
+});
+
 ipcMain.handle('steam-debug', (event, options) => {
   initSteamworks();
-  if (!steamClient) return { ok: false, available: false, reason: 'steam_unavailable' };
+  if (!steamworks) return { ok: false, available: false, reason: 'steam_unavailable' };
   if (!steamStatsReady && !isSteamUserStatsReady()) return { ok: false, available: true, reason: 'stats_not_ready' };
 
   try {
@@ -1032,38 +1061,35 @@ ipcMain.handle('steam-debug', (event, options) => {
       ? options.achievementApiNames.filter((s) => typeof s === 'string')
       : [];
 
-    const achievementNames = (() => {
-      try {
-        return steamClient.achievement?.names?.() ?? [];
-      } catch {
-        return [];
-      }
-    })();
+    const achievementNames = [];
 
     const stats = {};
-    for (const name of statNames) {
+    const statPromises = statNames.map(async (name) => {
       try {
-        const v = steamClient.stats.getInt(name);
-        stats[name] = typeof v === 'number' && Number.isFinite(v) ? v : null;
+        const stat = await steamworks.stats.getStatInt(name);
+        stats[name] = typeof stat?.value === 'number' && Number.isFinite(stat.value) ? stat.value : null;
       } catch {
         stats[name] = null;
       }
-    }
+    });
 
     const achievements = {};
-    for (const apiName of achievementApiNames) {
+    const achievementPromises = achievementApiNames.map(async (apiName) => {
       try {
-        const v = steamClient.achievement.isActivated(apiName);
-        achievements[apiName] = typeof v === 'boolean' ? v : null;
+        const all = await steamworks.achievements.getAllAchievements();
+        const hit = all.find((a) => a.apiName === apiName);
+        achievements[apiName] = typeof hit?.unlocked === 'boolean' ? hit.unlocked : null;
       } catch {
         achievements[apiName] = null;
       }
-    }
+    });
+
+    Promise.allSettled([...statPromises, ...achievementPromises]).catch(() => {});
 
     return {
       ok: true,
       available: true,
-      appId: steamClient.utils?.getAppId?.() ?? null,
+      appId: steamworks.getStatus?.()?.appId ?? null,
       achievementNames,
       achievements,
       stats,

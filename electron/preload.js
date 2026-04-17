@@ -18,6 +18,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getStatInt: (statName) => ipcRenderer.invoke('steam-get-stat-int', statName),
     setStatInt: (statName, value) => ipcRenderer.invoke('steam-set-stat-int', statName, value),
     storeStats: (options) => ipcRenderer.invoke('steam-store-stats', options),
+    leaderboardSubmitScore: (options) => ipcRenderer.invoke('steam-leaderboard-submit-score', options),
+    leaderboardGetTop: (options) => ipcRenderer.invoke('steam-leaderboard-get-top', options),
     debug: (options) => ipcRenderer.invoke('steam-debug', options),
     openOverlayAchievements: () => ipcRenderer.invoke('steam-open-overlay-achievements'),
   },
