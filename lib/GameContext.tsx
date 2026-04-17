@@ -22,6 +22,7 @@ import {
 } from '@/lib/steam/steamClient';
 import { getSteamIntStatsFromLocalStats, STEAM_INT_STATS } from '@/lib/steam/steamStats';
 import { ACTIVE_CHALLENGE_SESSION_KEY, parseActiveChallengeSession } from '@/lib/challengeSession';
+import { exportSaveSnapshotToDisk, importSaveSnapshotFromDisk } from '@/lib/cloudSaveSnapshot';
 
 export interface ReactionTimeStats {
   current: number | null;
@@ -150,8 +151,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   // Load preferences from localStorage on mount and preload sounds
   useEffect(() => {
-      // Load sound preference
       if (typeof window !== 'undefined') {
+        // Import a single-file snapshot (Steam Auto-Cloud friendly) if present.
+        // Best-effort and non-blocking; after import we read preferences as usual.
+        importSaveSnapshotFromDisk().catch(() => {});
+
+        // Load sound preference
         const savedSound = localStorageBatcher.getItem(STORAGE_KEYS.SOUND_ENABLED);
         if (savedSound !== null) {
           setSoundEnabled(savedSound === 'true');
@@ -836,6 +841,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
               // ignore
             }
           });
+
+          // Persist a single-file snapshot for Steam Auto-Cloud (best-effort).
+          // Chosen strategy B: save at game-over and again at app quit (main process).
+          exportSaveSnapshotToDisk().catch(() => {});
         };
         
         // Use requestIdleCallback for non-critical stats updates

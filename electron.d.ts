@@ -7,6 +7,8 @@ export interface ElectronAPI {
     electron: string;
   };
   quit: () => Promise<void>;
+  saveSnapshot: () => Promise<{ ok: boolean; reason?: string; message?: string }>;
+  readSnapshot: () => Promise<{ ok: boolean; content?: string; reason?: string; message?: string }>;
   steam?: {
     isAvailable: () => Promise<
       | { available: false }

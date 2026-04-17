@@ -10,6 +10,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     electron: process.versions.electron,
   },
   quit: () => ipcRenderer.invoke('app-quit'),
+  saveSnapshot: () => ipcRenderer.invoke('app-save-snapshot'),
+  readSnapshot: () => ipcRenderer.invoke('app-read-snapshot'),
   steam: {
     isAvailable: () => ipcRenderer.invoke('steam-is-available'),
     ensureStatsReady: (options) => ipcRenderer.invoke('steam-ensure-stats-ready', options),

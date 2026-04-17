@@ -27,6 +27,62 @@ let steamStatsReadyInFlight = null; // Promise<boolean> | null
 let lastSteamStoreAt = 0;
 let steamCallbacksInterval = null;
 
+// ============================================================================
+// Local save snapshot (Auto-Cloud friendly)
+// ============================================================================
+const SAVE_SNAPSHOT_FILENAME = 'reflexthis_save.json';
+
+function getSaveSnapshotPath() {
+  try {
+    const userData = app.getPath('userData');
+    return path.join(userData, SAVE_SNAPSHOT_FILENAME);
+  } catch {
+    return path.join(process.cwd(), SAVE_SNAPSHOT_FILENAME);
+  }
+}
+
+async function writeSaveSnapshotFromWindow(bw, { timeoutMs = 1500 } = {}) {
+  if (!bw || bw.isDestroyed()) return { ok: false, reason: 'no_window' };
+
+  try {
+    const payload = await Promise.race([
+      bw.webContents.executeJavaScript(
+        `(function(){
+          try {
+            const out = {};
+            for (let i=0;i<localStorage.length;i++){
+              const k = localStorage.key(i);
+              if (k && k.startsWith('reflexthis_')) out[k] = localStorage.getItem(k);
+            }
+            return JSON.stringify({ v: 1, savedAt: Date.now(), localStorage: out });
+          } catch (e) {
+            return JSON.stringify({ v: 1, savedAt: Date.now(), localStorage: {}, error: String(e && e.message ? e.message : e) });
+          }
+        })()`,
+        true
+      ),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), timeoutMs)),
+    ]);
+
+    const savePath = getSaveSnapshotPath();
+    fs.writeFileSync(savePath, payload, 'utf8');
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, reason: 'exception', message: e.message };
+  }
+}
+
+function readSaveSnapshot() {
+  try {
+    const savePath = getSaveSnapshotPath();
+    if (!fs.existsSync(savePath)) return { ok: false, reason: 'not_found' };
+    const content = fs.readFileSync(savePath, 'utf8');
+    return { ok: true, content };
+  } catch (e) {
+    return { ok: false, reason: 'exception', message: e.message };
+  }
+}
+
 function cleanupSteamworks() {
   // Stop our callback pumping (and any overlay frame invalidation timers we attached).
   if (steamCallbacksInterval) {
@@ -919,6 +975,12 @@ app.on('before-quit', () => {
   if (nextServer) {
     nextServer.kill();
   }
+  // Best-effort: persist local state to a single file so Steam Auto-Cloud can sync it.
+  // Do not block shutdown for long; keep timeout small.
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    // Fire-and-forget; Steam will upload after exit if Auto-Cloud is configured.
+    writeSaveSnapshotFromWindow(mainWindow, { timeoutMs: 1200 }).catch(() => {});
+  }
   cleanupSteamworks();
 });
 
@@ -927,8 +989,20 @@ ipcMain.handle('app-quit', () => {
   if (nextServer) {
     nextServer.kill();
   }
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    writeSaveSnapshotFromWindow(mainWindow, { timeoutMs: 1200 }).catch(() => {});
+  }
   cleanupSteamworks();
   app.quit();
+});
+
+ipcMain.handle('app-save-snapshot', async () => {
+  if (!mainWindow || mainWindow.isDestroyed()) return { ok: false, reason: 'no_window' };
+  return await writeSaveSnapshotFromWindow(mainWindow, { timeoutMs: 1500 });
+});
+
+ipcMain.handle('app-read-snapshot', async () => {
+  return readSaveSnapshot();
 });
 
 // ============================================================================
