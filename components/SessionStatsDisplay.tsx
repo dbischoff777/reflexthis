@@ -28,7 +28,22 @@ export function SessionStatsDisplay({ stats, hideTitle = false, gameMode }: Sess
   const [steamLeaderboardLoading, setSteamLeaderboardLoading] = useState(false);
   const [steamLeaderboardEntries, setSteamLeaderboardEntries] = useState<SteamLeaderboardEntry[] | null>(null);
   const [steamLeaderboardError, setSteamLeaderboardError] = useState<string | null>(null);
-  
+
+  const isElectronSteam = useMemo(() => typeof window !== 'undefined' && !!window.electronAPI?.steam, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!isElectronSteam) return;
+    (async () => {
+      const status = await getSteamStatus();
+      if (cancelled) return;
+      setSteamAvailable(status.available);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isElectronSteam]);
+
   // Get achievement progress
   const allSessions = getGameSessions();
   const sessions = gameMode ? allSessions.filter(s => s.gameMode === gameMode) : allSessions;
@@ -107,21 +122,6 @@ export function SessionStatsDisplay({ stats, hideTitle = false, gameMode }: Sess
     { id: 'achievements', label: t(language, 'stats.tab.achievements') },
     { id: 'history', label: t(language, 'stats.tab.history') },
   ];
-
-  const isElectronSteam = useMemo(() => typeof window !== 'undefined' && !!window.electronAPI?.steam, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    if (!isElectronSteam) return;
-    (async () => {
-      const status = await getSteamStatus();
-      if (cancelled) return;
-      setSteamAvailable(status.available);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [isElectronSteam]);
 
   const loadSteamLeaderboard = async () => {
     if (!isElectronSteam) return;
