@@ -2,6 +2,7 @@
 
 import { ChangeEvent, useState, useEffect } from 'react';
 import { KeybindingsSettings } from '@/components/KeybindingsSettings';
+import { CreditsTab } from '@/components/CreditsTab';
 import { useGameState } from '@/lib/GameContext';
 import { t } from '@/lib/i18n';
 import { SUPPORTED_LANGUAGES, type Language } from '@/lib/i18n';
@@ -32,7 +33,7 @@ export function SettingsModal({ show, onClose }: SettingsModalProps) {
     window.addEventListener('keydown', handleEsc);
     return () => window.removeEventListener('keydown', handleEsc);
   }, [show, onClose]);
-  const [activeTab, setActiveTab] = useState<'audio' | 'controls' | 'comfort'>('audio');
+  const [activeTab, setActiveTab] = useState<'audio' | 'controls' | 'comfort' | 'credits'>('audio');
   const {
     language,
     setLanguage,
@@ -207,6 +208,22 @@ export function SettingsModal({ show, onClose }: SettingsModalProps) {
                 onClick={() => setActiveTab('comfort')}
               >
                 {t(language, 'settings.tab.comfort')}
+              </button>
+              <button
+                type="button"
+                className={
+                  'px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold border-l transition-colors ' +
+                  (activeTab === 'credits'
+                    ? 'text-foreground'
+                    : 'text-foreground/70 hover:text-foreground')
+                }
+                style={{
+                  borderLeftColor: '#3E7CAC',
+                  ...(activeTab === 'credits' ? { backgroundColor: 'rgba(62, 124, 172, 0.3)' } : {})
+                }}
+                onClick={() => setActiveTab('credits')}
+              >
+                {t(language, 'settings.tab.credits')}
               </button>
             </div>
 
@@ -761,6 +778,8 @@ export function SettingsModal({ show, onClose }: SettingsModalProps) {
             </div>
           </section>
         )}
+
+        {activeTab === 'credits' && <CreditsTab />}
           </div>
         </ModalTransition>
       </div>
