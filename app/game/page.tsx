@@ -8,7 +8,7 @@ import { useGameState } from '@/lib/GameContext';
 import { GameMode } from '@/lib/gameModes';
 import { OrientationHandler } from '@/components/OrientationHandler';
 import { ScreenFlash } from '@/components/ScreenFlash';
-import { setGamePageActive, stopMenuMusic } from '@/lib/soundUtils';
+import { playSound, setGamePageActive, stopMenuMusic } from '@/lib/soundUtils';
 import { useKeyboardControls } from '@/hooks/useKeyboardControls';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import { RetroHudWidgets } from '@/components/RetroHudWidgets';
@@ -539,6 +539,7 @@ export default function GamePage() {
       e.preventDefault(); // prevent focus navigation
 
       setRiskPickerIndex((prev) => (prev + 1) % choices.length);
+      playSound('uiClick', soundEnabled);
 
       // Auto-commit the currently selected choice after a short pause,
       // so players can tap TAB multiple times to reach the desired option.
@@ -560,7 +561,7 @@ export default function GamePage() {
         pendingRiskCommitTimerRef.current = null;
       }
     };
-  }, [applyRiskChoice, clearTimer, gameMode, gameOver, isPausedRef, isReady, riskPickerIndex, setTimer, showRiskPicker]);
+  }, [applyRiskChoice, clearTimer, gameMode, gameOver, isPausedRef, isReady, riskPickerIndex, setTimer, showRiskPicker, soundEnabled]);
 
   // Decrement active risk modifier rounds when a new highlight set spawns.
   const lastHighlightStartRef = useRef<number | null>(null);
@@ -986,9 +987,12 @@ export default function GamePage() {
                     type="button"
                     className="border-2 rounded px-3 py-2 text-left transition-all w-full"
                     style={{
-                      borderColor: isActive ? '#00D9FF' : '#3E7CAC',
-                      backgroundColor: isActive ? 'rgba(0, 217, 255, 0.12)' : 'rgba(0, 0, 0, 0.20)',
-                      boxShadow: isActive ? '0 0 12px rgba(0, 217, 255, 0.25)' : 'none',
+                        borderColor: isActive ? '#FFD400' : '#3E7CAC',
+                        backgroundColor: isActive ? 'rgba(255, 212, 0, 0.14)' : 'rgba(0, 0, 0, 0.20)',
+                        boxShadow: isActive
+                          ? '0 0 20px rgba(255, 212, 0, 0.35), inset 0 0 0 1px rgba(0,0,0,0.25)'
+                          : 'none',
+                        transform: isActive ? 'scale(1.02)' : 'scale(1)',
                     }}
                     onClick={() => applyRiskChoice(opt.key)}
                   >

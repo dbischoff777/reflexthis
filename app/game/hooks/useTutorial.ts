@@ -40,7 +40,8 @@ export function useTutorial({
   });
   const [tutorialLoaded, setTutorialLoaded] = useState(false);
 
-  const tutorialStorageKey = useCallback((mode: GameMode) => `rt_tutorial_done_${mode}_v1`, []);
+  // v2: includes risk picker (Safe/Greedy/Recovery) in supported modes
+  const tutorialStorageKey = useCallback((mode: GameMode) => `rt_tutorial_done_${mode}_v2`, []);
 
   const tutorialStepsByMode: Record<GameMode, TutorialStep[]> = useMemo(
     () => ({
@@ -55,6 +56,12 @@ export function useTutorial({
           title: t(language, 'tutorial.reflex.2.title'),
           body: t(language, 'tutorial.reflex.2.body'),
           callout: t(language, 'tutorial.reflex.2.callout'),
+        },
+        {
+          id: 'reflex-risk',
+          title: t(language, 'tutorial.risk.title'),
+          body: t(language, 'tutorial.risk.body'),
+          callout: t(language, 'tutorial.risk.callout'),
         },
         {
           id: 'reflex-3',
@@ -98,6 +105,12 @@ export function useTutorial({
           body: t(language, 'tutorial.survival.2.body'),
         },
         {
+          id: 'survival-risk',
+          title: t(language, 'tutorial.risk.title'),
+          body: t(language, 'tutorial.risk.body'),
+          callout: t(language, 'tutorial.risk.callout'),
+        },
+        {
           id: 'survival-3',
           title: t(language, 'tutorial.survival.3.title'),
           body: t(language, 'tutorial.survival.3.body'),
@@ -118,6 +131,12 @@ export function useTutorial({
           id: 'nightmare-2',
           title: t(language, 'tutorial.nightmare.2.title'),
           body: t(language, 'tutorial.nightmare.2.body'),
+        },
+        {
+          id: 'nightmare-risk',
+          title: t(language, 'tutorial.risk.title'),
+          body: t(language, 'tutorial.risk.body'),
+          callout: t(language, 'tutorial.risk.callout'),
         },
         {
           id: 'nightmare-3',
@@ -141,6 +160,12 @@ export function useTutorial({
           title: t(language, 'tutorial.odd.2.title'),
           body: t(language, 'tutorial.odd.2.body'),
           callout: t(language, 'tutorial.odd.2.callout'),
+        },
+        {
+          id: 'odd-risk',
+          title: t(language, 'tutorial.risk.title'),
+          body: t(language, 'tutorial.risk.body'),
+          callout: t(language, 'tutorial.risk.callout'),
         },
         {
           id: 'odd-3',

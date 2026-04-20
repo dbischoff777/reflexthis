@@ -449,6 +449,11 @@ const en: TranslationDict = {
   'tutorial.start': 'Start Playing',
   'tutorial.step': 'Step',
 
+  // Tutorial Step - Risk picker (Safe / Greedy / Recovery)
+  'tutorial.risk.title': 'Pick your next risk',
+  'tutorial.risk.body': 'After you clear a round, you can choose a short modifier for the next 2 rounds: Safe (more time, fewer points), Greedy (less time, more points), or Recovery (stabilize; multi-hit disabled).',
+  'tutorial.risk.callout': 'Use TAB to cycle the choice and pause briefly to confirm.',
+
   // Tutorial Steps - Reflex
   'tutorial.reflex.1.title': 'Hit the highlighted button fast',
   'tutorial.reflex.1.body': 'Only the glowing button is correct. Press it quickly to score and avoid losing a life.',
@@ -944,6 +949,11 @@ const de: TranslationDict = {
   'tutorial.next': 'Weiter',
   'tutorial.start': 'Spiel starten',
   'tutorial.step': 'Schritt',
+
+  // Tutorial Step - Risk picker (Safe / Greedy / Recovery)
+  'tutorial.risk.title': 'Nächstes Risiko wählen',
+  'tutorial.risk.body': 'Nachdem du eine Runde abgeschlossen hast, kannst du für die nächsten 2 Runden einen kurzen Modifikator wählen: Sicher (mehr Zeit, weniger Punkte), Gierig (weniger Zeit, mehr Punkte) oder Erholung (stabilisieren; Multi-Hit deaktiviert).',
+  'tutorial.risk.callout': 'TAB wechselt die Auswahl – kurz warten zum Bestätigen.',
 
   // Tutorial Steps - Reflex
   'tutorial.reflex.1.title': 'Triff den markierten Button schnell',
