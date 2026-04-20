@@ -114,6 +114,17 @@ export default function GamePage() {
   const [buttonReactionTimes, setButtonReactionTimes] = useState<Record<number, number | null>>({});
   const [oddOneOutTarget, setOddOneOutTarget] = useState<number | null>(null);
   const [sequenceDistractorButtons, setSequenceDistractorButtons] = useState<number[]>([]);
+  const [showRiskPicker, setShowRiskPicker] = useState(false);
+  const [riskPickerIndex, setRiskPickerIndex] = useState(0);
+  const [riskRoundsLeft, setRiskRoundsLeft] = useState(0);
+  const [riskModifiers, setRiskModifiers] = useState<{
+    durationMultiplier: number;
+    scoreMultiplier: number;
+    patternChanceMultiplier: number;
+    multiHitChanceMultiplier: number;
+    multiHitDisabled: boolean;
+    bonusChanceMultiplier: number;
+  } | null>(null);
   
   // Multi-hit combo state: tracks required hits (2-3) and current hit count per button
   const [buttonHitRequirements, setButtonHitRequirements] = useState<Record<number, number>>({});
@@ -233,6 +244,7 @@ export default function GamePage() {
     lastHighlightedRef,
     currentHighlightedRef,
     highlightStartTimeRef,
+    riskModifiers: riskRoundsLeft > 0 && riskModifiers ? riskModifiers : undefined,
   });
 
   const startGameplay = useCallback(() => {
@@ -473,6 +485,102 @@ export default function GamePage() {
     isPausedRef.current = isPaused;
   }, [isPaused]);
 
+  const applyRiskChoice = useCallback(
+    (choice: 'safe' | 'greedy' | 'recovery') => {
+      if (choice === 'safe') {
+        setRiskModifiers({
+          durationMultiplier: 1.12,
+          scoreMultiplier: 0.9,
+          patternChanceMultiplier: 0.9,
+          multiHitChanceMultiplier: 0.85,
+          multiHitDisabled: false,
+          bonusChanceMultiplier: 1.0,
+        });
+      } else if (choice === 'greedy') {
+        setRiskModifiers({
+          durationMultiplier: 0.9,
+          scoreMultiplier: 1.2,
+          patternChanceMultiplier: 1.15,
+          multiHitChanceMultiplier: 1.2,
+          multiHitDisabled: false,
+          bonusChanceMultiplier: 1.1,
+        });
+      } else {
+        setRiskModifiers({
+          durationMultiplier: 1.08,
+          scoreMultiplier: 0.95,
+          patternChanceMultiplier: 0.95,
+          multiHitChanceMultiplier: 0,
+          multiHitDisabled: true,
+          bonusChanceMultiplier: 0.95,
+        });
+      }
+      setRiskRoundsLeft(2);
+      setShowRiskPicker(false);
+      // Resume loop immediately if safe to do so.
+      if (!gameOver && isReady && !isPausedRef.current && highlightedButtons.length === 0 && !isProcessingRef.current) {
+        highlightNewButtons();
+      }
+    },
+    [gameOver, highlightNewButtons, highlightedButtons.length, isReady, isPausedRef, isProcessingRef]
+  );
+
+  // Allow cycling the pending choice with TAB (non-blocking HUD picker).
+  const pendingRiskCommitTimerRef = useRef<NodeJS.Timeout | null>(null);
+  useEffect(() => {
+    if (!showRiskPicker) return;
+
+    const choices: Array<'safe' | 'greedy' | 'recovery'> = ['safe', 'greedy', 'recovery'];
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
+      if (gameOver || !isReady || isPausedRef.current) return;
+      if (gameMode === 'sequence') return;
+      e.preventDefault(); // prevent focus navigation
+
+      setRiskPickerIndex((prev) => (prev + 1) % choices.length);
+
+      // Auto-commit the currently selected choice after a short pause,
+      // so players can tap TAB multiple times to reach the desired option.
+      if (pendingRiskCommitTimerRef.current) {
+        clearTimer(pendingRiskCommitTimerRef.current);
+        pendingRiskCommitTimerRef.current = null;
+      }
+      pendingRiskCommitTimerRef.current = setTimer(() => {
+        const selected = choices[(riskPickerIndex + 1) % choices.length];
+        applyRiskChoice(selected);
+      }, 650);
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      if (pendingRiskCommitTimerRef.current) {
+        clearTimer(pendingRiskCommitTimerRef.current);
+        pendingRiskCommitTimerRef.current = null;
+      }
+    };
+  }, [applyRiskChoice, clearTimer, gameMode, gameOver, isPausedRef, isReady, riskPickerIndex, setTimer, showRiskPicker]);
+
+  // Decrement active risk modifier rounds when a new highlight set spawns.
+  const lastHighlightStartRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (highlightStartTimeState === null) {
+      lastHighlightStartRef.current = null;
+      return;
+    }
+    if (lastHighlightStartRef.current === highlightStartTimeState) return;
+    lastHighlightStartRef.current = highlightStartTimeState;
+    setRiskRoundsLeft((prev) => Math.max(0, prev - 1));
+  }, [highlightStartTimeState]);
+
+  // Clear risk effects when they expire or game ends/pauses.
+  useEffect(() => {
+    if (riskRoundsLeft <= 0) {
+      setRiskModifiers(null);
+    }
+  }, [riskRoundsLeft]);
+
   // Game button handlers hook
   const { handleReflexButtonPress, handleOddOneOutButtonPress } = useGameButtonHandlers({
     gameOver,
@@ -521,6 +629,17 @@ export default function GamePage() {
     clearHighlightTimer,
     highlightNewButtons,
     setTimer,
+    scoreMultiplier: riskRoundsLeft > 0 && riskModifiers ? riskModifiers.scoreMultiplier : 1,
+    onRoundCleared: () => {
+      // Only offer the choice during active, non-sequence gameplay.
+      if (gameOver || isPausedRef.current || !isReady) return false;
+      if (gameMode === 'sequence') return false;
+      // Avoid stacking pickers.
+      if (showRiskPicker) return true;
+      setRiskPickerIndex(0);
+      setShowRiskPicker(true);
+      return true;
+    },
   });
 
   // OLD HANDLERS REMOVED - Now using useGameButtonHandlers hook
@@ -838,6 +957,50 @@ export default function GamePage() {
           }}
         />
       </header>
+
+      {/* Risk picker (HUD layer; fixed so it never changes layout / cuts the playfield) */}
+      {showRiskPicker && (
+        <div className="fixed left-3 sm:left-5 top-[52%] -translate-y-1/2 z-30 w-[260px] sm:w-[280px] pointer-events-none">
+          <div
+            className="border-2 pixel-border rounded px-3 py-3 sm:px-4 sm:py-3 shadow-[0_0_18px_rgba(62,124,172,0.35)] pointer-events-auto"
+            style={{ borderColor: '#3E7CAC', backgroundColor: 'rgba(0, 58, 99, 0.85)' }}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="font-bold text-sm sm:text-base">{t(language, 'riskPicker.title')}</div>
+                <div className="text-[11px] sm:text-xs text-foreground/70">{t(language, 'riskPicker.note')}</div>
+              </div>
+              <div className="text-[11px] sm:text-xs text-foreground/60 whitespace-nowrap">{t(language, 'riskPicker.subtitle')}</div>
+            </div>
+
+            <div className="mt-3 flex flex-col gap-2">
+              {([
+                { key: 'safe', title: 'riskPicker.safe.title', desc: 'riskPicker.safe.desc' },
+                { key: 'greedy', title: 'riskPicker.greedy.title', desc: 'riskPicker.greedy.desc' },
+                { key: 'recovery', title: 'riskPicker.recovery.title', desc: 'riskPicker.recovery.desc' },
+              ] as const).map((opt, idx) => {
+                const isActive = riskPickerIndex === idx;
+                return (
+                  <button
+                    key={opt.key}
+                    type="button"
+                    className="border-2 rounded px-3 py-2 text-left transition-all w-full"
+                    style={{
+                      borderColor: isActive ? '#00D9FF' : '#3E7CAC',
+                      backgroundColor: isActive ? 'rgba(0, 217, 255, 0.12)' : 'rgba(0, 0, 0, 0.20)',
+                      boxShadow: isActive ? '0 0 12px rgba(0, 217, 255, 0.25)' : 'none',
+                    }}
+                    onClick={() => applyRiskChoice(opt.key)}
+                  >
+                    <div className="font-bold text-xs sm:text-sm">{t(language, opt.title)}</div>
+                    <div className="text-[11px] sm:text-xs text-foreground/70 mt-0.5">{t(language, opt.desc)}</div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Performance Feedback */}
       <PerformanceFeedback

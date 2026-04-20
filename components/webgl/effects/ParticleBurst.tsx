@@ -142,10 +142,11 @@ export const ParticleBurst = memo(function ParticleBurst({
       args={[undefined, undefined, PARTICLE_COUNT * 2]}
       frustumCulled={false}
     >
-      <sphereGeometry args={[1, 6, 6]} />
+      <sphereGeometry args={[1, 8, 8]} />
       <meshBasicMaterial 
         transparent 
-        opacity={0.9}
+        opacity={0.85}
+        vertexColors
         blending={THREE.AdditiveBlending}
         depthWrite={false}
       />

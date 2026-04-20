@@ -337,6 +337,17 @@ const en: TranslationDict = {
   'hud.show': 'Show HUD',
   'settings.close': 'CLOSE',
 
+  // Risk picker (decision layer)
+  'riskPicker.title': 'Pick your next risk',
+  'riskPicker.subtitle': 'Next 2 rounds',
+  'riskPicker.safe.title': 'Safe',
+  'riskPicker.safe.desc': 'More time to react. Lower points.',
+  'riskPicker.greedy.title': 'Greedy',
+  'riskPicker.greedy.desc': 'Less time. Higher points. More chaos.',
+  'riskPicker.recovery.title': 'Recovery',
+  'riskPicker.recovery.desc': 'Stabilize the run. Multi-hit disabled.',
+  'riskPicker.note': 'Press TAB to cycle. Pause briefly to confirm.',
+
   // Credits
   'credits.title': 'CREDITS',
   'credits.subtitle': 'Made with care by the team behind Reflex This.',
@@ -821,6 +832,17 @@ const de: TranslationDict = {
   'hud.hidden': 'HUD ausgeblendet',
   'hud.show': 'HUD anzeigen',
   'settings.close': 'SCHLIESSEN',
+
+  // Risk picker (decision layer)
+  'riskPicker.title': 'Nächstes Risiko wählen',
+  'riskPicker.subtitle': 'Nächste 2 Runden',
+  'riskPicker.safe.title': 'Sicher',
+  'riskPicker.safe.desc': 'Mehr Reaktionszeit. Weniger Punkte.',
+  'riskPicker.greedy.title': 'Gierig',
+  'riskPicker.greedy.desc': 'Weniger Zeit. Mehr Punkte. Mehr Chaos.',
+  'riskPicker.recovery.title': 'Erholung',
+  'riskPicker.recovery.desc': 'Lauf stabilisieren. Multi-Hit deaktiviert.',
+  'riskPicker.note': 'TAB wechselt. Kurz warten zum Bestätigen.',
 
   // Credits
   'credits.title': 'CREDITS',

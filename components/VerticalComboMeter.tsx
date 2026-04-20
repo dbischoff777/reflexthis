@@ -98,6 +98,8 @@ export function VerticalComboMeter({
   // Don't show if combo is 0
   if (combo === 0) return null;
 
+  const comboDigits = String(displayCombo).split('');
+
   return (
     <div
       className={cn(
@@ -196,6 +198,7 @@ export function VerticalComboMeter({
         <div
           className={cn(
             'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2',
+            'flex flex-col items-center justify-center',
             'text-2xl sm:text-3xl md:text-4xl font-bold',
             'drop-shadow-[0_0_12px_currentColor]',
             'transition-all duration-300',
@@ -206,11 +209,16 @@ export function VerticalComboMeter({
             color: ratingDisplay.color,
             textShadow: `0 0 12px ${ratingDisplay.color}, 0 0 24px ${ratingDisplay.color}90, 0 0 36px ${ratingDisplay.color}60, 3px 3px 0 rgba(0,0,0,0.95)`,
             fontFamily: 'var(--font-mono)',
-            letterSpacing: '0.1em',
+            letterSpacing: '0.02em',
             fontWeight: 800,
+            lineHeight: 0.9,
           }}
         >
-          {displayCombo}
+          {comboDigits.map((d, idx) => (
+            <span key={`${d}-${idx}`} className="leading-none">
+              {d}
+            </span>
+          ))}
         </div>
 
         {/* Rating Threshold Markers (optional, subtle) */}

@@ -173,7 +173,7 @@ export const ButtonMesh = memo(function ButtonMesh({
         urgencyColorRef.current.setRGB(
           THEME_COLORS.secondary.r,
           THEME_COLORS.secondary.g,
-          THEME_COLORS.b
+          THEME_COLORS.secondary.b
         );
       } else if (isDistractor && gameMode === 'sequence') {
         // Sequence distractor: soft purple highlight

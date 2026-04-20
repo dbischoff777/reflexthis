@@ -11,6 +11,30 @@ export const FloatingParticles = memo(function FloatingParticles({ active, color
   const particlesRef = useRef<THREE.Points>(null);
   const PARTICLE_COUNT = 24;
   
+  const spriteTexture = useMemo(() => {
+    const size = 64;
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+    
+    const center = size / 2;
+    const gradient = ctx.createRadialGradient(center, center, 0, center, center, center);
+    gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+    gradient.addColorStop(0.35, 'rgba(255, 255, 255, 0.6)');
+    gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, size, size);
+    
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.minFilter = THREE.LinearFilter;
+    tex.magFilter = THREE.LinearFilter;
+    tex.wrapS = THREE.ClampToEdgeWrapping;
+    tex.wrapT = THREE.ClampToEdgeWrapping;
+    return tex;
+  }, []);
+  
   const { positions, velocities, phases } = useMemo(() => {
     const positions = new Float32Array(PARTICLE_COUNT * 3);
     const velocities: THREE.Vector3[] = [];
@@ -94,6 +118,8 @@ export const FloatingParticles = memo(function FloatingParticles({ active, color
         sizeAttenuation
         blending={THREE.AdditiveBlending}
         depthWrite={false}
+        map={spriteTexture as any}
+        alphaTest={0.01}
       />
     </points>
   );

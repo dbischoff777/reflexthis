@@ -53,6 +53,8 @@ interface UseGameButtonHandlersOptions {
   clearHighlightTimer: () => void;
   highlightNewButtons: () => void;
   setTimer: (callback: () => void, delay: number) => NodeJS.Timeout;
+  scoreMultiplier?: number;
+  onRoundCleared?: () => boolean;
 }
 
 export function useGameButtonHandlers({
@@ -102,6 +104,8 @@ export function useGameButtonHandlers({
   clearHighlightTimer,
   highlightNewButtons,
   setTimer,
+  scoreMultiplier = 1,
+  onRoundCleared,
 }: UseGameButtonHandlersOptions) {
   // Handle button press (Reflex / Survival / Nightmare modes)
   const handleReflexButtonPress = useCallback(
@@ -151,13 +155,14 @@ export function useGameButtonHandlers({
         // Get pattern bonus multiplier if pattern is active
         // Pattern bonus applies to each button press in the pattern
         const patternBonus = currentPatternRef?.current?.bonusMultiplier || 1.0;
+        const totalBonusMultiplier = patternBonus * scoreMultiplier;
         
         // Increment score, with pattern bonus and fast-streak bonus
         // Note: reactionTime is used for scoring calculation, not directly as points
         if (fastStreakActive) {
-          incrementScore(Math.max(1, Math.floor(reactionTime * 0.8)), patternBonus);
+          incrementScore(Math.max(1, Math.floor(reactionTime * 0.8)), totalBonusMultiplier);
         } else {
-          incrementScore(reactionTime, patternBonus);
+          incrementScore(reactionTime, totalBonusMultiplier);
         }
         
         // Clear pattern when all buttons in pattern are pressed
@@ -254,6 +259,8 @@ export function useGameButtonHandlers({
             if (currentPatternRef?.current) {
               currentPatternRef.current = null;
             }
+            const shouldDefer = onRoundCleared?.() === true;
+            if (shouldDefer) return;
             // Only schedule next highlight if game is still active and mode hasn't changed
             // Note: Defensive check for mode changes - timer could fire after mode switch
             const currentMode = gameMode as GameMode;
@@ -403,7 +410,7 @@ export function useGameButtonHandlers({
           });
         }, 300);
 
-        incrementScore(reactionTime);
+        incrementScore(reactionTime, scoreMultiplier);
 
         if (screenFlashEnabled) {
           setScreenFlash('success');
@@ -423,6 +430,9 @@ export function useGameButtonHandlers({
         setHighlightDuration(0);
         clearHighlightTimer();
         setOddOneOutTarget(null);
+
+        const shouldDefer = onRoundCleared?.() === true;
+        if (shouldDefer) return;
 
         // Only schedule next highlight if game is still active and mode hasn't changed
         // Note: Defensive check for mode changes - timer could fire after mode switch
@@ -523,6 +533,8 @@ export function useGameButtonHandlers({
       clearHighlightTimer,
       highlightNewButtons,
       setTimer,
+      scoreMultiplier,
+      onRoundCleared,
       lives,
     ]
   );

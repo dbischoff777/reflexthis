@@ -45,6 +45,13 @@ interface UseHighlightButtonsOptions {
   currentHighlightedRef: React.MutableRefObject<number[]>;
   highlightStartTimeRef: React.MutableRefObject<number | null>;
   currentPatternRef?: React.MutableRefObject<Pattern | null>;
+  riskModifiers?: {
+    durationMultiplier?: number;
+    patternChanceMultiplier?: number;
+    multiHitChanceMultiplier?: number;
+    multiHitDisabled?: boolean;
+    bonusChanceMultiplier?: number;
+  };
 }
 
 export function useHighlightButtons({
@@ -80,6 +87,7 @@ export function useHighlightButtons({
   currentHighlightedRef,
   highlightStartTimeRef,
   currentPatternRef,
+  riskModifiers,
 }: UseHighlightButtonsOptions) {
   const { adaptiveDifficultyMultiplier } = useGameState();
   const adaptiveMultiplierRef = useRef(adaptiveDifficultyMultiplier);
@@ -156,13 +164,18 @@ export function useHighlightButtons({
       return baseChance + (maxChance - baseChance) * progress;
     };
 
+    const patternChanceMultiplier = riskModifiers?.patternChanceMultiplier ?? 1;
+    const multiHitChanceMultiplier = riskModifiers?.multiHitChanceMultiplier ?? 1;
+    const bonusChanceMultiplier = riskModifiers?.bonusChanceMultiplier ?? 1;
+    const multiHitDisabled = riskModifiers?.multiHitDisabled ?? false;
+
     if (gameMode === 'oddOneOut') {
       // Odd One Out mode: use the same pattern system for the layout, then pick a single correct target
       const baseCount = getButtonsToHighlightForDifficulty(combo, difficulty, currentMultiplier);
       // Clamp to 3–6 buttons for better visual discrimination
       const buttonCount = Math.min(6, Math.max(3, baseCount));
 
-      const patternSpawnChance = calculatePatternSpawnChance(combo);
+      const patternSpawnChance = Math.min(1, Math.max(0, calculatePatternSpawnChance(combo) * patternChanceMultiplier));
       const usePatterns = Math.random() < patternSpawnChance;
 
       if (usePatterns) {
@@ -190,7 +203,7 @@ export function useHighlightButtons({
       
       // Use patterns for all non-oddOneOut, non-sequence modes that rely on this hook
       // Spawn chance scales with combo: 40% at 0 → 100% by combo 10
-      const patternSpawnChance = calculatePatternSpawnChance(combo);
+      const patternSpawnChance = Math.min(1, Math.max(0, calculatePatternSpawnChance(combo) * patternChanceMultiplier));
       const usePatterns =
         (gameMode === 'reflex' ||
           gameMode === 'survival' ||
@@ -201,7 +214,8 @@ export function useHighlightButtons({
         // Generate pattern-based highlights
         // For patterns, ignore target button count - let the pattern use its natural button count
         // Check if we should include a bonus button within the pattern (for reflex and nightmare modes)
-        const shouldIncludeBonus = (gameMode === 'reflex' || gameMode === 'nightmare') && Math.random() < 0.18;
+        const shouldIncludeBonus =
+          (gameMode === 'reflex' || gameMode === 'nightmare') && Math.random() < Math.min(1, 0.18 * bonusChanceMultiplier);
         const pattern = generatePattern(buttonCount, score, lastHighlightedRef.current, shouldIncludeBonus);
         newHighlighted = pattern.buttons;
         patternRef.current = pattern;
@@ -225,7 +239,10 @@ export function useHighlightButtons({
         patternRef.current = null;
         
         // Occasionally spawn a bonus button in reflex / survival / nightmare (only for random, not patterns)
-        if ((gameMode === 'reflex' || gameMode === 'survival' || gameMode === 'nightmare') && Math.random() < 0.18) {
+        if (
+          (gameMode === 'reflex' || gameMode === 'survival' || gameMode === 'nightmare') &&
+          Math.random() < Math.min(1, 0.18 * bonusChanceMultiplier)
+        ) {
           const available = Array.from({ length: 10 }, (_, i) => i + 1).filter(
             (id) => !newHighlighted.includes(id)
           );
@@ -255,7 +272,7 @@ export function useHighlightButtons({
       // that use this hook, except for sequence (which has its own sequence logic).
       // Note: gameMode is typed to exclude 'sequence' in this hook, but we check defensively
       // to prevent issues if mode changes between timer setup and execution
-      if (gameMode !== 'oddOneOut') {
+      if (gameMode !== 'oddOneOut' && !multiHitDisabled) {
       const hitRequirements: Record<number, number> = {};
       
       // Define additional hits required per difficulty (1 base hit + additional hits)
@@ -270,7 +287,10 @@ export function useHighlightButtons({
       const totalHitsRequired = 1 + additionalHits; // Base hit + additional hits
       
       // Multi-hit spawn chance scales with combo, similar to patterns
-      const multiHitSpawnChance = calculateMultiHitSpawnChance(combo);
+      const multiHitSpawnChance = Math.min(
+        1,
+        Math.max(0, calculateMultiHitSpawnChance(combo) * multiHitChanceMultiplier)
+      );
       
       newHighlighted.forEach((buttonId) => {
         if (Math.random() < multiHitSpawnChance) {
@@ -278,6 +298,8 @@ export function useHighlightButtons({
         }
       });
       setButtonHitRequirements(hitRequirements);
+    } else {
+      setButtonHitRequirements({});
     }
 
     setHighlightedButtons(newHighlighted);
@@ -293,7 +315,9 @@ export function useHighlightButtons({
     // Set timer to clear highlight and penalize if not pressed in time
     // Use captured multiplier to prevent changes during highlight
     // Reaction time now scales with combo: at combo 100, duration reaches minDuration
-    const duration = getHighlightDurationForDifficulty(combo, difficulty, currentMultiplier);
+    const baseDuration = getHighlightDurationForDifficulty(combo, difficulty, currentMultiplier);
+    const durationMultiplier = riskModifiers?.durationMultiplier ?? 1;
+    const duration = Math.max(120, Math.round(baseDuration * durationMultiplier));
     setHighlightDuration(duration);
     
     // Set bonus highlight duration if bonus button exists
@@ -379,6 +403,7 @@ export function useHighlightButtons({
     lastHighlightedRef,
     currentHighlightedRef,
     highlightStartTimeRef,
+    riskModifiers,
     // Note: adaptiveDifficultyMultiplier intentionally NOT in deps to prevent mid-highlight changes
     // We use a ref to capture the current value when buttons are highlighted
   ]);
