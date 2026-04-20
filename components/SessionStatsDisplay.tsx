@@ -7,7 +7,9 @@ import { cn } from '@/lib/utils';
 import { t, type Language } from '@/lib/i18n';
 import { useGameState } from '@/lib/GameContext';
 import { GameMode } from '@/lib/gameModes';
+import type { DifficultyPreset } from '@/lib/difficulty';
 import { getSteamLeaderboardTop, getSteamStatus, type SteamLeaderboardEntry } from '@/lib/steam/steamClient';
+import { getSteamLeaderboardName } from '@/lib/steam/leaderboardNames';
 import Link from 'next/link';
 
 interface SessionStatsDisplayProps {
@@ -28,6 +30,8 @@ export function SessionStatsDisplay({ stats, hideTitle = false, gameMode }: Sess
   const [steamLeaderboardLoading, setSteamLeaderboardLoading] = useState(false);
   const [steamLeaderboardEntries, setSteamLeaderboardEntries] = useState<SteamLeaderboardEntry[] | null>(null);
   const [steamLeaderboardError, setSteamLeaderboardError] = useState<string | null>(null);
+  const [steamLeaderboardMode, setSteamLeaderboardMode] = useState<GameMode>(gameMode ?? 'reflex');
+  const [steamLeaderboardDifficulty, setSteamLeaderboardDifficulty] = useState<DifficultyPreset>('easy');
 
   const isElectronSteam = useMemo(() => typeof window !== 'undefined' && !!window.electronAPI?.steam, []);
 
@@ -43,6 +47,23 @@ export function SessionStatsDisplay({ stats, hideTitle = false, gameMode }: Sess
       cancelled = true;
     };
   }, [isElectronSteam]);
+
+  // Keep the Steam leaderboard selector aligned with the optional `gameMode` prop.
+  useEffect(() => {
+    if (!gameMode) return;
+    setSteamLeaderboardMode(gameMode);
+    if (gameMode === 'nightmare') setSteamLeaderboardDifficulty('nightmare');
+    else if (steamLeaderboardDifficulty === 'nightmare') setSteamLeaderboardDifficulty('hard');
+  }, [gameMode]); // intentionally not depending on steamLeaderboardDifficulty to avoid loops
+
+  // Clamp difficulty when switching modes.
+  useEffect(() => {
+    if (steamLeaderboardMode === 'nightmare') {
+      if (steamLeaderboardDifficulty !== 'nightmare') setSteamLeaderboardDifficulty('nightmare');
+    } else {
+      if (steamLeaderboardDifficulty === 'nightmare') setSteamLeaderboardDifficulty('hard');
+    }
+  }, [steamLeaderboardMode, steamLeaderboardDifficulty]);
 
   // Get achievement progress
   const allSessions = getGameSessions();
@@ -128,7 +149,10 @@ export function SessionStatsDisplay({ stats, hideTitle = false, gameMode }: Sess
     setSteamLeaderboardLoading(true);
     setSteamLeaderboardError(null);
     try {
-      const res = await getSteamLeaderboardTop({ leaderboardName: 'LB_BEST_SCORE', limit: 10 });
+      const res = await getSteamLeaderboardTop({
+        leaderboardName: getSteamLeaderboardName(steamLeaderboardMode, steamLeaderboardDifficulty),
+        limit: 10,
+      });
       if (!res.ok) {
         setSteamLeaderboardEntries(null);
         setSteamLeaderboardError(res.reason ?? 'Failed to load leaderboard');
@@ -257,6 +281,52 @@ export function SessionStatsDisplay({ stats, hideTitle = false, gameMode }: Sess
                   >
                     {steamLeaderboardLoading ? 'Loading…' : 'Refresh'}
                   </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 mb-3">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[11px] uppercase tracking-wide text-foreground/60">Mode</label>
+                    <select
+                      className="px-2 py-1.5 border-2 rounded text-xs sm:text-sm font-semibold transition-all cursor-pointer"
+                      style={{
+                        borderColor: '#3E7CAC',
+                        backgroundColor: 'rgba(0, 58, 99, 0.7)',
+                        color: '#e8f4ff',
+                      }}
+                      value={steamLeaderboardMode}
+                      onChange={(e) => setSteamLeaderboardMode(e.target.value as GameMode)}
+                    >
+                      <option value="reflex">{t(language, 'mode.reflex.name')}</option>
+                      <option value="sequence">{t(language, 'mode.sequence.name')}</option>
+                      <option value="survival">{t(language, 'mode.survival.name')}</option>
+                      <option value="nightmare">{t(language, 'mode.nightmare.name')}</option>
+                      <option value="oddOneOut">{t(language, 'mode.odd.name')}</option>
+                    </select>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[11px] uppercase tracking-wide text-foreground/60">Difficulty</label>
+                    <select
+                      className="px-2 py-1.5 border-2 rounded text-xs sm:text-sm font-semibold transition-all cursor-pointer"
+                      style={{
+                        borderColor: '#3E7CAC',
+                        backgroundColor: 'rgba(0, 58, 99, 0.7)',
+                        color: '#e8f4ff',
+                      }}
+                      value={steamLeaderboardDifficulty}
+                      onChange={(e) => setSteamLeaderboardDifficulty(e.target.value as DifficultyPreset)}
+                      disabled={steamLeaderboardMode === 'nightmare'}
+                    >
+                      {steamLeaderboardMode === 'nightmare' ? (
+                        <option value="nightmare">{t(language, 'difficulty.name.nightmare')}</option>
+                      ) : (
+                        <>
+                          <option value="easy">{t(language, 'difficulty.name.easy')}</option>
+                          <option value="medium">{t(language, 'difficulty.name.medium')}</option>
+                          <option value="hard">{t(language, 'difficulty.name.hard')}</option>
+                        </>
+                      )}
+                    </select>
+                  </div>
                 </div>
 
                 {steamLeaderboardError && (

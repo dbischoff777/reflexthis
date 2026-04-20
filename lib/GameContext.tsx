@@ -21,6 +21,7 @@ import {
   unlockSteamAchievementForLocalId,
 } from '@/lib/steam/steamClient';
 import { getSteamIntStatsFromLocalStats, STEAM_INT_STATS } from '@/lib/steam/steamStats';
+import { getSteamLeaderboardName } from '@/lib/steam/leaderboardNames';
 import { ACTIVE_CHALLENGE_SESSION_KEY, parseActiveChallengeSession } from '@/lib/challengeSession';
 import { exportSaveSnapshotToDisk, importSaveSnapshotFromDisk } from '@/lib/cloudSaveSnapshot';
 
@@ -820,7 +821,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
               // This is separate from stats; stats are used for "Progress Stat" achievement bindings.
               // Safe no-op outside Steam / if leaderboards aren't configured.
               if (score > 0) {
-                await submitSteamLeaderboardScore({ leaderboardName: 'LB_BEST_SCORE', score });
+                await submitSteamLeaderboardScore({
+                  leaderboardName: getSteamLeaderboardName(gameMode, difficulty),
+                  score,
+                });
               }
 
               // Also explicitly activate newly unlocked achievements as a fallback.
