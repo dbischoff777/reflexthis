@@ -51,6 +51,7 @@ interface UseHighlightButtonsOptions {
     multiHitChanceMultiplier?: number;
     multiHitDisabled?: boolean;
     bonusChanceMultiplier?: number;
+    oddOneOutExtraButtons?: number;
   };
 }
 
@@ -168,12 +169,13 @@ export function useHighlightButtons({
     const multiHitChanceMultiplier = riskModifiers?.multiHitChanceMultiplier ?? 1;
     const bonusChanceMultiplier = riskModifiers?.bonusChanceMultiplier ?? 1;
     const multiHitDisabled = riskModifiers?.multiHitDisabled ?? false;
+    const oddOneOutExtraButtons = riskModifiers?.oddOneOutExtraButtons ?? 0;
 
     if (gameMode === 'oddOneOut') {
       // Odd One Out mode: use the same pattern system for the layout, then pick a single correct target
       const baseCount = getButtonsToHighlightForDifficulty(combo, difficulty, currentMultiplier);
       // Clamp to 3–6 buttons for better visual discrimination
-      const buttonCount = Math.min(6, Math.max(3, baseCount));
+      const buttonCount = Math.min(6, Math.max(3, baseCount + oddOneOutExtraButtons));
 
       const patternSpawnChance = Math.min(1, Math.max(0, calculatePatternSpawnChance(combo) * patternChanceMultiplier));
       const usePatterns = Math.random() < patternSpawnChance;

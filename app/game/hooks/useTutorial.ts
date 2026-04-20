@@ -40,8 +40,8 @@ export function useTutorial({
   });
   const [tutorialLoaded, setTutorialLoaded] = useState(false);
 
-  // v2: includes risk picker (Safe/Greedy/Recovery) in supported modes
-  const tutorialStorageKey = useCallback((mode: GameMode) => `rt_tutorial_done_${mode}_v2`, []);
+  // v3: includes persistent, mode-specific Risk Profile picks in supported modes
+  const tutorialStorageKey = useCallback((mode: GameMode) => `rt_tutorial_done_${mode}_v3`, []);
 
   const tutorialStepsByMode: Record<GameMode, TutorialStep[]> = useMemo(
     () => ({

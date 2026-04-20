@@ -114,17 +114,217 @@ export default function GamePage() {
   const [buttonReactionTimes, setButtonReactionTimes] = useState<Record<number, number | null>>({});
   const [oddOneOutTarget, setOddOneOutTarget] = useState<number | null>(null);
   const [sequenceDistractorButtons, setSequenceDistractorButtons] = useState<number[]>([]);
-  const [showRiskPicker, setShowRiskPicker] = useState(false);
-  const [riskPickerIndex, setRiskPickerIndex] = useState(0);
-  const [riskRoundsLeft, setRiskRoundsLeft] = useState(0);
-  const [riskModifiers, setRiskModifiers] = useState<{
+  type RiskPickModifier = {
     durationMultiplier: number;
     scoreMultiplier: number;
     patternChanceMultiplier: number;
     multiHitChanceMultiplier: number;
     multiHitDisabled: boolean;
     bonusChanceMultiplier: number;
-  } | null>(null);
+    oddOneOutExtraButtons?: number;
+  };
+
+  type RiskPickDefinition = {
+    key: string;
+    titleKey: string;
+    descKey: string;
+    modifiers: RiskPickModifier;
+  };
+
+  const modeRiskPicks: Record<GameMode, { picks: RiskPickDefinition[]; defaultKey: string } | null> = useMemo(() => {
+    return {
+      reflex: {
+        defaultKey: 'safe',
+        picks: [
+          {
+            key: 'safe',
+            titleKey: 'riskPick.reflex.safe.title',
+            descKey: 'riskPick.reflex.safe.desc',
+            modifiers: {
+              durationMultiplier: 1.12,
+              scoreMultiplier: 0.9,
+              patternChanceMultiplier: 0.9,
+              multiHitChanceMultiplier: 0.85,
+              multiHitDisabled: false,
+              bonusChanceMultiplier: 1.0,
+            },
+          },
+          {
+            key: 'greedy',
+            titleKey: 'riskPick.reflex.greedy.title',
+            descKey: 'riskPick.reflex.greedy.desc',
+            modifiers: {
+              durationMultiplier: 0.9,
+              scoreMultiplier: 1.2,
+              patternChanceMultiplier: 1.15,
+              multiHitChanceMultiplier: 1.2,
+              multiHitDisabled: false,
+              bonusChanceMultiplier: 1.1,
+            },
+          },
+          {
+            key: 'recovery',
+            titleKey: 'riskPick.reflex.recovery.title',
+            descKey: 'riskPick.reflex.recovery.desc',
+            modifiers: {
+              durationMultiplier: 1.08,
+              scoreMultiplier: 0.95,
+              patternChanceMultiplier: 0.95,
+              multiHitChanceMultiplier: 0,
+              multiHitDisabled: true,
+              bonusChanceMultiplier: 0.95,
+            },
+          },
+        ],
+      },
+      survival: {
+        defaultKey: 'steady',
+        picks: [
+          {
+            key: 'steady',
+            titleKey: 'riskPick.survival.steady.title',
+            descKey: 'riskPick.survival.steady.desc',
+            modifiers: {
+              durationMultiplier: 1.1,
+              scoreMultiplier: 0.92,
+              patternChanceMultiplier: 0.95,
+              multiHitChanceMultiplier: 0.8,
+              multiHitDisabled: false,
+              bonusChanceMultiplier: 0.95,
+            },
+          },
+          {
+            key: 'pressure',
+            titleKey: 'riskPick.survival.pressure.title',
+            descKey: 'riskPick.survival.pressure.desc',
+            modifiers: {
+              durationMultiplier: 0.93,
+              scoreMultiplier: 1.12,
+              patternChanceMultiplier: 1.05,
+              multiHitChanceMultiplier: 1.05,
+              multiHitDisabled: false,
+              bonusChanceMultiplier: 1.0,
+            },
+          },
+          {
+            key: 'secondWind',
+            titleKey: 'riskPick.survival.secondWind.title',
+            descKey: 'riskPick.survival.secondWind.desc',
+            modifiers: {
+              durationMultiplier: 1.06,
+              scoreMultiplier: 0.95,
+              patternChanceMultiplier: 0.95,
+              multiHitChanceMultiplier: 0,
+              multiHitDisabled: true,
+              bonusChanceMultiplier: 0.95,
+            },
+          },
+        ],
+      },
+      nightmare: {
+        defaultKey: 'overclock',
+        picks: [
+          {
+            key: 'overclock',
+            titleKey: 'riskPick.nightmare.overclock.title',
+            descKey: 'riskPick.nightmare.overclock.desc',
+            modifiers: {
+              durationMultiplier: 0.86,
+              scoreMultiplier: 1.18,
+              patternChanceMultiplier: 1.15,
+              multiHitChanceMultiplier: 1.25,
+              multiHitDisabled: false,
+              bonusChanceMultiplier: 1.0,
+            },
+          },
+          {
+            key: 'blindSpot',
+            titleKey: 'riskPick.nightmare.blindSpot.title',
+            descKey: 'riskPick.nightmare.blindSpot.desc',
+            modifiers: {
+              durationMultiplier: 0.82,
+              scoreMultiplier: 1.22,
+              patternChanceMultiplier: 1.25,
+              multiHitChanceMultiplier: 1.15,
+              multiHitDisabled: false,
+              bonusChanceMultiplier: 0.95,
+            },
+          },
+          {
+            key: 'noMercy',
+            titleKey: 'riskPick.nightmare.noMercy.title',
+            descKey: 'riskPick.nightmare.noMercy.desc',
+            modifiers: {
+              durationMultiplier: 0.78,
+              scoreMultiplier: 1.28,
+              patternChanceMultiplier: 1.25,
+              multiHitChanceMultiplier: 1.35,
+              multiHitDisabled: false,
+              bonusChanceMultiplier: 0.9,
+            },
+          },
+        ],
+      },
+      oddOneOut: {
+        defaultKey: 'narrow',
+        picks: [
+          {
+            key: 'narrow',
+            titleKey: 'riskPick.odd.narrow.title',
+            descKey: 'riskPick.odd.narrow.desc',
+            modifiers: {
+              durationMultiplier: 1.08,
+              scoreMultiplier: 0.9,
+              patternChanceMultiplier: 0.95,
+              multiHitChanceMultiplier: 1,
+              multiHitDisabled: true,
+              bonusChanceMultiplier: 1,
+              oddOneOutExtraButtons: -1,
+            },
+          },
+          {
+            key: 'wide',
+            titleKey: 'riskPick.odd.wide.title',
+            descKey: 'riskPick.odd.wide.desc',
+            modifiers: {
+              durationMultiplier: 0.95,
+              scoreMultiplier: 1.1,
+              patternChanceMultiplier: 1.05,
+              multiHitChanceMultiplier: 1,
+              multiHitDisabled: true,
+              bonusChanceMultiplier: 1,
+              oddOneOutExtraButtons: 1,
+            },
+          },
+          {
+            key: 'doubleBluff',
+            titleKey: 'riskPick.odd.doubleBluff.title',
+            descKey: 'riskPick.odd.doubleBluff.desc',
+            modifiers: {
+              durationMultiplier: 0.9,
+              scoreMultiplier: 1.15,
+              patternChanceMultiplier: 1.2,
+              multiHitChanceMultiplier: 1,
+              multiHitDisabled: true,
+              bonusChanceMultiplier: 1,
+              oddOneOutExtraButtons: 0,
+            },
+          },
+        ],
+      },
+      sequence: null,
+    };
+  }, []);
+
+  const currentModePickConfig = modeRiskPicks[gameMode];
+  const modeSupportsRiskPicks = currentModePickConfig !== null;
+  const [selectedRiskPickKey, setSelectedRiskPickKey] = useState<string>('safe');
+
+  // Reset selection when mode changes (mode-specific defaults).
+  useEffect(() => {
+    if (!currentModePickConfig) return;
+    setSelectedRiskPickKey(currentModePickConfig.defaultKey);
+  }, [currentModePickConfig, gameMode]);
   
   // Multi-hit combo state: tracks required hits (2-3) and current hit count per button
   const [buttonHitRequirements, setButtonHitRequirements] = useState<Record<number, number>>({});
@@ -244,7 +444,11 @@ export default function GamePage() {
     lastHighlightedRef,
     currentHighlightedRef,
     highlightStartTimeRef,
-    riskModifiers: riskRoundsLeft > 0 && riskModifiers ? riskModifiers : undefined,
+    riskModifiers: (() => {
+      if (!currentModePickConfig) return undefined;
+      const def = currentModePickConfig.picks.find((p) => p.key === selectedRiskPickKey) ?? currentModePickConfig.picks[0];
+      return def?.modifiers;
+    })(),
   });
 
   const startGameplay = useCallback(() => {
@@ -485,102 +689,33 @@ export default function GamePage() {
     isPausedRef.current = isPaused;
   }, [isPaused]);
 
-  const applyRiskChoice = useCallback(
-    (choice: 'safe' | 'greedy' | 'recovery') => {
-      if (choice === 'safe') {
-        setRiskModifiers({
-          durationMultiplier: 1.12,
-          scoreMultiplier: 0.9,
-          patternChanceMultiplier: 0.9,
-          multiHitChanceMultiplier: 0.85,
-          multiHitDisabled: false,
-          bonusChanceMultiplier: 1.0,
-        });
-      } else if (choice === 'greedy') {
-        setRiskModifiers({
-          durationMultiplier: 0.9,
-          scoreMultiplier: 1.2,
-          patternChanceMultiplier: 1.15,
-          multiHitChanceMultiplier: 1.2,
-          multiHitDisabled: false,
-          bonusChanceMultiplier: 1.1,
-        });
-      } else {
-        setRiskModifiers({
-          durationMultiplier: 1.08,
-          scoreMultiplier: 0.95,
-          patternChanceMultiplier: 0.95,
-          multiHitChanceMultiplier: 0,
-          multiHitDisabled: true,
-          bonusChanceMultiplier: 0.95,
-        });
-      }
-      setRiskRoundsLeft(2);
-      setShowRiskPicker(false);
-      // Resume loop immediately if safe to do so.
-      if (!gameOver && isReady && !isPausedRef.current && highlightedButtons.length === 0 && !isProcessingRef.current) {
-        highlightNewButtons();
-      }
-    },
-    [gameOver, highlightNewButtons, highlightedButtons.length, isReady, isPausedRef, isProcessingRef]
-  );
-
-  // Allow cycling the pending choice with TAB (non-blocking HUD picker).
-  const pendingRiskCommitTimerRef = useRef<NodeJS.Timeout | null>(null);
+  // Allow cycling picks with TAB. The selected pick stays active until changed.
   useEffect(() => {
-    if (!showRiskPicker) return;
+    if (!modeSupportsRiskPicks) return;
+    if (!isReady || gameOver) return;
 
-    const choices: Array<'safe' | 'greedy' | 'recovery'> = ['safe', 'greedy', 'recovery'];
+    // Avoid TAB handling while overlays are open.
+    if (showSettingsModal || showPauseModal || showTutorialOverlay) return;
+
+    const picks = currentModePickConfig?.picks ?? [];
+    if (picks.length === 0) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key !== 'Tab') return;
       if (gameOver || !isReady || isPausedRef.current) return;
       if (gameMode === 'sequence') return;
       e.preventDefault(); // prevent focus navigation
-
-      setRiskPickerIndex((prev) => (prev + 1) % choices.length);
+      const currentIdx = Math.max(0, picks.findIndex((p) => p.key === selectedRiskPickKey));
+      const nextIdx = (currentIdx + 1) % picks.length;
+      setSelectedRiskPickKey(picks[nextIdx].key);
       playSound('uiClick', soundEnabled);
-
-      // Auto-commit the currently selected choice after a short pause,
-      // so players can tap TAB multiple times to reach the desired option.
-      if (pendingRiskCommitTimerRef.current) {
-        clearTimer(pendingRiskCommitTimerRef.current);
-        pendingRiskCommitTimerRef.current = null;
-      }
-      pendingRiskCommitTimerRef.current = setTimer(() => {
-        const selected = choices[(riskPickerIndex + 1) % choices.length];
-        applyRiskChoice(selected);
-      }, 650);
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
-      if (pendingRiskCommitTimerRef.current) {
-        clearTimer(pendingRiskCommitTimerRef.current);
-        pendingRiskCommitTimerRef.current = null;
-      }
     };
-  }, [applyRiskChoice, clearTimer, gameMode, gameOver, isPausedRef, isReady, riskPickerIndex, setTimer, showRiskPicker, soundEnabled]);
-
-  // Decrement active risk modifier rounds when a new highlight set spawns.
-  const lastHighlightStartRef = useRef<number | null>(null);
-  useEffect(() => {
-    if (highlightStartTimeState === null) {
-      lastHighlightStartRef.current = null;
-      return;
-    }
-    if (lastHighlightStartRef.current === highlightStartTimeState) return;
-    lastHighlightStartRef.current = highlightStartTimeState;
-    setRiskRoundsLeft((prev) => Math.max(0, prev - 1));
-  }, [highlightStartTimeState]);
-
-  // Clear risk effects when they expire or game ends/pauses.
-  useEffect(() => {
-    if (riskRoundsLeft <= 0) {
-      setRiskModifiers(null);
-    }
-  }, [riskRoundsLeft]);
+  }, [currentModePickConfig, gameMode, gameOver, isPausedRef, isReady, modeSupportsRiskPicks, selectedRiskPickKey, showPauseModal, showSettingsModal, showTutorialOverlay, soundEnabled]);
 
   // Game button handlers hook
   const { handleReflexButtonPress, handleOddOneOutButtonPress } = useGameButtonHandlers({
@@ -630,17 +765,11 @@ export default function GamePage() {
     clearHighlightTimer,
     highlightNewButtons,
     setTimer,
-    scoreMultiplier: riskRoundsLeft > 0 && riskModifiers ? riskModifiers.scoreMultiplier : 1,
-    onRoundCleared: () => {
-      // Only offer the choice during active, non-sequence gameplay.
-      if (gameOver || isPausedRef.current || !isReady) return false;
-      if (gameMode === 'sequence') return false;
-      // Avoid stacking pickers.
-      if (showRiskPicker) return true;
-      setRiskPickerIndex(0);
-      setShowRiskPicker(true);
-      return true;
-    },
+    scoreMultiplier: (() => {
+      if (!currentModePickConfig) return 1;
+      const def = currentModePickConfig.picks.find((p) => p.key === selectedRiskPickKey) ?? currentModePickConfig.picks[0];
+      return def?.modifiers.scoreMultiplier ?? 1;
+    })(),
   });
 
   // OLD HANDLERS REMOVED - Now using useGameButtonHandlers hook
@@ -959,8 +1088,8 @@ export default function GamePage() {
         />
       </header>
 
-      {/* Risk picker (HUD layer; fixed so it never changes layout / cuts the playfield) */}
-      {showRiskPicker && (
+      {/* Risk picker (HUD layer; fixed, persistent while game is active) */}
+      {modeSupportsRiskPicks && isReady && !gameOver && (
         <div className="fixed left-3 sm:left-5 top-[52%] -translate-y-1/2 z-30 w-[260px] sm:w-[280px] pointer-events-none">
           <div
             className="border-2 pixel-border rounded px-3 py-3 sm:px-4 sm:py-3 shadow-[0_0_18px_rgba(62,124,172,0.35)] pointer-events-auto"
@@ -975,12 +1104,8 @@ export default function GamePage() {
             </div>
 
             <div className="mt-3 flex flex-col gap-2">
-              {([
-                { key: 'safe', title: 'riskPicker.safe.title', desc: 'riskPicker.safe.desc' },
-                { key: 'greedy', title: 'riskPicker.greedy.title', desc: 'riskPicker.greedy.desc' },
-                { key: 'recovery', title: 'riskPicker.recovery.title', desc: 'riskPicker.recovery.desc' },
-              ] as const).map((opt, idx) => {
-                const isActive = riskPickerIndex === idx;
+              {(currentModePickConfig?.picks ?? []).map((opt) => {
+                const isActive = selectedRiskPickKey === opt.key;
                 return (
                   <button
                     key={opt.key}
@@ -994,10 +1119,13 @@ export default function GamePage() {
                           : 'none',
                         transform: isActive ? 'scale(1.02)' : 'scale(1)',
                     }}
-                    onClick={() => applyRiskChoice(opt.key)}
+                    onClick={() => {
+                      setSelectedRiskPickKey(opt.key);
+                      playSound('uiClick', soundEnabled);
+                    }}
                   >
-                    <div className="font-bold text-xs sm:text-sm">{t(language, opt.title)}</div>
-                    <div className="text-[11px] sm:text-xs text-foreground/70 mt-0.5">{t(language, opt.desc)}</div>
+                    <div className="font-bold text-xs sm:text-sm">{t(language, opt.titleKey)}</div>
+                    <div className="text-[11px] sm:text-xs text-foreground/70 mt-0.5">{t(language, opt.descKey)}</div>
                   </button>
                 );
               })}

@@ -338,15 +338,38 @@ const en: TranslationDict = {
   'settings.close': 'CLOSE',
 
   // Risk picker (decision layer)
-  'riskPicker.title': 'Pick your next risk',
-  'riskPicker.subtitle': 'Next 2 rounds',
-  'riskPicker.safe.title': 'Safe',
-  'riskPicker.safe.desc': 'More time to react. Lower points.',
-  'riskPicker.greedy.title': 'Greedy',
-  'riskPicker.greedy.desc': 'Less time. Higher points. More chaos.',
-  'riskPicker.recovery.title': 'Recovery',
-  'riskPicker.recovery.desc': 'Stabilize the run. Multi-hit disabled.',
-  'riskPicker.note': 'Press TAB to cycle. Pause briefly to confirm.',
+  'riskPicker.title': 'Risk Profile',
+  'riskPicker.subtitle': 'TAB cycles',
+  'riskPicker.note': 'Active until you change it.',
+
+  // Risk picks (mode-specific)
+  'riskPick.reflex.safe.title': 'Safe',
+  'riskPick.reflex.safe.desc': 'More time. Fewer points.',
+  'riskPick.reflex.greedy.title': 'Greedy',
+  'riskPick.reflex.greedy.desc': 'Less time. More points. More chaos.',
+  'riskPick.reflex.recovery.title': 'Recovery',
+  'riskPick.reflex.recovery.desc': 'Stabilize. Multi-hit disabled.',
+
+  'riskPick.survival.steady.title': 'Steady Hands',
+  'riskPick.survival.steady.desc': 'More time. Slightly fewer points.',
+  'riskPick.survival.pressure.title': 'Pressure',
+  'riskPick.survival.pressure.desc': 'Less time. More points.',
+  'riskPick.survival.secondWind.title': 'Second Wind',
+  'riskPick.survival.secondWind.desc': 'Stabilize. Multi-hit disabled.',
+
+  'riskPick.nightmare.overclock.title': 'Overclock',
+  'riskPick.nightmare.overclock.desc': 'Faster targets. More points.',
+  'riskPick.nightmare.blindSpot.title': 'Blind Spot',
+  'riskPick.nightmare.blindSpot.desc': 'Even faster. More patterns.',
+  'riskPick.nightmare.noMercy.title': 'No Mercy',
+  'riskPick.nightmare.noMercy.desc': 'Fastest. Highest reward.',
+
+  'riskPick.odd.narrow.title': 'Narrow Scan',
+  'riskPick.odd.narrow.desc': 'Smaller cluster. More time. Fewer points.',
+  'riskPick.odd.wide.title': 'Wide Scan',
+  'riskPick.odd.wide.desc': 'Bigger cluster. Less time. More points.',
+  'riskPick.odd.doubleBluff.title': 'Double Bluff',
+  'riskPick.odd.doubleBluff.desc': 'Harder layouts. Higher reward.',
 
   // Credits
   'credits.title': 'CREDITS',
@@ -451,8 +474,8 @@ const en: TranslationDict = {
 
   // Tutorial Step - Risk picker (Safe / Greedy / Recovery)
   'tutorial.risk.title': 'Pick your next risk',
-  'tutorial.risk.body': 'After you clear a round, you can choose a short modifier for the next 2 rounds: Safe (more time, fewer points), Greedy (less time, more points), or Recovery (stabilize; multi-hit disabled).',
-  'tutorial.risk.callout': 'Use TAB to cycle the choice and pause briefly to confirm.',
+  'tutorial.risk.body': 'Choose a Risk Profile in the HUD. It changes timing and rewards, and stays active until you switch it.',
+  'tutorial.risk.callout': 'Press TAB to cycle between profiles.',
 
   // Tutorial Steps - Reflex
   'tutorial.reflex.1.title': 'Hit the highlighted button fast',
@@ -839,15 +862,38 @@ const de: TranslationDict = {
   'settings.close': 'SCHLIESSEN',
 
   // Risk picker (decision layer)
-  'riskPicker.title': 'Nächstes Risiko wählen',
-  'riskPicker.subtitle': 'Nächste 2 Runden',
-  'riskPicker.safe.title': 'Sicher',
-  'riskPicker.safe.desc': 'Mehr Reaktionszeit. Weniger Punkte.',
-  'riskPicker.greedy.title': 'Gierig',
-  'riskPicker.greedy.desc': 'Weniger Zeit. Mehr Punkte. Mehr Chaos.',
-  'riskPicker.recovery.title': 'Erholung',
-  'riskPicker.recovery.desc': 'Lauf stabilisieren. Multi-Hit deaktiviert.',
-  'riskPicker.note': 'TAB wechselt. Kurz warten zum Bestätigen.',
+  'riskPicker.title': 'Risikoprofil',
+  'riskPicker.subtitle': 'TAB wechselt',
+  'riskPicker.note': 'Bleibt aktiv bis du es änderst.',
+
+  // Risk picks (mode-specific)
+  'riskPick.reflex.safe.title': 'Sicher',
+  'riskPick.reflex.safe.desc': 'Mehr Zeit. Weniger Punkte.',
+  'riskPick.reflex.greedy.title': 'Gierig',
+  'riskPick.reflex.greedy.desc': 'Weniger Zeit. Mehr Punkte. Mehr Chaos.',
+  'riskPick.reflex.recovery.title': 'Erholung',
+  'riskPick.reflex.recovery.desc': 'Stabilisieren. Multi-Hit deaktiviert.',
+
+  'riskPick.survival.steady.title': 'Ruhige Hand',
+  'riskPick.survival.steady.desc': 'Mehr Zeit. Etwas weniger Punkte.',
+  'riskPick.survival.pressure.title': 'Druck',
+  'riskPick.survival.pressure.desc': 'Weniger Zeit. Mehr Punkte.',
+  'riskPick.survival.secondWind.title': 'Zweiter Atem',
+  'riskPick.survival.secondWind.desc': 'Stabilisieren. Multi-Hit deaktiviert.',
+
+  'riskPick.nightmare.overclock.title': 'Overclock',
+  'riskPick.nightmare.overclock.desc': 'Schneller. Mehr Punkte.',
+  'riskPick.nightmare.blindSpot.title': 'Blind Spot',
+  'riskPick.nightmare.blindSpot.desc': 'Noch schneller. Mehr Muster.',
+  'riskPick.nightmare.noMercy.title': 'Keine Gnade',
+  'riskPick.nightmare.noMercy.desc': 'Am schnellsten. Höchste Belohnung.',
+
+  'riskPick.odd.narrow.title': 'Enger Scan',
+  'riskPick.odd.narrow.desc': 'Kleineres Feld. Mehr Zeit. Weniger Punkte.',
+  'riskPick.odd.wide.title': 'Weiter Scan',
+  'riskPick.odd.wide.desc': 'Größeres Feld. Weniger Zeit. Mehr Punkte.',
+  'riskPick.odd.doubleBluff.title': 'Doppelter Bluff',
+  'riskPick.odd.doubleBluff.desc': 'Härtere Layouts. Höhere Belohnung.',
 
   // Credits
   'credits.title': 'CREDITS',
@@ -952,8 +998,8 @@ const de: TranslationDict = {
 
   // Tutorial Step - Risk picker (Safe / Greedy / Recovery)
   'tutorial.risk.title': 'Nächstes Risiko wählen',
-  'tutorial.risk.body': 'Nachdem du eine Runde abgeschlossen hast, kannst du für die nächsten 2 Runden einen kurzen Modifikator wählen: Sicher (mehr Zeit, weniger Punkte), Gierig (weniger Zeit, mehr Punkte) oder Erholung (stabilisieren; Multi-Hit deaktiviert).',
-  'tutorial.risk.callout': 'TAB wechselt die Auswahl – kurz warten zum Bestätigen.',
+  'tutorial.risk.body': 'Wähle im HUD ein Risikoprofil. Es verändert Timing und Belohnung und bleibt aktiv, bis du es wechselst.',
+  'tutorial.risk.callout': 'TAB wechselt zwischen Profilen.',
 
   // Tutorial Steps - Reflex
   'tutorial.reflex.1.title': 'Triff den markierten Button schnell',
